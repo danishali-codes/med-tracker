@@ -1,0 +1,130 @@
+import { describe, expect, it } from 'vitest';
+import { addDays, eachDay } from '../dates';
+import { COINS, computeProgress, medStreak, summarizeDay, type DaySummary } from '../progress';
+import { indexLogs, slotKey } from '../schedule';
+import type { DoseLog, Medication } from '../types';
+
+const med = (id: string, times = ['08:00', '20:00']): Medication => ({
+  id,
+  name: id,
+  dose: '1',
+  form: 'pill',
+  color: '#000',
+  schedule: { pattern: { kind: 'daily' }, times, startDate: '2026-11-01' },
+  stock: null,
+  perDose: 1,
+  refillAt: null,
+  archived: false,
+  createdAt: '2026-11-01T00:00:00Z',
+});
+
+const take = (medId: string, date: string, time: string, at: Date): DoseLog => ({
+  slot: slotKey(medId, date, time),
+  medId,
+  date,
+  time,
+  status: 'taken',
+  at: at.toISOString(),
+});
+
+const local = (date: string, hh: number, mm = 0) => {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y, m - 1, d, hh, mm);
+};
+
+const day = (status: DaySummary['status'], extra: Partial<DaySummary> = {}): DaySummary => ({
+  date: '2026-11-01',
+  scheduled: 1,
+  taken: status === 'complete' ? 1 : 0,
+  onTime: status === 'complete' ? 1 : 0,
+  late: 0,
+  skipped: 0,
+  status,
+  ...extra,
+});
+
+describe('summarizeDay', () => {
+  const meds = [med('a')];
+
+  it('a morning dose taken in the evening still completes the day (late, not missed)', () => {
+    const logs = indexLogs([take('a', '2026-11-03', '08:00', local('2026-11-03', 19)), take('a', '2026-11-03', '20:00', local('2026-11-03', 20, 5))]);
+    const s = summarizeDay(meds, logs, '2026-11-03', '2026-11-04', 60);
+    expect(s.status).toBe('complete');
+    expect(s.late).toBe(1);
+    expect(s.onTime).toBe(1);
+  });
+
+  it('a dose never taken makes a finished day partial', () => {
+    const logs = indexLogs([take('a', '2026-11-03', '08:00', local('2026-11-03', 8))]);
+    expect(summarizeDay(meds, logs, '2026-11-03', '2026-11-04', 60).status).toBe('partial');
+    expect(summarizeDay(meds, new Map(), '2026-11-03', '2026-11-04', 60).status).toBe('missed');
+  });
+
+  it('today stays pending until every dose is answered', () => {
+    expect(summarizeDay(meds, new Map(), '2026-11-04', '2026-11-04', 60).status).toBe('pending');
+  });
+
+  it('skipping on purpose is neutral', () => {
+    const skip: DoseLog = { ...take('a', '2026-11-03', '08:00', local('2026-11-03', 8)), status: 'skipped' };
+    const logs = indexLogs([skip, take('a', '2026-11-03', '20:00', local('2026-11-03', 20))]);
+    expect(summarizeDay(meds, logs, '2026-11-03', '2026-11-04', 60).status).toBe('complete');
+  });
+});
+
+describe('computeProgress', () => {
+  it('counts the streak and ignores days without doses', () => {
+    const p = computeProgress([day('complete'), day('none'), day('complete'), day('pending')]);
+    expect(p.currentStreak).toBe(2);
+    expect(p.bestStreak).toBe(2);
+  });
+
+  it('a missed day resets the streak when there is no freeze', () => {
+    const p = computeProgress([day('complete'), day('complete'), day('missed'), day('complete')]);
+    expect(p.currentStreak).toBe(1);
+    expect(p.bestStreak).toBe(2);
+  });
+
+  it('7 perfect days earn a freeze that saves the streak on a missed day', () => {
+    const days = [...Array(7)].map(() => day('complete'));
+    const p = computeProgress([...days, { ...day('partial'), date: '2026-11-08' }, day('complete')]);
+    expect(p.currentStreak).toBe(8);
+    expect(p.freezes).toBe(0);
+    expect(p.frozenDays.has('2026-11-08')).toBe(true);
+  });
+
+  it('freezes cap at two', () => {
+    const p = computeProgress([...Array(28)].map(() => day('complete')));
+    expect(p.freezes).toBe(2);
+  });
+
+  it('awards coins for doses, perfect days and milestones', () => {
+    const p = computeProgress([...Array(7)].map(() => day('complete')));
+    expect(p.coinsEarned).toBe(7 * (COINS.onTime + COINS.perfectDay) + COINS.milestones[7]);
+  });
+
+  it('counts a finished perfect month', () => {
+    const days = eachDay('2026-11-01', '2026-12-01').map((d) => ({ ...day('complete'), date: d }));
+    days[days.length - 1].status = 'pending';
+    expect(computeProgress(days).perfectMonths).toBe(1);
+  });
+});
+
+describe('medStreak', () => {
+  it('counts back from today, not counting an unfinished today against it', () => {
+    const m = med('a', ['08:00']);
+    const logs = indexLogs(
+      ['2026-11-01', '2026-11-02', '2026-11-03'].map((d) => take('a', d, '08:00', local(d, 8))),
+    );
+    expect(medStreak(m, logs, '2026-11-04')).toBe(3);
+    expect(medStreak(m, logs, addDays('2026-11-04', 1))).toBe(0);
+  });
+});
+
+describe('trackedFrom', () => {
+  it('does not count days before a med was added, even with an earlier start date', () => {
+    const m = { ...med('a', ['08:00']), createdAt: new Date(2026, 10, 10, 12).toISOString() };
+    const s = summarizeDay([m], new Map(), '2026-11-05', '2026-11-12', 60);
+    expect(s.status).toBe('none');
+    expect(summarizeDay([m], new Map(), '2026-11-11', '2026-11-12', 60).status).toBe('missed');
+  });
+});
