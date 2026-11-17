@@ -1,0 +1,48 @@
+name: Launch test
+
+# Installs the APK on an Android emulator, opens the app and fails if it crashes.
+# Prints the crash log so problems can be fixed without a phone.
+on:
+  workflow_run:
+    workflows: ['Android APK']
+    types: [completed]
+  push:
+    branches: [feat/android-mvp]
+    paths: ['.github/workflows/smoke.yml']
+
+jobs:
+  launch:
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Download the APK
+        uses: actions/download-artifact@v4
+        with:
+          name: med-tracker-apk
+          path: apk
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id || '44066098134' }}
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r apk/*.apk
+            adb logcat -c
+            adb shell monkey -p com.danishalicodes.medtracker -c android.intent.category.LAUNCHER 1
+            sleep 25
+            adb logcat -d -v brief '*:E' ReactNativeJS:V AndroidRuntime:V ReactNative:V > logcat.txt || true
+            echo "----- crash log -----"
+            grep -E -A40 "FATAL EXCEPTION|ReactNativeJS|Error|Exception" logcat.txt | grep -v -E "chatty|GoogleApiManager|Finsky|gms" | head -300 || true
+            echo "----- is the app still running? -----"
+            adb shell pidof com.danishalicodes.medtracker && echo RUNNING || (echo CRASHED && exit 1)
