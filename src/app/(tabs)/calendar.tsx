@@ -49,8 +49,17 @@ export default function CalendarScreen() {
     setMonth({ y: month.y + Math.floor(m0 / 12), m: (((m0 % 12) + 12) % 12) + 1 });
   };
 
-  const dayDoses = useMemo(() => dosesOn(meds, selected), [meds, selected]);
   const dayLogs = useMemo(() => indexLogs(repo.getLogs(selected, selected)), [selected, version]);
+  // What's scheduled now, plus anything logged that day that the current schedule no longer
+  // lists (times changed since, or an as-needed dose), so recorded history never disappears.
+  const dayDoses = useMemo(() => {
+    const scheduled = dosesOn(meds, selected);
+    const known = new Set(scheduled.map((d) => d.slot));
+    const extra = [...dayLogs.values()]
+      .filter((l) => !known.has(l.slot))
+      .map((l) => ({ slot: l.slot, medId: l.medId, date: l.date, time: l.time }));
+    return [...scheduled, ...extra].sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+  }, [meds, selected, dayLogs]);
   const medById = new Map(meds.map((m) => [m.id, m]));
   const isFuture = diffDays(today, selected) > 0;
 

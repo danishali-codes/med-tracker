@@ -107,3 +107,17 @@ describe('describeSchedule', () => {
     expect(describeSchedule(sched({ kind: 'asNeeded' }, { times: [] }))).toBe('As needed');
   });
 });
+
+describe('archived meds', () => {
+  it('stay in history before the archive date and drop out from then on', () => {
+    const m = {
+      id: 'a',
+      archived: true,
+      archivedAt: new Date(2026, 10, 10, 12).toISOString(),
+      schedule: sched({ kind: 'daily' }),
+    } as Medication;
+    expect(dosesOn([m], '2026-11-09')).toHaveLength(1);
+    expect(dosesOn([m], '2026-11-10')).toHaveLength(0);
+    expect(dosesOn([{ ...m, archivedAt: undefined }], '2026-11-09')).toHaveLength(0);
+  });
+});
