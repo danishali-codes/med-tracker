@@ -48,13 +48,16 @@ export function saveMed(med: Medication) {
   changed();
 }
 
-/** Deleting removes the med and its history. Archiving (saveMed with archived) keeps history. */
+/**
+ * Deleting removes the med and its dose log. Finished days keep their summaries, so
+ * past streaks and coins (for this and every other med) stay as they were.
+ * Archiving (saveMed with archived) keeps the dose log too.
+ */
 export function deleteMed(id: string) {
   const db = getDb();
   db.withTransactionSync(() => {
     db.runSync('DELETE FROM meds WHERE id = ?', id);
     db.runSync('DELETE FROM dose_log WHERE med_id = ?', id);
-    db.runSync('DELETE FROM day_summary');
   });
   changed();
 }

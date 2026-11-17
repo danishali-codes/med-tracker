@@ -119,7 +119,7 @@ export default function MedEditor() {
   };
 
   const remove = () =>
-    Alert.alert('Delete medication?', 'This also deletes its dose history. Archive it instead if you want to keep the history.', [
+    Alert.alert('Delete medication?', 'This removes it and its dose log. Your past streaks and coins stay. Archive it instead if you want to keep its log.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',

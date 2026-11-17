@@ -42,6 +42,8 @@ export function summarizeDay(
   today: DateKey,
   windowMinutes: number,
 ): DaySummary {
+  // As-needed doses are left out on purpose: they shouldn't earn coins or badges,
+  // so the app never nudges anyone to take more of an as-needed medicine.
   // Days before a med was added don't count against you, even if its schedule
   // starts earlier (an earlier start date only anchors "every 2 weeks" style schedules).
   const doses = dosesOn(meds.filter((m) => trackedFrom(m) <= date), date);
