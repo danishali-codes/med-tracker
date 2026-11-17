@@ -109,33 +109,37 @@ export function setDose(
   const db = getDb();
   const lowStock: Medication[] = [];
   db.withTransactionSync(() => {
-    const prev = getLog(dose.slot);
+    const prev = db.getFirstSync<LogRow & { stock_used: number }>('SELECT * FROM dose_log WHERE slot = ?', dose.slot);
+    if (prev && prev.status === status) return; // already recorded (e.g. tapped in the notification and in the app)
+    const med = getMed(dose.medId);
+    const tracked = med != null && med.stock != null;
+    let stock = med?.stock ?? 0;
+    // Put back exactly what an earlier "taken" removed.
+    if (prev?.status === 'taken' && tracked) stock += prev.stock_used;
+    let used = 0;
+    if (status === 'taken' && tracked) {
+      used = Math.min(med!.perDose, stock);
+      stock -= used;
+    }
     if (status === null) {
       db.runSync('DELETE FROM dose_log WHERE slot = ?', dose.slot);
-    } else if (prev && prev.status === status) {
-      return; // already recorded (e.g. tapped in the notification and in the app)
     } else {
       db.runSync(
-        'INSERT OR REPLACE INTO dose_log (slot, med_id, date, time, status, at) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT OR REPLACE INTO dose_log (slot, med_id, date, time, status, at, stock_used) VALUES (?, ?, ?, ?, ?, ?, ?)',
         dose.slot,
         dose.medId,
         dose.date,
         dose.time,
         status,
         at.toISOString(),
+        used,
       );
     }
-    const wasTaken = prev?.status === 'taken';
-    const isTaken = status === 'taken';
-    if (wasTaken !== isTaken) {
-      const med = getMed(dose.medId);
-      if (med && med.stock != null) {
-        const stock = Math.max(0, med.stock + (isTaken ? -med.perDose : med.perDose));
-        const crossed = isTaken && med.refillAt != null && med.stock > med.refillAt && stock <= med.refillAt;
-        const next = { ...med, stock };
-        db.runSync('UPDATE meds SET data = ? WHERE id = ?', JSON.stringify(next), med.id);
-        if (crossed) lowStock.push(next);
-      }
+    if (tracked && stock !== med!.stock) {
+      const next = { ...med!, stock };
+      db.runSync('UPDATE meds SET data = ? WHERE id = ?', JSON.stringify(next), med!.id);
+      const crossed = status === 'taken' && med!.refillAt != null && med!.stock! > med!.refillAt && stock <= med!.refillAt;
+      if (crossed) lowStock.push(next);
     }
     db.runSync('DELETE FROM day_summary WHERE date = ?', dose.date);
   });
@@ -180,8 +184,8 @@ export function getSettings(): Settings {
 }
 
 export function saveSettings(s: Settings) {
+  // Finished days keep their summaries; a new on-time window applies from today on.
   getDb().runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', 'settings', JSON.stringify(s));
-  getDb().runSync('DELETE FROM day_summary'); // on-time window may have changed
   changed();
 }
 
@@ -254,7 +258,9 @@ export function place(slotId: string, itemId: string | null) {
 
 // ---- backup ----
 
-const TABLES = ['meds', 'dose_log', 'snooze', 'purchase', 'placement', 'kv'] as const;
+// day_summary is included: it holds finished days as they were, which can't be rebuilt
+// once a med has been archived or its schedule changed.
+const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv'] as const;
 
 export function exportAll(): string {
   const db = getDb();
@@ -279,7 +285,6 @@ export function importAll(json: string) {
         );
       }
     }
-    db.runSync('DELETE FROM day_summary');
   });
   changed();
 }

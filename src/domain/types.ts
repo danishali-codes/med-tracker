@@ -39,6 +39,8 @@ export interface Medication {
   /** Alert when stock falls to this many units or fewer. */
   refillAt: number | null;
   archived: boolean;
+  /** When it was archived; doses before this still show in history. */
+  archivedAt?: string | null;
   createdAt: string;
 }
 

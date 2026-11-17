@@ -1,4 +1,4 @@
-import { addDays, daysInMonth, diffDays, ordinal, parseDateKey, weekdayOf, weekdayShort, formatTime, type DateKey, type TimeOfDay } from './dates';
+import { addDays, daysInMonth, toDateKey, diffDays, ordinal, parseDateKey, weekdayOf, weekdayShort, formatTime, type DateKey, type TimeOfDay } from './dates';
 import type { DoseLog, Medication, Schedule, ScheduledDose } from './types';
 
 export function slotKey(medId: string, date: DateKey, time: TimeOfDay): string {
@@ -39,7 +39,8 @@ export function isDueOn(schedule: Schedule, date: DateKey): boolean {
 export function dosesOn(meds: Medication[], date: DateKey): ScheduledDose[] {
   const out: ScheduledDose[] = [];
   for (const med of meds) {
-    if (med.archived) continue;
+    // Archived meds stop being due from the day they were archived, but stay in earlier history.
+    if (med.archived && (!med.archivedAt || date >= toDateKey(new Date(med.archivedAt)))) continue;
     if (!isDueOn(med.schedule, date)) continue;
     for (const time of med.schedule.times) {
       out.push({ slot: slotKey(med.id, date, time), medId: med.id, date, time });

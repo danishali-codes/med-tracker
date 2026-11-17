@@ -41,6 +41,8 @@ const MIGRATIONS: string[] = [
      key TEXT PRIMARY KEY NOT NULL,
      value TEXT NOT NULL
    );`,
+  // How many units a "taken" log removed from stock, so Undo puts back exactly that.
+  `ALTER TABLE dose_log ADD COLUMN stock_used INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 export function getDb(): SQLiteDatabase {

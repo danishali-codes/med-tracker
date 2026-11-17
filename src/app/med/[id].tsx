@@ -90,6 +90,7 @@ export default function MedEditor() {
     perDose: num(perDose, 1),
     refillAt: trackStock ? Math.max(0, parseInt(refillAt, 10) || 0) : null,
     archived: existing?.archived ?? false,
+    archivedAt: existing?.archivedAt ?? null,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
   });
 
@@ -113,7 +114,7 @@ export default function MedEditor() {
 
   const archive = async () => {
     if (!existing) return;
-    await saveMedication({ ...existing, archived: !existing.archived });
+    await saveMedication({ ...existing, archived: !existing.archived, archivedAt: existing.archived ? null : new Date().toISOString() });
     router.back();
   };
 
