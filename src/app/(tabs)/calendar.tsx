@@ -1,17 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable, View } from 'react-native';
 import { DoseRow } from '../../components/DoseRow';
-import { Card, SectionTitle } from '../../components/ui';
+import { Screen } from '../../components/Screen';
+import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { daysInMonth, diffDays, formatDateLong, formatTime, monthName, parseDateKey, weekdayOf, type DateKey } from '../../domain/dates';
 import type { DaySummary } from '../../domain/progress';
 import { dosesOn, indexLogs } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
-import { colors } from '../../theme';
+import { makeStyles, useTheme } from '../../theme';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 export default function CalendarScreen() {
+  const c = useTheme();
+  const st = useStyles();
   const { today, byDate, progress } = useProgress();
   const meds = useMeds();
   const settings = useSettings();
@@ -64,18 +68,19 @@ export default function CalendarScreen() {
   const isFuture = diffDays(today, selected) > 0;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <Screen title="History" subtitle="Your record">
+      <FadeIn>
       <Card>
         <View style={st.header}>
-          <Pressable onPress={() => shift(-1)} hitSlop={12}>
-            <Text style={st.arrow}>‹</Text>
-          </Pressable>
+          <PressableScale onPress={() => shift(-1)} hitSlop={12} style={st.arrowBtn} accessibilityLabel="Previous month">
+            <Ionicons name="chevron-back" size={20} color={c.text} />
+          </PressableScale>
           <Text style={st.month}>
             {monthName(month.m)} {month.y}
           </Text>
-          <Pressable onPress={() => shift(1)} hitSlop={12}>
-            <Text style={st.arrow}>›</Text>
-          </Pressable>
+          <PressableScale onPress={() => shift(1)} hitSlop={12} style={st.arrowBtn} accessibilityLabel="Next month">
+            <Ionicons name="chevron-forward" size={20} color={c.text} />
+          </PressableScale>
         </View>
         <View style={st.grid}>
           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
@@ -96,14 +101,15 @@ export default function CalendarScreen() {
           ))}
         </View>
         <View style={st.legend}>
-          <Legend color={colors.good} label="All taken" />
-          <Legend color={colors.warn} label="Some missed" />
-          <Legend color={colors.bad} label="Missed" />
-          <Legend color="#7FB6F0" label="Freeze used" />
+          <Legend color={c.good} label="All taken" />
+          <Legend color={c.warn} label="Some missed" />
+          <Legend color={c.bad} label="Missed" />
+          <Legend color={c.ice} label="Freeze used" />
         </View>
       </Card>
+      </FadeIn>
 
-      <View style={st.statsRow}>
+      <FadeIn delay={80} style={st.statsRow}>
         <Card style={st.statCard}>
           <Text style={st.statValue}>{monthStats.pct == null ? '–' : `${monthStats.pct}%`}</Text>
           <Text style={st.statLabel}>doses taken this month</Text>
@@ -112,10 +118,10 @@ export default function CalendarScreen() {
           <Text style={st.statValue}>{monthStats.perfect}</Text>
           <Text style={st.statLabel}>perfect days</Text>
         </Card>
-      </View>
+      </FadeIn>
 
       <SectionTitle>{formatDateLong(selected)}</SectionTitle>
-      <Card style={{ paddingVertical: 4 }}>
+      <Card style={{ paddingVertical: 6 }}>
         {dayDoses.length === 0 ? <Text style={st.empty}>No doses scheduled.</Text> : null}
         {dayDoses.map((d) => {
           const med = medById.get(d.medId);
@@ -131,9 +137,9 @@ export default function CalendarScreen() {
         })}
       </Card>
       {!isFuture && selected !== today && dayDoses.length > 0 ? (
-        <Text style={st.hint}>Forgot to log something? Tap Take or ⋯ to fix the record.</Text>
+        <Text style={st.hint}>Forgot to log something? Tap the circle to mark it taken, or tap it again to change it.</Text>
       ) : null}
-    </ScrollView>
+    </Screen>
   );
 }
 
@@ -152,14 +158,16 @@ function DayCell({
   selected: boolean;
   onPress: () => void;
 }) {
+  const c = useTheme();
+  const st = useStyles();
   if (!date) return <View style={st.cell} />;
   let bg = 'transparent';
-  let fg = colors.text;
+  let fg = c.text;
   if (summary) {
-    if (frozen) bg = '#7FB6F0';
-    else if (summary.status === 'complete') bg = colors.good;
-    else if (summary.status === 'partial') bg = colors.warn;
-    else if (summary.status === 'missed') bg = colors.bad;
+    if (frozen) bg = c.ice;
+    else if (summary.status === 'complete') bg = c.good;
+    else if (summary.status === 'partial') bg = c.warn;
+    else if (summary.status === 'missed') bg = c.bad;
     if (bg !== 'transparent') fg = '#fff';
   }
   return (
@@ -168,8 +176,8 @@ function DayCell({
         style={[
           st.dayBubble,
           { backgroundColor: bg },
-          isToday && { borderWidth: 2, borderColor: colors.primary },
-          selected && { transform: [{ scale: 1.12 }], borderWidth: 2, borderColor: colors.text },
+          isToday && { borderWidth: 2.5, borderColor: c.primary },
+          selected && { transform: [{ scale: 1.12 }], borderWidth: 2.5, borderColor: c.text },
         ]}
       >
         <Text style={[st.dayText, { color: fg }]}>{parseDateKey(date).d}</Text>
@@ -179,31 +187,32 @@ function DayCell({
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
+  const c = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 10, marginTop: 4 }}>
       <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-      <Text style={{ fontSize: 12, color: colors.muted }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: c.muted, fontWeight: '600' }}>{label}</Text>
     </View>
   );
 }
 
-const st = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  arrow: { fontSize: 30, color: colors.primary, paddingHorizontal: 12 },
-  month: { fontSize: 18, fontWeight: '700', color: colors.text },
+const useStyles = makeStyles((c) => ({
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  arrowBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.sunken, alignItems: 'center', justifyContent: 'center' },
+  month: { fontSize: 19, fontWeight: '900', color: c.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  weekday: { width: `${100 / 7}%`, textAlign: 'center', fontSize: 12, color: colors.muted, marginBottom: 6 },
+  weekday: { width: `${100 / 7}%`, textAlign: 'center', fontSize: 12, fontWeight: '800', color: c.muted, marginBottom: 6 },
   cell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  dayBubble: { width: '80%', aspectRatio: 1, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  dayText: { fontSize: 14, fontWeight: '600' },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
+  dayBubble: { width: '82%', aspectRatio: 1, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  dayText: { fontSize: 14, fontWeight: '700' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
   statsRow: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: '800', color: colors.text },
-  statLabel: { fontSize: 12, color: colors.muted, textAlign: 'center' },
-  empty: { color: colors.muted, paddingVertical: 12 },
-  futureRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
-  futureText: { fontSize: 15, color: colors.text },
-  futureTime: { fontSize: 15, color: colors.muted },
-  hint: { fontSize: 12, color: colors.muted, textAlign: 'center' },
-});
+  statCard: { flex: 1, alignItems: 'center', paddingVertical: 20 },
+  statValue: { fontSize: 30, fontWeight: '900', color: c.primary },
+  statLabel: { fontSize: 13, color: c.muted, textAlign: 'center', fontWeight: '600' },
+  empty: { color: c.muted, paddingVertical: 12 },
+  futureRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
+  futureText: { fontSize: 16, fontWeight: '700', color: c.text },
+  futureTime: { fontSize: 15, color: c.muted, fontWeight: '600' },
+  hint: { fontSize: 13, color: c.muted, textAlign: 'center', marginHorizontal: 16 },
+}));

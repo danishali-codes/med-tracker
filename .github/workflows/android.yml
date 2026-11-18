@@ -40,8 +40,21 @@ jobs:
       - run: npm ci
       - name: Generate the Android project
         run: npx expo prebuild --platform android --no-install
+      # With the signing secrets set, every build is signed with the same private key so
+      # new versions install over old ones. Without them it falls back to the shared debug key.
+      - name: Use the app's signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          node scripts/use-release-key.js
       - name: Build the APK
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
       - name: Name the APK
         run: |

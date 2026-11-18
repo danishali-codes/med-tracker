@@ -190,9 +190,7 @@ export interface BadgeDef {
   earned: (s: BadgeStats) => boolean;
 }
 
-export interface BadgeStats extends Progress {
-  purchases: number;
-}
+export type BadgeStats = Progress;
 
 export const BADGES: BadgeDef[] = [
   { id: 'first_dose', name: 'First step', emoji: '🌱', description: 'Log your first dose', earned: (s) => s.totalTaken >= 1 },
@@ -205,6 +203,15 @@ export const BADGES: BadgeDef[] = [
   { id: 'doses_500', name: 'Dedicated', emoji: '💎', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
   { id: 'on_time_50', name: 'Like clockwork', emoji: '⏰', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
   { id: 'perfect_month', name: 'Flawless month', emoji: '🌕', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
-  { id: 'decorator', name: 'Home maker', emoji: '🛋️', description: 'Buy your first decoration', earned: (s) => s.purchases >= 1 },
-  { id: 'collector', name: 'Collector', emoji: '🎁', description: 'Own 10 decorations', earned: (s) => s.purchases >= 10 },
 ];
+
+/** Share of scheduled doses answered (taken or skipped) across these days, or null when none were due. */
+export function adherence(days: DaySummary[]): number | null {
+  let due = 0,
+    done = 0;
+  for (const s of days) {
+    due += s.scheduled;
+    done += s.taken + s.skipped;
+  }
+  return due ? done / due : null;
+}

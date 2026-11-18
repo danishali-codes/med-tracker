@@ -1,8 +1,9 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { Button, Card, Chip, SectionTitle } from '../components/ui';
+import * as Application from 'expo-application';
+import { Alert, Platform, ScrollView, Switch, View } from 'react-native';
+import { Button, Card, Chip, SectionTitle, Text } from '../components/ui';
 import { toDateKey } from '../domain/dates';
 import type { Settings } from '../domain/types';
 import * as repo from '../db/repo';
@@ -16,9 +17,10 @@ import {
   type PermissionState,
 } from '../notifications/permissions';
 import { rescheduleAll, resetNotificationSetup, sendTestReminder } from '../notifications/reminders';
-import { colors } from '../theme';
+import { makeStyles, useTheme } from '../theme';
 
 export default function SettingsScreen() {
+  const st = useStyles();
   const settings = useSettings();
   const [perm, setPerm] = useState<PermissionState | null>(null);
   const refresh = useCallback(() => {
@@ -74,6 +76,23 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <SectionTitle>Look and feel</SectionTitle>
+      <Card>
+        <Text style={[st.label, { marginBottom: 8 }]}>Appearance</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {(
+            [
+              ['system', '📱 Match phone'],
+              ['light', '☀️ Light'],
+              ['dark', '🌙 Dark'],
+            ] as const
+          ).map(([v, label]) => (
+            <Chip key={v} label={label} selected={settings.appearance === v} onPress={() => update({ appearance: v })} />
+          ))}
+        </View>
+        <ToggleRow label="Confetti when the day is done" value={settings.celebrate} onChange={(v) => update({ celebrate: v })} />
+      </Card>
+
       <SectionTitle>Make reminders reliable</SectionTitle>
       <Card>
         <PermRow
@@ -138,35 +157,55 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      {Platform.OS === 'android' ? (
+        <>
+          <SectionTitle>Home screen widget</SectionTitle>
+          <Card>
+            <Text style={st.hint}>
+              Long-press your home screen, tap Widgets, and find Med Tracker. It shows today's progress and your next dose, and you can mark the next dose as
+              taken right from it.
+            </Text>
+          </Card>
+        </>
+      ) : null}
+
       <Button title="Open system app settings" kind="ghost" onPress={openAppSettings} />
+      <Text style={[st.hint, { textAlign: 'center', marginTop: 8 }]}>
+        Med Tracker {Application.nativeApplicationVersion ?? ''} ({Application.nativeBuildVersion ?? ''})
+      </Text>
     </ScrollView>
   );
 }
 
 function PermRow({ label, ok, action }: { label: string; ok?: boolean; action: () => void }) {
+  const c = useTheme();
+  const st = useStyles();
   return (
     <View style={st.row}>
       <Text style={[st.label, { flex: 1 }]}>
         {ok ? '✅' : '⚠️'} {label}
       </Text>
-      {ok ? <Text style={{ color: colors.good, fontWeight: '600' }}>On</Text> : <Button title="Allow" small onPress={action} />}
+      {ok ? <Text style={{ color: c.good, fontWeight: '800' }}>On</Text> : <Button title="Allow" small onPress={action} />}
     </View>
   );
 }
 
 function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
+  const c = useTheme();
+  const st = useStyles();
   return (
     <View style={st.row}>
       <View style={{ flex: 1 }}>
         <Text style={st.label}>{label}</Text>
         {hint ? <Text style={st.hint}>{hint}</Text> : null}
       </View>
-      <Switch value={value} onValueChange={onChange} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: c.primary }} />
     </View>
   );
 }
 
 function Options({ label, value, options, suffix, onChange }: { label: string; value: number; options: number[]; suffix: string; onChange: (v: number) => void }) {
+  const st = useStyles();
   return (
     <View style={{ marginVertical: 6 }}>
       <Text style={[st.label, { marginBottom: 6 }]}>{label}</Text>
@@ -179,8 +218,8 @@ function Options({ label, value, options, suffix, onChange }: { label: string; v
   );
 }
 
-const st = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 12 },
-  label: { fontSize: 15, color: colors.text, fontWeight: '500' },
-  hint: { fontSize: 12, color: colors.muted, marginTop: 2 },
-});
+const useStyles = makeStyles((c) => ({
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  label: { fontSize: 15, color: c.text, fontWeight: '800' },
+  hint: { fontSize: 13, color: c.muted, marginTop: 2, fontWeight: '600', lineHeight: 18 },
+}));

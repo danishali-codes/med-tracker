@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { formatTime, toDateKey } from '../domain/dates';
+import { daysOfSupply, describeDose, units } from '../domain/dose';
 import { groupFromReminderId, groupKey, planReminders, REMINDER_PREFIX, type PlannedReminder } from '../domain/reminders';
 import { slotKey } from '../domain/schedule';
 import type { Medication } from '../domain/types';
@@ -52,7 +53,7 @@ export function resetNotificationSetup() {
 
 function contentFor(r: PlannedReminder, meds: Map<string, Medication>): Notifications.NotificationContentInput {
   const names = r.medIds.map((id) => meds.get(id)).filter((m): m is Medication => !!m);
-  const list = names.map((m) => (m.dose ? `${m.name} (${m.dose})` : m.name)).join(', ');
+  const list = names.map((m) => `${m.name} (${describeDose(m)})`).join(', ');
   const when = formatTime(r.time);
   const title =
     r.kind === 'nag'
@@ -191,11 +192,13 @@ export async function handleReminderAction(actionId: string, rawData: unknown) {
 
 export async function notifyLowStock(meds: Medication[]) {
   for (const m of meds) {
+    const days = daysOfSupply(m);
+    const left = `${units(m.form, m.stock ?? 0)} left${days != null ? `, about ${days === 1 ? '1 day' : `${days} days`}` : ''}`;
     await Notifications.scheduleNotificationAsync({
       identifier: `refill:${m.id}`,
       content: {
         title: `Running low on ${m.name}`,
-        body: `${m.stock} left. Time to order a refill.`,
+        body: `${left}. Time to order a refill.`,
         data: { medId: m.id },
       },
       trigger: Platform.OS === 'android' ? { channelId: REFILL_CHANNEL_ID } : null,
