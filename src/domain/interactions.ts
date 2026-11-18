@@ -25,14 +25,23 @@ export interface CheckedMed {
   ingredients: string[];
 }
 
+const SALTS = new Set(
+  'hydrochloride hcl sodium potassium calcium magnesium maleate besylate besilate mesylate succinate tartrate citrate sulfate sulphate phosphate acetate bromide fumarate dihydrate monohydrate'.split(' '),
+);
+
 export function ingredientsOf(name: string, generic?: string | null): string[] {
   const src = (generic?.trim() || name).toLowerCase();
   return [
     ...new Set(
       src
         .split(/\s*(?:\/|\+|,|\band\b|\bwith\b)\s*/)
-        .map((s) => s.replace(/\b(hydrochloride|hcl|sodium|potassium|calcium|magnesium|maleate|besylate|besilate|mesylate|succinate|tartrate|citrate|sulfate|sulphate|phosphate|acetate|bromide|fumarate|dihydrate|monohydrate|tablets?|capsules?|\d+(\.\d+)?\s*(mg|mcg|g|ml|%))\b/g, ' '))
-        .map((s) => s.replace(/\s+/g, ' ').trim())
+        .map((s) => s.replace(/\b(tablets?|capsules?|\d+(\.\d+)?\s*(mg|mcg|g|ml|%))(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim())
+        // Drop salt words after the first word ("metformin hydrochloride" -> "metformin"),
+        // but keep a first word that is itself a mineral ("calcium carbonate", "magnesium").
+        .map((s) => {
+          const [first, ...rest] = s.split(' ');
+          return [first, ...rest.filter((w) => !SALTS.has(w))].join(' ').trim();
+        })
         .filter((s) => s.length > 2),
     ),
   ];

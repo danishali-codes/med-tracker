@@ -8,6 +8,10 @@ describe('interactions', () => {
     expect(ingredientsOf('Exforge', 'amlodipine / valsartan')).toEqual(['amlodipine', 'valsartan']);
     expect(ingredientsOf('Glucophage', 'metformin hydrochloride')).toEqual(['metformin']);
     expect(ingredientsOf('Panadol 500 mg')).toEqual(['panadol']);
+    expect(ingredientsOf('Calcium carbonate', 'calcium carbonate')).toEqual(['calcium carbonate']);
+    expect(ingredientsOf('Magnesium', 'magnesium')).toEqual(['magnesium']);
+    expect(ingredientsOf('Euthyrox', 'levothyroxine sodium')).toEqual(['levothyroxine']);
+    expect(ingredientsOf('Ferrograd', 'ferrous sulfate')).toEqual(['ferrous']);
   });
 
   it('finds known alcohol, food and pair notes', () => {
@@ -16,6 +20,11 @@ describe('interactions', () => {
     const pair = notes.find((n) => n.kind === 'medicine');
     expect(pair?.between).toEqual(['Viagra', 'Imdur']);
     expect(pair?.serious).toBe(true);
+  });
+
+  it('matches mineral supplements in pair rules', () => {
+    const notes = knownNotes([med('1', 'Euthyrox', 'levothyroxine sodium'), med('2', 'Calcium', 'calcium carbonate')]);
+    expect(notes.some((n) => n.kind === 'medicine')).toBe(true);
   });
 
   it('reads alcohol, food and other-med sentences from a label', () => {

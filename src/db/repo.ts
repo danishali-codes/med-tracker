@@ -203,8 +203,11 @@ export function saveSettings(s: Settings) {
 export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySummary[] {
   const db = getDb();
   const meds = getMeds();
-  if (meds.length === 0) return [];
-  const first = meds.reduce((min, m) => (trackedFrom(m) < min ? trackedFrom(m) : min), today);
+  // Saved summaries count too, so history survives deleting a med (even the last one).
+  const firstCached = db.getFirstSync<{ d: string | null }>('SELECT MIN(date) AS d FROM day_summary')?.d ?? null;
+  if (meds.length === 0 && !firstCached) return [];
+  const fromMeds = meds.reduce((min, m) => (trackedFrom(m) < min ? trackedFrom(m) : min), today);
+  const first = firstCached && firstCached < fromMeds ? firstCached : fromMeds;
   const start = diffDays(first, today) > 730 ? addDays(today, -730) : first;
   if (diffDays(start, today) < 0) return [];
 

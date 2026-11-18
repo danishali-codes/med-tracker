@@ -205,7 +205,13 @@ export default function MedEditor() {
                 value={name}
                 onChangeText={(t) => {
                   setName(t);
-                  if (t.trim() !== picked.current) setRxcui(null);
+                  // Typing a different name drops what the earlier pick filled in.
+                  if (picked.current && t.trim() !== picked.current) {
+                    picked.current = '';
+                    setRxcui(null);
+                    setGeneric('');
+                    setStrengths([]);
+                  }
                 }}
                 onFocus={() => setNameFocused(true)}
                 onBlur={() => setTimeout(() => setNameFocused(false), 150)}
