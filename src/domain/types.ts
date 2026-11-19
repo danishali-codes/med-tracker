@@ -24,6 +24,8 @@ export interface Schedule {
 /** 'pill' is shown as "Tablet" (kept as the stored key so older data still reads). */
 export type MedForm = 'pill' | 'capsule' | 'liquid' | 'injection' | 'drops' | 'inhaler' | 'patch' | 'cream' | 'sachet' | 'other';
 
+export type PillShape = 'round' | 'oval' | 'oblong' | 'capsule' | 'square' | 'diamond' | 'triangle';
+
 export interface Medication {
   id: string;
   name: string;
@@ -36,7 +38,14 @@ export interface Medication {
   generic?: string | null;
   /** RxNorm concept id, when picked from the medicine search. */
   rxcui?: string | null;
+  /** Accent colour used for the med's rings, tags and icon background. */
   color: string;
+  /** What the pill looks like (tablets and capsules). */
+  shape?: PillShape;
+  /** Colour of the pill, or of the bottle/pen/etc. for other forms. */
+  pillColor?: string;
+  /** Second half of a two-colour capsule. */
+  pillColor2?: string | null;
   notes?: string;
   schedule: Schedule;
   /** Units (tablets, ml...) on hand; null when stock isn't tracked. Each dose uses `amount` units. */

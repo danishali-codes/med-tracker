@@ -207,7 +207,7 @@ export default function TodayScreen() {
                 const last = todayLogs.filter((l) => l.medId === m.id).sort((a, b) => b.at.localeCompare(a.at))[0];
                 return (
                   <View key={m.id} style={s.prnRow}>
-                    <MedIcon form={m.form} color={m.color} />
+                    <MedIcon med={m} />
                     <View style={{ flex: 1 }}>
                       <Text style={s.prnName}>{m.name}</Text>
                       <Text style={s.prnSub}>{last ? `Last today at ${formatTime(timeFromDate(new Date(last.at)))}` : describeDose(m)}</Text>

@@ -136,18 +136,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          current=$(node -p "require('./repo/app.json').expo.version.split('.').slice(0,2).join('.')")
+          current=$(node -p "require('./repo/app.json').expo.version.replace(/\\.0$/, '')")
           node repo/scripts/release-notes.js repo/CHANGELOG.md | while read -r line; do
             version=$(echo "$line" | jq -r .version)
             tag=$(echo "$line" | jq -r .tag)
             commit=$(echo "$line" | jq -r '.commit // empty')
-            if gh release view "$tag" >/dev/null 2>&1; then echo "$tag exists"; continue; fi
-            echo "$line" | jq -r .notes > notes.md
             files=()
-            if [ -d "repo/docs/screenshots/$version" ]; then
+            if ls "repo/docs/screenshots/$version"/*.png >/dev/null 2>&1; then
               (cd "repo/docs/screenshots/$version" && zip -q "$GITHUB_WORKSPACE/screenshots-$version.zip" *.png)
               files+=("screenshots-$version.zip")
             fi
+            if gh release view "$tag" >/dev/null 2>&1; then
+              # Screenshots added after the release was made still get attached.
+              if [ ${#files[@]} -gt 0 ] && ! gh release view "$tag" --json assets -q '.assets[].name' | grep -qx "screenshots-$version.zip"; then
+                gh release upload "$tag" "screenshots-$version.zip"
+              fi
+              echo "$tag exists"; continue
+            fi
+            echo "$line" | jq -r .notes > notes.md
             if [ "$version" = "$current" ]; then
               cp dist/*.apk "med-tracker-$version.apk"
               files+=("med-tracker-$version.apk")
