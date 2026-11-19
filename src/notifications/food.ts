@@ -4,7 +4,7 @@ import { formatTime, timeFromDate } from '../domain/dates';
 import { eatAfter } from '../domain/routines';
 import * as repo from '../db/repo';
 
-export const TIMER_CHANNEL_ID = 'timers';
+const TIMER_CHANNEL_ID = 'timers';
 const FOOD_ID = 'food-timer';
 const KEY = 'food_timer';
 

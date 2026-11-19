@@ -87,13 +87,14 @@ const fromMin = (n: number): TimeOfDay => {
 };
 
 /** The schedule's own times on a day, after weekday-specific times. */
-export function scheduleTimesOn(s: Schedule, date: DateKey): TimeOfDay[] {
+function scheduleTimesOn(s: Schedule, date: DateKey): TimeOfDay[] {
   const wd = weekdayOf(date);
   const rule = (s.dayTimes ?? []).find((r) => r.days.includes(wd) && r.times.length > 0);
   if (!rule) return s.times;
   // A rule lines up with the usual times dose by dose. If the usual times gained a
   // dose since the rule was made, that dose keeps its usual time; extras are dropped.
-  return s.times.map((t, i) => rule.times[i] ?? t).sort();
+  // Not re-sorted: the n-th entry must stay the n-th dose (dosesOn sorts by time).
+  return s.times.map((t, i) => rule.times[i] ?? t);
 }
 
 export function isRamadanOn(r: RamadanSettings | undefined | null, date: DateKey): boolean {
@@ -171,7 +172,7 @@ export function dosesOn(meds: Medication[], date: DateKey): ScheduledDose[] {
 // ---- travel: home time zone ----
 
 /** Offset from UTC (minutes) of a time zone at an instant, using the phone's time zone data. */
-export function zoneOffsetMinutes(timeZone: string, at: Date): number | null {
+function zoneOffsetMinutes(timeZone: string, at: Date): number | null {
   try {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone,

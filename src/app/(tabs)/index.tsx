@@ -1,8 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { logAsNeeded, logDose } from '../../actions';
 import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
@@ -75,6 +74,13 @@ export default function TodayScreen() {
 
   const activeCount = meds.filter((m) => !m.archived).length;
 
+  // One at a time, so each dose is logged before the reminders are worked out again.
+  const takeAll = async (pending: typeof doses) => {
+    let failed = 0;
+    for (const d of pending) await logDose(d, 'taken').catch(() => failed++);
+    if (failed) Alert.alert('Some doses were not saved', 'Please try again.');
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <Screen title="Today" subtitle={formatDateLong(today)}>
@@ -93,7 +99,7 @@ export default function TodayScreen() {
         ) : null}
 
         <FadeIn>
-          <LinearGradient colors={c.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.hero}>
+          <View style={[s.hero, { backgroundColor: c.hero }]}>
             <View style={s.heroTop}>
               <Rings
                 size={148}
@@ -132,7 +138,7 @@ export default function TodayScreen() {
                 </View>
               ) : null}
             </View>
-          </LinearGradient>
+          </View>
         </FadeIn>
 
         <FadeIn delay={80}>
@@ -217,7 +223,7 @@ export default function TodayScreen() {
                   return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} /> : null;
                 })}
                 {pending.length > 1 ? (
-                  <Button title={`Take all ${pending.length}`} kind="secondary" small onPress={() => pending.forEach((d) => logDose(d, 'taken'))} style={{ marginTop: 6, marginBottom: 6 }} />
+                  <Button title={`Take all ${pending.length}`} kind="secondary" small onPress={() => takeAll(pending)} style={{ marginTop: 6, marginBottom: 6 }} />
                 ) : null}
               </Card>
             </FadeIn>
@@ -281,7 +287,7 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
 }
 
 const useStyles = makeStyles((c) => ({
-  hero: { borderRadius: 32, padding: 20, marginBottom: 14, shadowColor: c.hero[1], shadowOpacity: 0.35, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
+  hero: { borderRadius: 32, padding: 20, marginBottom: 14, shadowColor: c.hero, shadowOpacity: 0.35, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   ringBig: { fontSize: 30, fontWeight: '900', color: '#fff' },
   ringOf: { fontSize: 18, fontWeight: '700', color: 'rgba(255,255,255,0.75)' },
@@ -300,7 +306,6 @@ const useStyles = makeStyles((c) => ({
   bannerText: { fontSize: 14, color: c.muted, marginTop: 4 },
   emptyTitle: { fontSize: 20, fontWeight: '900', color: c.text, marginTop: 8 },
   prnRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
-  prnIcon: { width: 50, height: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   prnName: { fontSize: 17, fontWeight: '800', color: c.text },
   prnSub: { fontSize: 14, color: c.muted, marginTop: 1, fontWeight: '600' },
 }));

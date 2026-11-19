@@ -1,4 +1,4 @@
-import { addDays, daysInMonth, diffDays, eachDay, monthName, parseTime, type DateKey, type TimeOfDay } from './dates';
+import { addDays, daysInMonth, diffDays, monthName, parseTime, type DateKey, type TimeOfDay } from './dates';
 import { consistencySeries, isFullDay, isGoldDay, trackedFrom, type DaySummary } from './progress';
 import { isMedDueOn, slotKey } from './schedule';
 import { editTimes } from './routines';
@@ -401,9 +401,4 @@ export function suggestTimings(meds: Medication[], logs: DoseLog[], today: DateK
 export function moveTime(med: Medication, from: TimeOfDay, to: TimeOfDay): Medication | null {
   const schedule = editTimes(med.schedule, [{ move: from, to }]);
   return schedule ? { ...med, schedule } : null;
-}
-
-/** Days covered, for screens that need to load data for a review. */
-export function reviewDays(from: DateKey, to: DateKey): DateKey[] {
-  return eachDay(from, to);
 }

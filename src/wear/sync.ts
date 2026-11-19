@@ -45,7 +45,7 @@ function todayPayload(now = new Date()) {
 /** Sends today's doses to the watch tile right away. Does nothing while the tile is off. */
 export async function pushToWatchNow() {
   if (!enabled()) return;
-  await SabrWear!.sendToday(JSON.stringify(todayPayload())).catch(() => {});
+  await SabrWear!.sendToday(JSON.stringify(todayPayload())).catch((e) => console.warn('Could not update the watch', e));
 }
 
 /** Takes everything off the watch, for when the tile is switched off. */
@@ -62,7 +62,7 @@ export async function connectedWatches(): Promise<string[]> {
 let pending: ReturnType<typeof setTimeout> | null = null;
 
 /** Cheap to call often; calls are merged. */
-export function pushToWatch() {
+function pushToWatch() {
   if (Platform.OS !== 'android' || !SabrWear) return;
   if (pending) clearTimeout(pending);
   pending = setTimeout(() => {
@@ -80,28 +80,36 @@ repo.subscribe(pushToWatch);
  */
 export async function handleWatchAction(data: { action?: string; body?: string }) {
   if (!enabled()) return;
-  if (data.action === 'take' || data.action === 'snooze') {
-    let req: { date?: unknown; time?: unknown } = {};
-    try {
-      req = JSON.parse(data.body ?? '{}');
-    } catch {
-      return;
-    }
-    const now = new Date();
-    if (typeof req.date !== 'string' || typeof req.time !== 'string' || req.date !== toDateKey(now)) return;
-    const group = groupByTime(dosesOn(repo.getMeds(), req.date)).find((g) => g.time === req.time);
-    if (!group || dueAt(req.date, req.time) > now) return;
-    const open = group.doses.filter((d) => !repo.getLog(d.slot));
-    if (open.length === 0) return pushToWatchNow();
-    await handleReminderAction(data.action === 'take' ? ACTION_TAKEN : ACTION_SNOOZE, {
-      date: req.date,
-      time: req.time,
-      medIds: open.map((d) => d.medId),
-      slots: open.map((d) => d.slot),
-    });
-    // The app may not be running, so update everything that shows doses before finishing.
-    await refreshWidgetNow().catch(() => {});
-    await pushShare().catch(() => {});
+  try {
+    if (data.action === 'take' || data.action === 'snooze') await applyWatchPress(data.action, data.body);
+  } finally {
+    // Always answer with the phone's real state: the tile shows a press straight away, so a
+    // press the phone turned down (not due yet, a new day) must be undone on the watch.
+    await pushToWatchNow();
   }
-  await pushToWatchNow();
+}
+
+async function applyWatchPress(action: 'take' | 'snooze', body: string | undefined) {
+  let req: { date?: unknown; time?: unknown };
+  try {
+    req = JSON.parse(body ?? '{}');
+  } catch {
+    return;
+  }
+  const now = new Date();
+  if (typeof req.date !== 'string' || typeof req.time !== 'string' || req.date !== toDateKey(now)) return;
+  const group = groupByTime(dosesOn(repo.getMeds(), req.date)).find((g) => g.time === req.time);
+  // A minute of grace: the watch's clock may run slightly ahead of the phone's.
+  if (!group || dueAt(req.date, req.time).getTime() > now.getTime() + 60_000) return;
+  const open = group.doses.filter((d) => !repo.getLog(d.slot));
+  if (open.length === 0) return;
+  await handleReminderAction(action === 'take' ? ACTION_TAKEN : ACTION_SNOOZE, {
+    date: req.date,
+    time: req.time,
+    medIds: open.map((d) => d.medId),
+    slots: open.map((d) => d.slot),
+  });
+  // The app may not be running, so update everything that shows doses before finishing.
+  await refreshWidgetNow().catch(() => {});
+  await pushShare().catch(() => {});
 }

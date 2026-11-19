@@ -8,7 +8,9 @@ import { fromB64, open, seal, toB64, utf8 } from '../sync/crypto';
  */
 
 // Hermes has no JIT, so this takes a couple of seconds on a phone. Stored in the file, so it can change later.
-export const KDF_ITERATIONS = 20_000;
+const KDF_ITERATIONS = 20_000;
+/** Upper limit on what a file may ask for, so a damaged or hostile file cannot hang the app. */
+const MAX_ITERATIONS = 200_000;
 const BLOCK = 128; // SHA-512 block size
 
 function hmacSha512(key: Uint8Array, msg: Uint8Array): Uint8Array {
@@ -75,7 +77,11 @@ export function isLockedBackup(text: string): boolean {
 export function unlockBackup(text: string, password: string): string {
   const file = JSON.parse(text) as LockedBackup;
   if (file.app !== 'sabr-backup' || file.kdf?.name !== 'pbkdf2-sha512') throw new Error('This is not a Sabr backup file.');
-  const key = toB64(pbkdf2(password, fromB64(file.kdf.salt), file.kdf.iterations));
+  const n = file.kdf.iterations;
+  if (!Number.isInteger(n) || n < 1 || n > MAX_ITERATIONS || typeof file.kdf.salt !== 'string' || typeof file.data !== 'string') {
+    throw new Error('This backup file is damaged.');
+  }
+  const key = toB64(pbkdf2(password, fromB64(file.kdf.salt), n));
   try {
     return open(file.data, key);
   } catch {

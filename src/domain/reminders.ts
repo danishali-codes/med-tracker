@@ -10,7 +10,7 @@ export function groupKey(date: DateKey, time: TimeOfDay): string {
 
 export const REMINDER_PREFIX = 'dose:';
 
-export function reminderId(group: string, k: number): string {
+function reminderId(group: string, k: number): string {
   return `${REMINDER_PREFIX}${group}|${k}`;
 }
 

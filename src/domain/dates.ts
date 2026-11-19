@@ -52,17 +52,6 @@ export function parseTime(t: TimeOfDay): { h: number; min: number } {
   return { h, min };
 }
 
-export function isValidTime(t: string): boolean {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(t);
-  if (!m) return false;
-  return Number(m[1]) < 24 && Number(m[2]) < 60;
-}
-
-export function normalizeTime(t: string): TimeOfDay {
-  const { h, min } = parseTime(t);
-  return `${pad(h)}:${pad(min)}`;
-}
-
 export function timeFromDate(d: Date): TimeOfDay {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -72,10 +61,6 @@ export function atTime(key: DateKey, t: TimeOfDay): Date {
   const { y, m, d } = parseDateKey(key);
   const { h, min } = parseTime(t);
   return new Date(y, m - 1, d, h, min, 0, 0);
-}
-
-export function compareTime(a: TimeOfDay, b: TimeOfDay): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 export function eachDay(from: DateKey, to: DateKey): DateKey[] {

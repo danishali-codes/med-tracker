@@ -70,7 +70,7 @@ export function deleteMed(id: string) {
  * (taken today, or skipped ahead of time) follow it, so they don't show as due again.
  * Earlier days keep their history as it was.
  */
-export function rebaseLogs(medId: string, from: string, to: string, fromDate: DateKey) {
+function rebaseLogs(medId: string, from: string, to: string, fromDate: DateKey) {
   if (from === to) return;
   const db = getDb();
   const rows = db.getAllSync<{ slot: string; date: string; time: string }>(
@@ -89,12 +89,17 @@ export function rebaseLogs(medId: string, from: string, to: string, fromDate: Da
   changed();
 }
 
-/** Saves a medicine whose usual times changed, carrying logged doses of a moved time along. */
+/** Saves a medicine whose usual times moved, carrying doses logged from today on along with them. */
+export function saveMedMoved(med: Medication, moves: { from: string; to: string }[], today: DateKey) {
+  saveMed(med);
+  for (const m of moves) rebaseLogs(med.id, m.from, m.to, today);
+}
+
+/** Like saveMedMoved, for an edit that replaced exactly one usual time with another (a move). */
 export function saveMedRetimed(before: Medication, after: Medication, today: DateKey) {
-  saveMed(after);
   const gone = before.schedule.times.filter((t) => !after.schedule.times.includes(t));
   const added = after.schedule.times.filter((t) => !before.schedule.times.includes(t));
-  if (gone.length === 1 && added.length === 1) rebaseLogs(after.id, gone[0], added[0], today);
+  saveMedMoved(after, gone.length === 1 && added.length === 1 ? [{ from: gone[0], to: added[0] }] : [], today);
 }
 
 export function newId(): string {

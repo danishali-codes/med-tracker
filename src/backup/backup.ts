@@ -14,12 +14,12 @@ const LAST_AUTO = 'last_backup_auto';
 const KEEP_AUTO_FILES = 4;
 const PREFIX = 'sabr-backup-';
 
-export function backupFileName(locked: boolean, date = new Date()): string {
+function backupFileName(locked: boolean, date = new Date()): string {
   return `${PREFIX}${toDateKey(date)}${locked ? '.sabr' : '.json'}`;
 }
 
 /** The backup as text: locked with the password, or plain JSON when there's none. */
-export function makeBackup(password: string | null): string {
+function makeBackup(password: string | null): string {
   const plain = repo.exportAll();
   return password ? lockBackup(plain, password) : plain;
 }

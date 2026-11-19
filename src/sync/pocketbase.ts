@@ -24,7 +24,7 @@ export class SyncError extends Error {
   }
 }
 
-export function normalizeServer(url: string): string {
+function normalizeServer(url: string): string {
   let s = url.trim().replace(/\/+$/, '');
   if (!/^https?:\/\//i.test(s)) s = `https://${s}`;
   return s;
@@ -40,7 +40,12 @@ async function call<T>(f: Fetch, url: string, init: RequestInit & { token?: stri
     throw new SyncError('Could not reach the server. Check the address and your connection.');
   }
   const text = await res.text();
-  const body = text ? JSON.parse(text) : {};
+  let body: { message?: string } = {};
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    if (res.ok) throw new SyncError('The server sent something unexpected. Check the address points to your PocketBase server.', res.status);
+  }
   if (!res.ok) {
     const msg =
       res.status === 401 || res.status === 403
@@ -106,14 +111,6 @@ export async function listVaults(f: Fetch, session: Session, kind: VaultRecord['
     token: session.token,
   });
   return r.items;
-}
-
-export async function findVault(f: Fetch, session: Session, kind: VaultRecord['kind']): Promise<VaultRecord | null> {
-  const q = encodeURIComponent(`kind="${kind}"`);
-  const r = await call<{ items: VaultRecord[] }>(f, `${session.server}/api/collections/vaults/records?filter=${q}&sort=-updated&perPage=1`, {
-    token: session.token,
-  });
-  return r.items[0] ?? null;
 }
 
 /** Reads a shared vault. No account needed: knowing the id is the permission, and the key unlocks it. */
