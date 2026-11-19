@@ -8,15 +8,18 @@ import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
 import { Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, Ring, Rings, SectionTitle, Text } from '../../components/ui';
-import { addDays, atTime, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
+import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
 import { describeDose } from '../../domain/dose';
 import { adherence } from '../../domain/progress';
-import { dosesOn, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
+import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
 import { getPermissionState, requestExactAlarms, requestNotificationPermission, type PermissionState } from '../../notifications/permissions';
 import { rescheduleAll } from '../../notifications/reminders';
 import { MedIcon } from '../../components/MedIcon';
+import { NoteCard } from '../../components/NoteCard';
+import { CareCard } from '../../components/CareCard';
+import { useFollowing } from '../../hooks/useFollowing';
 import { makeStyles, useTheme } from '../../theme';
 
 export default function TodayScreen() {
@@ -24,6 +27,7 @@ export default function TodayScreen() {
   const s = useStyles();
   const meds = useMeds();
   const settings = useSettings();
+  const people = useFollowing();
   const version = useDbVersion();
   const { today, progress, byDate } = useProgress();
   const [perm, setPerm] = useState<PermissionState | null>(null);
@@ -172,7 +176,7 @@ export default function TodayScreen() {
 
         {groups.map((g, i) => {
           const pending = g.doses.filter((d) => !logs.has(d.slot));
-          const overdue = pending.length > 0 && atTime(today, g.time) < now;
+          const overdue = pending.length > 0 && dueAt(today, g.time) < now;
           return (
             <FadeIn key={g.time} delay={120 + i * 50}>
               <SectionTitle
@@ -207,7 +211,7 @@ export default function TodayScreen() {
                 const last = todayLogs.filter((l) => l.medId === m.id).sort((a, b) => b.at.localeCompare(a.at))[0];
                 return (
                   <View key={m.id} style={s.prnRow}>
-                    <MedIcon form={m.form} color={m.color} />
+                    <MedIcon med={m} />
                     <View style={{ flex: 1 }}>
                       <Text style={s.prnName}>{m.name}</Text>
                       <Text style={s.prnSub}>{last ? `Last today at ${formatTime(timeFromDate(new Date(last.at)))}` : describeDose(m)}</Text>
@@ -217,6 +221,23 @@ export default function TodayScreen() {
                 );
               })}
             </Card>
+          </>
+        ) : null}
+
+        {activeCount > 0 ? (
+          <View style={{ marginTop: 14 }}>
+            <NoteCard date={today} />
+          </View>
+        ) : null}
+
+        {people.length > 0 ? (
+          <>
+            <SectionTitle>People I look after</SectionTitle>
+            {people.map((p) => (
+              <PressableScale key={p.code.id} onPress={() => router.push('/care')} style={{ marginBottom: 10 }}>
+                <CareCard person={p} graceMinutes={settings.care.graceMinutes} />
+              </PressableScale>
+            ))}
           </>
         ) : null}
       </Screen>

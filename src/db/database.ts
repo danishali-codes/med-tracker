@@ -43,6 +43,11 @@ const MIGRATIONS: string[] = [
    );`,
   // How many units a "taken" log removed from stock, so Undo puts back exactly that.
   `ALTER TABLE dose_log ADD COLUMN stock_used INTEGER NOT NULL DEFAULT 0;`,
+  // Mood, symptoms and a few words for a day.
+  `CREATE TABLE IF NOT EXISTS day_note (
+     date TEXT PRIMARY KEY NOT NULL,
+     data TEXT NOT NULL
+   );`,
 ];
 
 export function getDb(): SQLiteDatabase {

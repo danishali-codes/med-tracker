@@ -1,14 +1,17 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { formatTime, toDateKey } from '../domain/dates';
-import { daysOfSupply, describeDose, units } from '../domain/dose';
-import { groupFromReminderId, groupKey, planReminders, REMINDER_PREFIX, type PlannedReminder } from '../domain/reminders';
-import { slotKey } from '../domain/schedule';
+import { daysOfSupply, units } from '../domain/dose';
+import { groupFromReminderId, groupKey, planReminders, refillText, REMINDER_PREFIX, reminderText, type PlannedReminder } from '../domain/reminders';
+import { dosesOn, slotKey } from '../domain/schedule';
 import type { Medication } from '../domain/types';
 import * as repo from '../db/repo';
 
-export const CHANNEL_ID = 'dose-reminders';
-export const REFILL_CHANNEL_ID = 'refills';
+// Android doesn't let an app change a channel's lock screen setting once it exists, so the
+// channel got a new id when it became private. The old one is deleted in setupNotifications.
+export const CHANNEL_ID = 'dose-reminders-private';
+const OLD_CHANNEL_IDS = ['dose-reminders', 'refills'];
+export const REFILL_CHANNEL_ID = 'refills-private';
 export const CATEGORY_ID = 'dose';
 export const ACTION_TAKEN = 'taken';
 export const ACTION_SNOOZE = 'snooze';
@@ -28,14 +31,18 @@ export async function setupNotifications() {
       name: 'Dose reminders',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 400, 250, 400],
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      // Private: when the phone hides sensitive content on the lock screen, the reminder
+      // still shows there but without its text. Unlocked, it shows in full.
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
       sound: 'default',
       bypassDnd: false,
     });
     await Notifications.setNotificationChannelAsync(REFILL_CHANNEL_ID, {
       name: 'Refill alerts',
       importance: Notifications.AndroidImportance.DEFAULT,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
+    for (const id of OLD_CHANNEL_IDS) await Notifications.deleteNotificationChannelAsync(id).catch(() => {});
   }
   const snooze = repo.getSettings().snoozeMinutes;
   await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
@@ -51,22 +58,24 @@ export function resetNotificationSetup() {
   setupDone = false;
 }
 
-function contentFor(r: PlannedReminder, meds: Map<string, Medication>): Notifications.NotificationContentInput {
-  const names = r.medIds.map((id) => meds.get(id)).filter((m): m is Medication => !!m);
-  const list = names.map((m) => `${m.name} (${describeDose(m)})`).join(', ');
-  const when = formatTime(r.time);
-  const title =
-    r.kind === 'nag'
-      ? `Still waiting: ${when} meds`
-      : r.kind === 'snoozed'
-        ? `Snoozed reminder: ${when} meds`
-        : names.length === 1
-          ? `Time for ${names[0].name}`
-          : `Time for your ${when} meds`;
+function contentFor(r: PlannedReminder, meds: Map<string, Medication>, showNames: boolean): Notifications.NotificationContentInput {
+  const due = r.medIds.map((id) => meds.get(id)).filter((m): m is Medication => !!m);
+  const { title, body } = reminderText(r, due, showNames);
+  if (r.kind === 'missed') {
+    return {
+      title,
+      body,
+      data: { date: r.date, time: r.time, medIds: r.medIds, slots: r.slots, group: groupKey(r.date, 'missed') },
+      categoryIdentifier: CATEGORY_ID,
+      sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+      autoDismiss: true,
+    };
+  }
   return {
     title,
-    body: list,
-    data: { date: r.date, time: r.time, medIds: r.medIds },
+    body,
+    data: { date: r.date, time: r.time, medIds: r.medIds, slots: r.slots },
     categoryIdentifier: CATEGORY_ID,
     sound: 'default',
     priority: Notifications.AndroidNotificationPriority.MAX,
@@ -127,7 +136,7 @@ async function rescheduleOnce() {
   for (const r of plan) {
     await Notifications.scheduleNotificationAsync({
       identifier: r.id,
-      content: contentFor(r, byId),
+      content: contentFor(r, byId, settings.showMedNames),
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: r.at,
@@ -152,12 +161,17 @@ interface ReminderData {
   date: string;
   time: string;
   medIds: string[];
+  /** Slot keys of the doses, in the same order as medIds. Older reminders don't have them. */
+  slots: string[] | null;
+  /** Which notification group to clear; defaults to the date and time. */
+  group: string | null;
 }
 
 function readData(data: unknown): ReminderData | null {
   const d = data as Partial<ReminderData> | null;
   if (!d || typeof d.date !== 'string' || typeof d.time !== 'string' || !Array.isArray(d.medIds)) return null;
-  return { date: d.date, time: d.time, medIds: d.medIds as string[] };
+  const slots = Array.isArray(d.slots) && d.slots.length === d.medIds.length ? (d.slots as string[]) : null;
+  return { date: d.date, time: d.time, medIds: d.medIds as string[], slots, group: typeof d.group === 'string' ? d.group : null };
 }
 
 /**
@@ -167,17 +181,20 @@ function readData(data: unknown): ReminderData | null {
 export async function handleReminderAction(actionId: string, rawData: unknown) {
   const data = readData(rawData);
   if (!data) return;
-  const group = groupKey(data.date, data.time);
+  const group = data.group ?? groupKey(data.date, data.time);
   const now = new Date();
 
   if (actionId === ACTION_TAKEN || actionId === ACTION_SKIP) {
     const status = actionId === ACTION_TAKEN ? 'taken' : 'skipped';
     const low: Medication[] = [];
-    for (const medId of data.medIds) {
-      const slot = slotKey(medId, data.date, data.time);
-      if (repo.getLog(slot)) continue; // already answered in the app
-      low.push(...repo.setDose({ slot, medId, date: data.date, time: data.time }, status, now));
-    }
+    // The doses as scheduled today, so each is logged with its own time.
+    const today = new Map(dosesOn(repo.getMeds(), data.date).map((d) => [d.slot, d]));
+    data.medIds.forEach((medId, i) => {
+      const slot = data.slots?.[i] ?? slotKey(medId, data.date, data.time);
+      if (repo.getLog(slot)) return; // already answered in the app
+      const dose = today.get(slot) ?? { slot, medId, date: data.date, time: data.time };
+      low.push(...repo.setDose(dose, status, now));
+    });
     repo.clearSnooze(group);
     await notifyLowStock(low);
   } else if (actionId === ACTION_SNOOZE) {
@@ -197,8 +214,7 @@ export async function notifyLowStock(meds: Medication[]) {
     await Notifications.scheduleNotificationAsync({
       identifier: `refill:${m.id}`,
       content: {
-        title: `Running low on ${m.name}`,
-        body: `${left}. Time to order a refill.`,
+        ...refillText(m.name, left, repo.getSettings().showMedNames),
         data: { medId: m.id },
       },
       trigger: Platform.OS === 'android' ? { channelId: REFILL_CHANNEL_ID } : null,

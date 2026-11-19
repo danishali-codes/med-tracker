@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, View } from 'react-native';
 import { DoseRow } from '../../components/DoseRow';
+import { NoteCard } from '../../components/NoteCard';
 import { Screen } from '../../components/Screen';
 import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { daysInMonth, diffDays, formatDateLong, formatTime, monthName, parseDateKey, weekdayOf, type DateKey } from '../../domain/dates';
@@ -138,6 +139,11 @@ export default function CalendarScreen() {
       </Card>
       {!isFuture && selected !== today && dayDoses.length > 0 ? (
         <Text style={st.hint}>Forgot to log something? Tap the circle to mark it taken, or tap it again to change it.</Text>
+      ) : null}
+      {!isFuture ? (
+        <View style={{ marginTop: 14 }}>
+          <NoteCard date={selected} title={selected === today ? 'How are you feeling?' : 'How you felt'} />
+        </View>
       ) : null}
     </Screen>
   );

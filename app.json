@@ -3,7 +3,7 @@
     "name": "Sabr",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.2.0",
+    "version": "0.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,8 @@
     },
     "android": {
       "package": "com.danishalicodes.medtracker",
-      "versionCode": 2,
+      "versionCode": 6,
+      "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,6 +37,7 @@
       "expo-router",
       "expo-sqlite",
       "expo-background-task",
+      "expo-secure-store",
       "@react-native-community/datetimepicker",
       [
         "expo-notifications",
@@ -47,6 +49,7 @@
         "expo-build-properties",
         {
           "android": {
+            "extraMavenRepos": ["https://maven-central.storage-download.googleapis.com/maven2/"],
             "enableMinifyInReleaseBuilds": false,
             "enableShrinkResourcesInReleaseBuilds": false
           }
@@ -70,8 +73,34 @@
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TodayList",
+              "label": "Sabr: Today's list",
+              "description": "Every dose today, with Take on the ones that are due",
+              "minWidth": "250dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 3,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
             }
           ]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Lets you choose a photo of each pill so they're easy to tell apart.",
+          "cameraPermission": "Lets you take a photo of each pill so they're easy to tell apart.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Lets you scan a medicine box to fill in its details.",
+          "recordAudioAndroid": false
         }
       ]
     ],
