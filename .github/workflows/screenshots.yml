@@ -27,6 +27,8 @@ jobs:
             ref: c22ec81cf21bd9634260f4d9885a3cba65dd3019
           - key: '0.2'
             ref: b93ed248d30b6928f5613d150c4256930a4966a0
+          - key: '0.2.1'
+            ref: 9279d64ed0b0155e51846447c595529cb11f8415
           - key: current
             ref: ''
     steps:
