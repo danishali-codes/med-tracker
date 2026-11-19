@@ -2,6 +2,7 @@
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
+import { syncNow } from '../sync/engine';
 import { refreshWidgetNow } from '../widget/update';
 import { handleReminderAction, rescheduleAll } from './reminders';
 
@@ -22,6 +23,7 @@ TaskManager.defineTask(REFRESH_TASK, async () => {
   try {
     await rescheduleAll();
     await refreshWidgetNow();
+    await syncNow().catch(() => {});
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;

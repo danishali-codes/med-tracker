@@ -180,9 +180,14 @@ export function getKv(key: string): string | null {
   return getDb().getFirstSync<{ value: string }>('SELECT value FROM kv WHERE key = ?', key)?.value ?? null;
 }
 
-export function setKv(key: string, value: string) {
+/** Pass notify=false for bookkeeping that screens and sync don't need to react to. */
+export function setKv(key: string, value: string, notify = true) {
   getDb().runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', key, value);
-  changed();
+  if (notify) changed();
+}
+
+export function deleteKv(key: string) {
+  getDb().runSync('DELETE FROM kv WHERE key = ?', key);
 }
 
 export function getSettings(): Settings {
@@ -193,6 +198,8 @@ export function getSettings(): Settings {
     ...saved,
     ramadan: { ...DEFAULT_SETTINGS.ramadan, ...(saved.ramadan ?? {}) },
     quietHours: { ...DEFAULT_SETTINGS.quietHours, ...(saved.quietHours ?? {}) },
+    sync: { ...DEFAULT_SETTINGS.sync, ...(saved.sync ?? {}) },
+    care: { ...DEFAULT_SETTINGS.care, ...(saved.care ?? {}) },
   };
   // Weekday times live on each med; Ramadan, temporary changes and travel live here.
   setTimeRules({ ramadan: s.ramadan, timeChanges: s.timeChanges, travelMode: s.travelMode, homeTimeZone: s.homeTimeZone });
@@ -274,12 +281,15 @@ export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySumm
 // day_summary is included: it holds finished days as they were, which can't be rebuilt
 // once a med has been archived or its schedule changed. purchase and placement belong to
 // the room decorating, which is switched off for now; they stay so nothing is lost.
+const LOCAL_ONLY_KV = ['care_', 'sync_', 'share_id', 'backup_id', 'last_share', 'last_backup'];
 const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv', 'day_note'] as const;
 
 export function exportAll(): string {
   const db = getDb();
   const data: Record<string, unknown[]> = {};
   for (const t of TABLES) data[t] = db.getAllSync(`SELECT * FROM ${t}`);
+  // Sync bookkeeping and other people's shared statuses stay on this phone.
+  data.kv = (data.kv as { key: string }[]).filter((r) => !LOCAL_ONLY_KV.some((p) => r.key.startsWith(p)));
   return JSON.stringify({ app: 'med-tracker', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
 }
 
@@ -289,8 +299,14 @@ export function importAll(json: string) {
   const db = getDb();
   db.withTransactionSync(() => {
     for (const t of TABLES) {
-      db.runSync(`DELETE FROM ${t}`);
+      if (t === 'kv') {
+        // Keep this phone's own sync bookkeeping.
+        for (const r of db.getAllSync<{ key: string }>('SELECT key FROM kv')) {
+          if (!LOCAL_ONLY_KV.some((p) => r.key.startsWith(p))) db.runSync('DELETE FROM kv WHERE key = ?', r.key);
+        }
+      } else db.runSync(`DELETE FROM ${t}`);
       for (const row of parsed.data![t] ?? []) {
+        if (t === 'kv' && LOCAL_ONLY_KV.some((p) => String(row.key).startsWith(p))) continue;
         const cols = Object.keys(row);
         if (cols.length === 0 || !cols.every((c) => /^[a-z_]+$/.test(c))) continue;
         db.runSync(

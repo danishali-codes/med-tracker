@@ -3,7 +3,7 @@
     "name": "Med Tracker",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.danishalicodes.medtracker",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,6 +36,7 @@
       "expo-router",
       "expo-sqlite",
       "expo-background-task",
+      "expo-secure-store",
       "@react-native-community/datetimepicker",
       [
         "expo-notifications",

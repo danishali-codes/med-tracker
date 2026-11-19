@@ -3,8 +3,9 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useState } from 'react';
 import * as Application from 'expo-application';
-import { Alert, Platform, ScrollView, Switch, View } from 'react-native';
+import { Alert, Platform, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
+import { ToggleRow } from '../components/ToggleRow';
 import { TimeButton } from '../components/Pickers';
 import { Button, Card, Chip, PressableScale, SectionTitle, Text } from '../components/ui';
 import { toDateKey } from '../domain/dates';
@@ -202,9 +203,35 @@ export default function SettingsScreen() {
         <Ionicons name="chevron-forward" size={20} color={c.faint} />
       </PressableScale>
 
+      <PressableScale onPress={() => router.push('/sync')} style={st.linkCard}>
+        <Ionicons name="lock-closed-outline" size={22} color={c.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={st.label}>Sync and sharing</Text>
+          <Text style={st.hint}>
+            {settings.sync.enabled
+              ? [settings.sync.backup ? 'Encrypted backup on' : null, settings.sync.share ? 'Sharing with a caregiver' : null].filter(Boolean).join(' · ') ||
+                'Connected to your server'
+              : 'Off. Nothing leaves this phone.'}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.faint} />
+      </PressableScale>
+
+      <PressableScale onPress={() => router.push('/care')} style={st.linkCard}>
+        <Ionicons name="people-outline" size={22} color={c.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={st.label}>People I look after</Text>
+          <Text style={st.hint}>See whether a family member took their doses, with the code they send you.</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.faint} />
+      </PressableScale>
+
       <SectionTitle>Your data</SectionTitle>
       <Card>
-        <Text style={st.hint}>Everything stays on this phone. Export a backup now and then so you don't lose your history if you change phones.</Text>
+        <Text style={st.hint}>
+          {settings.sync.enabled ? 'Your data lives on this phone, with an encrypted copy on your server if backup is on.' : 'Everything stays on this phone.'} Export a
+          backup file now and then so you don't lose your history if you change phones.
+        </Text>
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
           <Button title="Export backup" kind="secondary" onPress={exportBackup} style={{ flex: 1 }} />
           <Button title="Restore" kind="secondary" onPress={importBackup} style={{ flex: 1 }} />
@@ -247,20 +274,6 @@ function PermRow({ label, ok, action }: { label: string; ok?: boolean; action: (
       <Ionicons name={ok ? 'checkmark-circle' : 'alert-circle-outline'} size={20} color={ok ? c.good : c.warn} style={{ marginRight: 8 }} />
       <Text style={[st.label, { flex: 1 }]}>{label}</Text>
       {ok ? <Text style={{ color: c.good, fontWeight: '800' }}>On</Text> : <Button title="Allow" small onPress={action} />}
-    </View>
-  );
-}
-
-function ToggleRow({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
-  const c = useTheme();
-  const st = useStyles();
-  return (
-    <View style={st.row}>
-      <View style={{ flex: 1 }}>
-        <Text style={st.label}>{label}</Text>
-        {hint ? <Text style={st.hint}>{hint}</Text> : null}
-      </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: c.primary }} />
     </View>
   );
 }

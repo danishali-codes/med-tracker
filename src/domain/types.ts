@@ -161,6 +161,31 @@ export interface Settings {
   missedNoticeAt: TimeOfDay;
   /** Repeat reminders come closer together each time. */
   nagEscalate: boolean;
+  /**
+   * Optional sync with a PocketBase server you run. Off by default: with it off, nothing
+   * ever leaves the phone. Everything sent is end-to-end encrypted first.
+   */
+  sync: SyncSettings;
+  /** Following someone else's doses as their caregiver. */
+  care: CareSettings;
+}
+
+export interface SyncSettings {
+  enabled: boolean;
+  /** Keep an encrypted backup on your server. */
+  backup: boolean;
+  /** Let people you give a share code to see whether doses were taken. */
+  share: boolean;
+  /** Include medicine names and doses in what you share. Off: "Medicine A", "Medicine B". */
+  shareNames: boolean;
+  /** The name caregivers see, e.g. "Mum". */
+  shareAs: string;
+}
+
+export interface CareSettings {
+  /** Tell me when someone I follow hasn't marked a dose this long after it was due. */
+  alerts: boolean;
+  graceMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -193,6 +218,8 @@ export const DEFAULT_SETTINGS: Settings = {
   missedNotice: true,
   missedNoticeAt: '22:00',
   nagEscalate: false,
+  sync: { enabled: false, backup: false, share: false, shareNames: false, shareAs: '' },
+  care: { alerts: true, graceMinutes: 30 },
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */

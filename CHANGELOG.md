@@ -6,6 +6,23 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.5
+
+Optional backup and caregiver sharing, through a server you run yourself. Off unless you turn it on.
+
+<p>
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.5/sync.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.5/care.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.5/settings.png" width="200" />
+</p>
+
+### Added
+- Sync and sharing (Settings): connect to a PocketBase server you host. Nothing changes until you do; with it off, nothing leaves the phone.
+- Encrypted backup: your medicines, history and notes, locked on the phone with a recovery key only you have, so the server stores data it can't read. Restore it on a new phone with the key.
+- Caregiver sharing: send a family member a share code and they can see today's and yesterday's doses and your week. Medicine names are left out unless you include them. Making a new code cuts off the old one.
+- People I look after: paste someone's code to follow their doses, with an optional alert when a dose hasn't been marked a while after it was due. No account needed.
+- A setup guide and ready-made collection for the server in `server/`.
+
 ## 0.4
 
 Share your history with your doctor, and add medicines by scanning the box.
