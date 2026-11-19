@@ -68,7 +68,7 @@ jobs:
       - run: npx expo prebuild --platform android --no-install
         if: env.SKIP != '1'
         working-directory: app
-      - run: ./gradlew assembleRelease --no-daemon
+      - run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.internal.repository.max.retries=8 -Dorg.gradle.internal.repository.initial.backoff=2000
         if: env.SKIP != '1'
         working-directory: app/android
       - name: Enable KVM
