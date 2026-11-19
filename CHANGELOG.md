@@ -50,6 +50,7 @@ Reminders that fit real life: different times on different days, Ramadan, travel
 - Doses moved from their usual time say so on Today.
 
 ## 0.2.1
+commit: 9279d64ed0b0155e51846447c595529cb11f8415
 
 Pick what each medicine looks like, and an easier medicine form.
 
