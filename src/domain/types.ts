@@ -68,6 +68,21 @@ export interface RamadanSettings {
 /** 'pill' is shown as "Tablet" (kept as the stored key so older data still reads). */
 export type MedForm = 'pill' | 'capsule' | 'liquid' | 'injection' | 'drops' | 'inhaler' | 'patch' | 'cream' | 'sachet' | 'other';
 
+export type FoodRule = 'empty' | 'with' | 'after';
+
+export const FOOD_RULES: { value: FoodRule; label: string }[] = [
+  { value: 'empty', label: 'Before food (empty stomach)' },
+  { value: 'with', label: 'With food' },
+  { value: 'after', label: 'After food' },
+];
+
+/** A named reminder time shared by several medicines, e.g. "Breakfast" at 08:00. */
+export interface Routine {
+  id: string;
+  name: string;
+  time: TimeOfDay;
+}
+
 export type PillShape = 'round' | 'oval' | 'oblong' | 'capsule' | 'square' | 'diamond' | 'triangle';
 
 export interface Medication {
@@ -95,6 +110,10 @@ export interface Medication {
   /** The box's barcode, so scanning it again finds this medicine. */
   barcode?: string | null;
   notes?: string;
+  /** How it goes with food. 'empty' = on an empty stomach, wait `foodWaitMinutes` before eating. */
+  food?: FoodRule | null;
+  /** For 'empty': minutes to wait after taking it before eating; a timer tells you when. */
+  foodWaitMinutes?: number | null;
   schedule: Schedule;
   /** Units (tablets, ml...) on hand; null when stock isn't tracked. Each dose uses `amount` units. */
   stock: number | null;
@@ -176,6 +195,28 @@ export interface Settings {
   sync: SyncSettings;
   /** Following someone else's doses as their caregiver. */
   care: CareSettings;
+  /** Ask for fingerprint, face or the phone's PIN to open the app. */
+  appLock: boolean;
+  /** Lock again after the app has been in the background this long (0 = straight away). */
+  lockAfterMinutes: number;
+  /** Blank the app in the recent apps screen (this also blocks screenshots). */
+  hideInRecents: boolean;
+  /** Named times, e.g. "Breakfast" at 08:00, that group the medicines due then. */
+  routines: Routine[];
+  /** Suggest moving a reminder when you usually take the dose at another time. */
+  smartTiming: boolean;
+  /** A notice when the wait after an empty-stomach medicine is over. */
+  foodTimers: boolean;
+  /** Save an encrypted backup to a folder you chose, once a week. */
+  autoBackup: AutoBackupSettings;
+}
+
+export interface AutoBackupSettings {
+  enabled: boolean;
+  /** Folder picked with the system file picker (a content:// address on Android). */
+  folderUri: string | null;
+  folderName: string | null;
+  everyDays: number;
 }
 
 export interface SyncSettings {
@@ -230,6 +271,13 @@ export const DEFAULT_SETTINGS: Settings = {
   showMedNames: false,
   sync: { enabled: false, backup: false, share: false, shareNames: false, shareAs: '' },
   care: { alerts: true, graceMinutes: 30 },
+  appLock: false,
+  lockAfterMinutes: 1,
+  hideInRecents: false,
+  routines: [],
+  smartTiming: true,
+  foodTimers: true,
+  autoBackup: { enabled: false, folderUri: null, folderName: null, everyDays: 7 },
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */

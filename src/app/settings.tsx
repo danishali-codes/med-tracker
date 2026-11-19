@@ -1,11 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useState } from 'react';
 import * as Application from 'expo-application';
 import { Alert, Platform, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { ToggleRow } from '../components/ToggleRow';
+import { canUseAppLock, unlockWithDevice } from '../components/AppLock';
 import { TimeButton } from '../components/Pickers';
 import { Button, Card, Chip, PressableScale, SectionTitle, Text } from '../components/ui';
 import { toDateKey } from '../domain/dates';
@@ -41,44 +40,17 @@ export default function SettingsScreen() {
     rescheduleAll().catch(() => {});
   };
 
-  const exportBackup = async () => {
-    try {
-      const file = new File(Paths.cache, `med-tracker-backup-${toDateKey(new Date())}.json`);
-      if (file.exists) file.delete();
-      file.create();
-      file.write(repo.exportAll());
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Save your backup' });
-    } catch (e) {
-      Alert.alert('Backup failed', String(e));
+  const toggleLock = async (v: boolean) => {
+    if (!v) {
+      // Turning it off needs the owner, so someone holding the unlocked phone can't.
+      if (await unlockWithDevice('Turn off the app lock')) update({ appLock: false });
+      return;
     }
-  };
-
-  const importBackup = async () => {
-    try {
-      const picked = await File.pickFileAsync({ mimeTypes: ['application/json', 'text/plain', '*/*'] });
-      if (picked.canceled) return;
-      const chosen = picked.result;
-      const text = await chosen.text();
-      Alert.alert('Restore backup?', 'This replaces everything in the app with the backup.', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Restore',
-          style: 'destructive',
-          onPress: () => {
-            try {
-              repo.importAll(text);
-              rescheduleAll().catch(() => {});
-              Alert.alert('Restored', 'Your backup has been restored.');
-            } catch (e) {
-              Alert.alert('Could not restore', String(e instanceof Error ? e.message : e));
-            }
-          },
-        },
-      ]);
-    } catch (e) {
-      if (String(e).toLowerCase().includes('cancel')) return;
-      Alert.alert('Could not open file', String(e));
+    if (!(await canUseAppLock())) {
+      Alert.alert('Set up a screen lock first', "Your phone has no fingerprint, face or PIN set up, so there's nothing to unlock the app with. Add one in your phone's settings, then try again.");
+      return;
     }
+    if (await unlockWithDevice('Confirm it\'s you')) update({ appLock: true });
   };
 
   return (
@@ -189,7 +161,30 @@ export default function SettingsScreen() {
           onChange={(v) => update({ onTimeWindowMinutes: v })}
         />
         <Text style={st.hint}>Late doses still count for your streak. Only doses never taken that day break it.</Text>
+        <ToggleRow
+          label="Learn my timing"
+          hint="When you usually take a dose well before or after its reminder, Sabr offers to move the reminder."
+          value={settings.smartTiming}
+          onChange={(v) => update({ smartTiming: v })}
+        />
+        <ToggleRow
+          label="Food timers"
+          hint="After a medicine taken on an empty stomach, a notice tells you when you can eat."
+          value={settings.foodTimers}
+          onChange={(v) => update({ foodTimers: v })}
+        />
       </Card>
+
+      <PressableScale onPress={() => router.push('/routines')} style={st.linkCard}>
+        <Ionicons name="albums-outline" size={22} color={c.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={st.label}>Routines</Text>
+          <Text style={st.hint}>
+            {settings.routines.length ? settings.routines.map((r) => r.name).join(', ') : 'Group medicines you take together, like "Breakfast" at 8:00'}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.faint} />
+      </PressableScale>
 
       <PressableScale onPress={() => router.push('/times')} style={st.linkCard}>
         <Ionicons name="moon-outline" size={22} color={c.primary} />
@@ -273,20 +268,37 @@ export default function SettingsScreen() {
         />
       </Card>
 
-      <SectionTitle>Your data</SectionTitle>
+      <SectionTitle>Security</SectionTitle>
       <Card>
-        <Text style={st.hint}>
-          {settings.sync.enabled
-            ? 'Your data lives on this phone, with an encrypted copy on your server if backup is on.'
-            : "Everything stays on this phone, and it isn't copied to Google's cloud backup."}{' '}
-          Export a backup file now and then so you don't lose your history if you change phones, and keep the file somewhere private, because it holds your
-          full medicine list and history.
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
-          <Button title="Export backup" kind="secondary" onPress={exportBackup} style={{ flex: 1 }} />
-          <Button title="Restore" kind="secondary" onPress={importBackup} style={{ flex: 1 }} />
-        </View>
+        <ToggleRow
+          label="App lock"
+          hint="Ask for your fingerprint, face or phone PIN to open Sabr. Reminders and their buttons still work while it's locked."
+          value={settings.appLock}
+          onChange={toggleLock}
+        />
+        {settings.appLock ? (
+          <Options label="Lock again after" value={settings.lockAfterMinutes} options={[0, 1, 5, 15]} suffix="min" onChange={(v) => update({ lockAfterMinutes: v })} />
+        ) : null}
+        <ToggleRow
+          label="Hide in recent apps"
+          hint="Shows a blank screen in the app switcher. This also blocks screenshots of the app."
+          value={settings.hideInRecents}
+          onChange={(v) => update({ hideInRecents: v })}
+        />
       </Card>
+
+      <PressableScale onPress={() => router.push('/backup')} style={st.linkCard}>
+        <Ionicons name="cloud-download-outline" size={22} color={c.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={st.label}>Backup and restore</Text>
+          <Text style={st.hint}>
+            {settings.autoBackup.enabled && settings.autoBackup.folderName
+              ? `Automatic backup to ${settings.autoBackup.folderName}`
+              : 'Save a password-locked file to Google Drive or your phone'}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.faint} />
+      </PressableScale>
 
       {Platform.OS === 'android' ? (
         <>
@@ -335,7 +347,7 @@ function Options({ label, value, options, suffix, onChange }: { label: string; v
       <Text style={[st.label, { marginBottom: 6 }]}>{label}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {options.map((o) => (
-          <Chip key={o} label={`${o} ${suffix}`} selected={value === o} onPress={() => onChange(o)} />
+          <Chip key={o} label={o === 0 ? "Straight away" : `${o} ${suffix}`} selected={value === o} onPress={() => onChange(o)} />
         ))}
       </View>
     </View>

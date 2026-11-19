@@ -200,6 +200,8 @@ export function getSettings(): Settings {
     quietHours: { ...DEFAULT_SETTINGS.quietHours, ...(saved.quietHours ?? {}) },
     sync: { ...DEFAULT_SETTINGS.sync, ...(saved.sync ?? {}) },
     care: { ...DEFAULT_SETTINGS.care, ...(saved.care ?? {}) },
+    autoBackup: { ...DEFAULT_SETTINGS.autoBackup, ...(saved.autoBackup ?? {}) },
+    routines: saved.routines ?? [],
   };
   // Weekday times live on each med; Ramadan, temporary changes and travel live here.
   setTimeRules({ ramadan: s.ramadan, timeChanges: s.timeChanges, travelMode: s.travelMode, homeTimeZone: s.homeTimeZone });
@@ -296,6 +298,8 @@ export function exportAll(): string {
 export function importAll(json: string) {
   const parsed = JSON.parse(json) as { app?: string; data?: Record<string, Record<string, unknown>[]> };
   if (parsed.app !== 'med-tracker' || !parsed.data) throw new Error('This is not a Sabr backup file.');
+  // The app lock and the backup folder belong to this phone, not to the data.
+  const here = getSettings();
   const db = getDb();
   db.withTransactionSync(() => {
     for (const t of TABLES) {
@@ -315,6 +319,16 @@ export function importAll(json: string) {
         );
       }
     }
+    const restored = getKv('settings');
+    const merged = {
+      ...(restored ? JSON.parse(restored) : {}),
+      appLock: here.appLock,
+      lockAfterMinutes: here.lockAfterMinutes,
+      hideInRecents: here.hideInRecents,
+      autoBackup: here.autoBackup,
+    };
+    db.runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', 'settings', JSON.stringify(merged));
   });
+  getSettings();
   changed();
 }

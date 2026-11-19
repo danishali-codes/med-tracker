@@ -11,6 +11,11 @@ import type { DoseLog, Medication } from './types';
  * - Days with no scheduled doses are neutral.
  * - Every 7 perfect days in a row earns a streak freeze (max 2). A freeze is spent
  *   automatically on a missed day so one bad day doesn't wipe out a long streak.
+ * - A day where every dose was skipped on purpose (a planned skip) is neutral: it neither
+ *   adds to the streak nor uses a freeze.
+ * - Earn it back: when a streak of 3+ days breaks with no freeze left, completing the next
+ *   3 days with doses brings the old streak back (plus those 3 days).
+ * - The perfect streak counts days in a row with every dose done and no freeze or earn-back used.
  */
 
 export type DayStatus = 'none' | 'complete' | 'partial' | 'missed' | 'pending';
@@ -34,6 +39,12 @@ export const COINS = {
 
 export const MAX_FREEZES = 2;
 export const FREEZE_EVERY = 7;
+/** Days in a row it takes to win back a broken streak. */
+export const EARN_BACK_DAYS = 3;
+/** Streaks shorter than this aren't worth winning back. */
+export const EARN_BACK_MIN = 3;
+/** Streak lengths that get a milestone moment. */
+export const MILESTONES = [7, 14, 30, 60, 100, 180, 365, 500, 730, 1000];
 
 export function summarizeDay(
   meds: Medication[],
@@ -66,6 +77,8 @@ export function summarizeDay(
   const resolved = taken + skipped;
   let status: DayStatus;
   if (scheduled === 0) status = 'none';
+  // Every dose skipped on purpose: neutral, like a day with nothing due.
+  else if (skipped === scheduled) status = 'none';
   else if (resolved === scheduled) status = 'complete';
   else if (diffDays(date, today) <= 0) status = 'pending';
   else status = resolved > 0 ? 'partial' : 'missed';
@@ -87,6 +100,17 @@ export interface Progress {
   bestStreak: number;
   freezes: number;
   frozenDays: Set<DateKey>;
+  /** Missed days whose streak was won back. */
+  restoredDays: Set<DateKey>;
+  /** A broken streak that can still be won back, and how many complete days that takes. */
+  earnBack: { streak: number; missedOn: DateKey; daysLeft: number } | null;
+  /** How many times a streak was won back. */
+  earnedBack: number;
+  /** Days in a row with every dose done and no freeze or earn-back used. */
+  perfectStreak: number;
+  bestPerfectStreak: number;
+  /** Freezes spent so far. */
+  freezesUsed: number;
   perfectDays: number;
   totalTaken: number;
   totalOnTime: number;
@@ -102,8 +126,14 @@ export function computeProgress(days: DaySummary[]): Progress {
     perfectDays = 0,
     totalTaken = 0,
     totalOnTime = 0,
-    coins = 0;
+    coins = 0,
+    perfect = 0,
+    bestPerfect = 0,
+    earnedBack = 0,
+    freezesUsed = 0;
   const frozenDays = new Set<DateKey>();
+  const restoredDays = new Set<DateKey>();
+  let earnBack: { streak: number; missedOn: DateKey; done: number } | null = null;
 
   for (const s of days) {
     totalTaken += s.taken;
@@ -116,16 +146,28 @@ export function computeProgress(days: DaySummary[]): Progress {
       case 'complete':
         streak++;
         perfectDays++;
+        perfect++;
+        bestPerfect = Math.max(bestPerfect, perfect);
         if (streak % FREEZE_EVERY === 0) freezes = Math.min(MAX_FREEZES, freezes + 1);
         coins += COINS.milestones[streak] ?? 0;
+        if (earnBack && ++earnBack.done >= EARN_BACK_DAYS) {
+          streak += earnBack.streak;
+          restoredDays.add(earnBack.missedOn);
+          earnedBack++;
+          earnBack = null;
+        }
         best = Math.max(best, streak);
         break;
       case 'partial':
       case 'missed':
+        perfect = 0;
         if (freezes > 0) {
           freezes--;
+          freezesUsed++;
           frozenDays.add(s.date);
         } else {
+          // A second miss while winning a streak back loses it for good.
+          earnBack = !earnBack && streak >= EARN_BACK_MIN ? { streak, missedOn: s.date, done: 0 } : null;
           streak = 0;
         }
         break;
@@ -137,6 +179,12 @@ export function computeProgress(days: DaySummary[]): Progress {
     bestStreak: best,
     freezes,
     frozenDays,
+    restoredDays,
+    earnBack: earnBack ? { streak: earnBack.streak, missedOn: earnBack.missedOn, daysLeft: EARN_BACK_DAYS - earnBack.done } : null,
+    earnedBack,
+    perfectStreak: perfect,
+    bestPerfectStreak: bestPerfect,
+    freezesUsed,
     perfectDays,
     totalTaken,
     totalOnTime,
@@ -203,6 +251,9 @@ export const BADGES: BadgeDef[] = [
   { id: 'doses_100', name: 'Hundred club', icon: 'medical-outline', description: 'Take 100 doses', earned: (s) => s.totalTaken >= 100 },
   { id: 'doses_500', name: 'Dedicated', icon: 'diamond-outline', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
   { id: 'on_time_50', name: 'Like clockwork', icon: 'alarm-outline', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
+  { id: 'earn_back', name: 'Back on track', icon: 'refresh-outline', description: 'Win back a broken streak', earned: (s) => s.earnedBack >= 1 },
+  { id: 'perfect_14', name: 'Spotless', icon: 'sparkles-outline', description: 'Reach a 14-day perfect streak', earned: (s) => s.bestPerfectStreak >= 14 },
+  { id: 'perfect_60', name: 'Unbroken', icon: 'ribbon-outline', description: 'Reach a 60-day perfect streak', earned: (s) => s.bestPerfectStreak >= 60 },
   { id: 'perfect_month', name: 'Flawless month', icon: 'calendar-outline', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
 ];
 
@@ -237,4 +288,62 @@ export function medDays(med: Medication, logs: Map<string, DoseLog>, today: Date
     out.push({ date, mark });
   }
   return out;
+}
+
+/** A day with every dose done (skips are fine) and at least one taken. */
+export function isPerfectDay(s: DaySummary | undefined): boolean {
+  return !!s && s.status === 'complete' && s.taken > 0;
+}
+
+/** The highest milestone reached by this streak that hasn't been shown yet, or null. */
+export function newMilestone(streak: number, lastSeen: number): number | null {
+  const hit = MILESTONES.filter((m) => m <= streak && m > lastSeen);
+  return hit.length ? hit[hit.length - 1] : null;
+}
+
+export function nextMilestone(streak: number): number | null {
+  return MILESTONES.find((m) => m > streak) ?? null;
+}
+
+/**
+ * Consistency score, after Loop Habit Tracker's habit strength: every day with doses moves the
+ * score towards that day's share of doses taken, with a half-life of about two weeks. So one bad
+ * day after a good month only dents it, and it climbs back as soon as you're on track again.
+ * Skipped doses and days with nothing due leave it alone. Returns 0..1, one value per day given.
+ */
+export const CONSISTENCY_HALF_LIFE = 13;
+export function consistencySeries(days: DaySummary[]): { date: DateKey; score: number }[] {
+  const keep = Math.pow(0.5, 1 / CONSISTENCY_HALF_LIFE);
+  let score = 0;
+  const out: { date: DateKey; score: number }[] = [];
+  for (const s of days) {
+    const due = s.scheduled - s.skipped;
+    if (s.status !== 'pending' && s.status !== 'none' && due > 0) score = score * keep + (s.taken / due) * (1 - keep);
+    else if (s.status === 'pending' && due > 0 && s.taken === due) score = score * keep + (1 - keep);
+    out.push({ date: s.date, score });
+  }
+  return out;
+}
+
+export function consistency(days: DaySummary[]): number {
+  const series = consistencySeries(days);
+  return series.length ? series[series.length - 1].score : 0;
+}
+
+/** The same score for one medicine, from its own due days. */
+export function medConsistency(med: Medication, logs: Map<string, DoseLog>, today: DateKey, lookback = 400): number {
+  const keep = Math.pow(0.5, 1 / CONSISTENCY_HALF_LIFE);
+  let score = 0;
+  for (let i = lookback; i >= 0; i--) {
+    const date = addDays(today, -i);
+    if (diffDays(trackedFrom(med), date) < 0 || !isMedDueOn(med, date)) continue;
+    const slots = med.schedule.times.map((t) => logs.get(slotKey(med.id, date, t)));
+    const skipped = slots.filter((l) => l?.status === 'skipped').length;
+    const taken = slots.filter((l) => l?.status === 'taken').length;
+    const due = slots.length - skipped;
+    if (due <= 0) continue;
+    if (i === 0 && taken < due) continue; // today still in progress
+    score = score * keep + (taken / due) * (1 - keep);
+  }
+  return score;
 }
