@@ -28,8 +28,9 @@ public class SabrTileService extends TileService {
         // Ask the phone again if there's nothing for today yet (at most every 10 minutes).
         if ((today == null || !today.isToday()) && !Today.refreshAskedRecently(this, now)) {
             PhoneLink.pull(this);
-            PhoneLink.send(this, "/sabr/refresh", "", "");
+            PhoneLink.askForRefresh(this);
         }
+        PhoneLink.flushPending(this);
 
         long next = Math.min(today != null ? today.nextChange(now) : Long.MAX_VALUE, nextMidnight(now));
         long freshness = Math.max(MINUTE, next - now + 1000);
@@ -57,7 +58,7 @@ public class SabrTileService extends TileService {
             g.snoozedUntil = now + 10 * MINUTE; // the phone replaces this with your snooze length
         }
         Today.save(this, today.toJson());
-        PhoneLink.send(this, take ? "/sabr/take" : "/sabr/snooze", today.date, g.time);
+        PhoneLink.sendAction(this, take ? "/sabr/take" : "/sabr/snooze", today.date, g.time);
         return today;
     }
 

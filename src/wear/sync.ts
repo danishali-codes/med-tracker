@@ -5,6 +5,8 @@ import { computeProgress } from '../domain/progress';
 import { dosesOn, dueAt, groupByTime, indexLogs } from '../domain/schedule';
 import * as repo from '../db/repo';
 import { ACTION_SNOOZE, ACTION_TAKEN, handleReminderAction } from '../notifications/reminders';
+import { pushShare } from '../sync/engine';
+import { refreshWidgetNow } from '../widget/update';
 import { watchPayload } from './payload';
 
 /** The watch tile, when it's switched on in Settings (off by default). */
@@ -97,6 +99,9 @@ export async function handleWatchAction(data: { action?: string; body?: string }
       medIds: open.map((d) => d.medId),
       slots: open.map((d) => d.slot),
     });
+    // The app may not be running, so update everything that shows doses before finishing.
+    await refreshWidgetNow().catch(() => {});
+    await pushShare().catch(() => {});
   }
   await pushToWatchNow();
 }

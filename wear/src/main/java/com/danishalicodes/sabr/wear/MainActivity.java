@@ -38,7 +38,8 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         PhoneLink.pull(this);
-        PhoneLink.send(this, "/sabr/refresh", "", "");
+        PhoneLink.askForRefresh(this);
+        PhoneLink.flushPending(this);
         Today today = Today.load(this);
         if (today == null) status.setText("Waiting for your phone");
         else if (!today.isToday()) status.setText("Open Sabr on your phone to update");

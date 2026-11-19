@@ -12,8 +12,10 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Today's doses as the phone last sent them (see src/wear/payload.ts in the phone app).
@@ -110,6 +112,10 @@ final class Today {
 
     /** True when this is for today on the watch's clock. */
     boolean isToday() {
+        return isTodayKey(date);
+    }
+
+    static boolean isTodayKey(String date) {
         return date.equals(new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()));
     }
 
@@ -178,6 +184,29 @@ final class Today {
 
     static void clear(Context context) {
         prefs(context).edit().remove(KEY).apply();
+    }
+
+    // ---- Taken / Snooze presses the phone hasn't received yet ----
+
+    static synchronized void addPending(Context context, String path, String date, String time) {
+        Set<String> set = new HashSet<>(prefs(context).getStringSet("pending", new HashSet<>()));
+        set.add(path + "\n" + date + "\n" + time);
+        prefs(context).edit().putStringSet("pending", set).apply();
+    }
+
+    static synchronized void removePending(Context context, String path, String date, String time) {
+        Set<String> set = new HashSet<>(prefs(context).getStringSet("pending", new HashSet<>()));
+        set.remove(path + "\n" + date + "\n" + time);
+        prefs(context).edit().putStringSet("pending", set).apply();
+    }
+
+    static synchronized List<String[]> pending(Context context) {
+        List<String[]> out = new ArrayList<>();
+        for (String s : prefs(context).getStringSet("pending", new HashSet<>())) {
+            String[] p = s.split("\n");
+            if (p.length == 3) out.add(p);
+        }
+        return out;
     }
 
     static boolean refreshAskedRecently(Context context, long now) {

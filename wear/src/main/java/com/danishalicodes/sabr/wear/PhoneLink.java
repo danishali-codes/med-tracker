@@ -22,9 +22,35 @@ final class PhoneLink {
 
     private PhoneLink() {}
 
-    /** Sends /sabr/take, /sabr/snooze or /sabr/refresh with the day and time the tile showed. */
-    static void send(Context context, String path, String date, String time) {
+    /**
+     * Sends /sabr/take or /sabr/snooze with the day and time the tile showed. The press is kept
+     * until the phone has received it, and tried again on the next tile update if the phone
+     * was out of reach.
+     */
+    static void sendAction(Context context, String path, String date, String time) {
+        Today.addPending(context, path, date, time);
+        flushPending(context);
+    }
+
+    /** Tries again with any presses the phone hasn't received yet. */
+    static void flushPending(Context context) {
         final Context app = context.getApplicationContext();
+        for (String[] p : Today.pending(app)) {
+            final String path = p[0], date = p[1], time = p[2];
+            if (!Today.isTodayKey(date)) {
+                Today.removePending(app, path, date, time);
+                continue;
+            }
+            send(app, path, date, time, () -> Today.removePending(app, path, date, time));
+        }
+    }
+
+    /** /sabr/refresh asks the phone to send today's data again. */
+    static void askForRefresh(Context context) {
+        send(context.getApplicationContext(), "/sabr/refresh", "", "", null);
+    }
+
+    private static void send(Context app, String path, String date, String time, Runnable delivered) {
         byte[] body;
         try {
             body = new JSONObject().put("date", date).put("time", time).toString().getBytes(StandardCharsets.UTF_8);
@@ -32,7 +58,11 @@ final class PhoneLink {
             return;
         }
         Wearable.getNodeClient(app).getConnectedNodes().addOnSuccessListener(nodes -> {
-            for (Node node : nodes) Wearable.getMessageClient(app).sendMessage(node.getId(), path, body);
+            for (Node node : nodes) {
+                Wearable.getMessageClient(app).sendMessage(node.getId(), path, body).addOnSuccessListener(id -> {
+                    if (delivered != null) delivered.run();
+                });
+            }
         });
     }
 

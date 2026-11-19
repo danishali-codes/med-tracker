@@ -26,5 +26,7 @@ public class DataListenerService extends WearableListenerService {
             }
         }
         if (changed) PhoneLink.redraw(this);
+        // The phone is in reach again: send any Taken / Snooze it missed.
+        PhoneLink.flushPending(this);
     }
 }
