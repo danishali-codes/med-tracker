@@ -51,18 +51,21 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 Screenshots of every version are kept in [docs/screenshots](docs/screenshots), taken on the same emulator with the same demo data, so you can compare them side by side.
 
-| | 0.1 | 0.2 | 0.3 |
-|---|---|---|---|
-| Today | <img src="docs/screenshots/0.1/today.png" width="180" /> | <img src="docs/screenshots/0.2/today.png" width="180" /> | <img src="docs/screenshots/0.3/today.png" width="180" /> |
-| Medications | <img src="docs/screenshots/0.1/meds.png" width="180" /> | <img src="docs/screenshots/0.2/meds.png" width="180" /> | <img src="docs/screenshots/0.3/meds.png" width="180" /> |
-| History | <img src="docs/screenshots/0.1/history.png" width="180" /> | <img src="docs/screenshots/0.2/history.png" width="180" /> | <img src="docs/screenshots/0.3/history.png" width="180" /> |
-| Edit a medication | <img src="docs/screenshots/0.1/medication.png" width="180" /> | <img src="docs/screenshots/0.2/medication.png" width="180" /> | <img src="docs/screenshots/0.3/medication.png" width="180" /> |
+| | 0.5 | 0.4 | 0.3 | 0.2 | 0.1 |
+|---|---|---|---|---|---|
+| Today | <img src="docs/screenshots/0.5/today.png" width="150" /> | <img src="docs/screenshots/0.4/today.png" width="150" /> | <img src="docs/screenshots/0.3/today.png" width="150" /> | <img src="docs/screenshots/0.2/today.png" width="150" /> | <img src="docs/screenshots/0.1/today.png" width="150" /> |
+| Medications | <img src="docs/screenshots/0.5/meds.png" width="150" /> | <img src="docs/screenshots/0.4/meds.png" width="150" /> | <img src="docs/screenshots/0.3/meds.png" width="150" /> | <img src="docs/screenshots/0.2/meds.png" width="150" /> | <img src="docs/screenshots/0.1/meds.png" width="150" /> |
+| History | <img src="docs/screenshots/0.5/history.png" width="150" /> | <img src="docs/screenshots/0.4/history.png" width="150" /> | <img src="docs/screenshots/0.3/history.png" width="150" /> | <img src="docs/screenshots/0.2/history.png" width="150" /> | <img src="docs/screenshots/0.1/history.png" width="150" /> |
+| Edit a medication | <img src="docs/screenshots/0.5/medication.png" width="150" /> | <img src="docs/screenshots/0.4/medication.png" width="150" /> | <img src="docs/screenshots/0.3/medication.png" width="150" /> | <img src="docs/screenshots/0.2/medication.png" width="150" /> | <img src="docs/screenshots/0.1/medication.png" width="150" /> |
 
-- **0.1** (Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
-- **0.4** (Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
-- **0.3** (Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
-- **0.2.1** (Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
-- **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
+Newest first:
+
+- **0.5** (19 Nov 2026): optional encrypted backup and caregiver sharing through a PocketBase server you host yourself, off unless you turn it on. Private by default: online search and medicine names in reminders are opt-in.
+- **0.4** (19 Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
+- **0.3** (19 Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
+- **0.2.1** (19 Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
+- **0.2** (19 Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
+- **0.1** (17 Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
 
 ## Privacy
 
@@ -70,7 +73,7 @@ No accounts, ads, analytics or crash reports, and your data stays on your phone.
 
 ## What's next
 
-- **0.5:** bug fixes from testing 0.4. Optional encrypted backup and caregiver sharing through a PocketBase server you host yourself are built and waiting on those fixes.
+- **0.5.x:** fixes from testing 0.5 on a phone.
 
 ## Install on Android
 

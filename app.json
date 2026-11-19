@@ -3,17 +3,17 @@
     "name": "Sabr",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.danishalicodes.medtracker"
+      "bundleIdentifier": "com.danishalicodes.sabrmedicinetracker"
     },
     "android": {
-      "package": "com.danishalicodes.medtracker",
-      "versionCode": 6,
+      "package": "com.danishalicodes.sabrmedicinetracker",
+      "versionCode": 1,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

@@ -29,6 +29,12 @@ jobs:
             ref: b93ed248d30b6928f5613d150c4256930a4966a0
           - key: '0.2.1'
             ref: 9279d64ed0b0155e51846447c595529cb11f8415
+          - key: '0.3'
+            ref: ed11d243c745938f7795f6ed0f33f84ca501704e
+          - key: '0.4'
+            ref: 9712bf1a2296b7ce304b70960edbac19d4e946eb
+          - key: '0.5'
+            ref: d4771dbf3cb14d81966a597760dc6007b7e10917
           - key: current
             ref: ''
     steps:
@@ -51,6 +57,7 @@ jobs:
         run: |
           v=$(node -p "require('./app/app.json').expo.version.replace(/\\.0$/, '')")
           echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "PKG=$(node -p "require('./app/app.json').expo.android.package")" >> "$GITHUB_ENV"
           # Released versions only need shooting once: skip them if their screenshots are saved already.
           if [ "${{ matrix.key }}" != current ] && [ -f "tools/docs/screenshots/$v/today.png" ] && [ "${{ github.event_name }}" != workflow_dispatch ]; then
             echo "SKIP=1" >> "$GITHUB_ENV"
@@ -86,7 +93,7 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
-          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt
+          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt ${{ env.PKG }}
       - uses: actions/upload-artifact@v4
         if: always() && env.SKIP != '1'
         with:
