@@ -46,20 +46,37 @@ clear_dialogs() {
   done
 }
 
+# Taps the first element whose text starts with the given words.
+tap_text() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 </dev/null || return 0
+  local b; b=$(adb shell cat /sdcard/ui.xml </dev/null | grep -o "text=\"$1[^\"]*\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1)
+  [ -z "$b" ] && { echo "no '$1' on screen"; return 0; }
+  local x1 y1 x2 y2; read -r x1 y1 x2 y2 <<<"$(echo "$b" | sed 's/\]\[/,/; s/[][]//g' | tr ',' ' ')"
+  adb shell input tap $(( (x1 + x2) / 2 )) $(( (y1 + y2) / 2 )) </dev/null
+}
+
 shoot() { # mode
   local mode=$1
   adb shell cmd uimode night "$mode"
   adb shell am force-stop $PKG
   adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 15
-  while read -r name link; do
+  while read -r name link action; do
     [ -z "$name" ] && continue
     adb shell am start -W -a android.intent.action.VIEW -d "medtracker://$link" $PKG </dev/null >/dev/null
     sleep 4
+    if [ "${action:-}" = "@notify" ]; then
+      # Press "Send a test reminder" and shoot the notification shade once it arrives.
+      tap_text "Send a test reminder"
+      sleep 15
+      adb shell cmd statusbar expand-notifications </dev/null
+      sleep 3
+    fi
     local file="$OUT/$name.png"; [ "$mode" = yes ] && file="$OUT/$name-dark.png"
     clear_dialogs
     adb exec-out screencap -p </dev/null > "$file"
     echo "saved $file"
+    [ "${action:-}" = "@notify" ] && { adb shell cmd statusbar collapse </dev/null; adb shell cmd notification cancel_all 2>/dev/null </dev/null || true; }
   done < "$SCREENS"
 }
 
