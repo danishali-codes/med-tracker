@@ -5,10 +5,15 @@ name: Screenshots
 # in docs/screenshots/<version>/. Runs when the screenshot tools change, or by hand.
 on:
   push:
+    branches-ignore: [main]
     paths:
       - scripts/screenshots/**
       - .github/workflows/screenshots.yml
   workflow_dispatch:
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   shoot:
