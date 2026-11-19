@@ -12,7 +12,7 @@ import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '
 import type { DayTimes, MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
 import * as repo from '../../db/repo';
-import { medicineDetails, searchMedicines } from '../../drugs/online';
+import { medicineDetails, onlineAllowed, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
 import { makeStyles, MED_COLORS, useTheme } from '../../theme';
 
@@ -270,6 +270,9 @@ export default function MedEditor() {
                   </Pressable>
                 ))}
               </View>
+            ) : null}
+            {nameFocused && !onlineAllowed() ? (
+              <Text style={[st.hint, { marginTop: 6 }]}>Searching the built-in list. Turn on online search in Settings, Privacy for more names.</Text>
             ) : null}
           </Field>
           {generic || loadingDetails ? (
