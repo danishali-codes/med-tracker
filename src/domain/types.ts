@@ -161,6 +161,14 @@ export interface Settings {
   missedNoticeAt: TimeOfDay;
   /** Repeat reminders come closer together each time. */
   nagEscalate: boolean;
+  /**
+   * Online medicine search and interaction lookups (off by default). When off, the app
+   * never goes online: search and the interaction check use only the built-in list and
+   * anything already saved on the phone.
+   */
+  onlineLookups: boolean;
+  /** Show medicine names in reminders and refill alerts (off by default, so they say "your medicine"). */
+  showMedNames: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -193,6 +201,8 @@ export const DEFAULT_SETTINGS: Settings = {
   missedNotice: true,
   missedNoticeAt: '22:00',
   nagEscalate: false,
+  onlineLookups: false,
+  showMedNames: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */

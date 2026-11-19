@@ -62,6 +62,10 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 - **0.2.1** (Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
 - **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
 
+## Privacy
+
+No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
+
 ## What's next
 
 - **0.5:** bug fixes, and optional sync and caregiver mode through a PocketBase server you host yourself. Both stay off unless you turn them on, so the app can always be fully private.

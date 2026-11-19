@@ -10,6 +10,7 @@ import { Button, Card, Chip, PressableScale, SectionTitle, Text } from '../compo
 import { toDateKey } from '../domain/dates';
 import type { Settings } from '../domain/types';
 import * as repo from '../db/repo';
+import { clearDownloads } from '../drugs/online';
 import { useSettings } from '../hooks/useData';
 import {
   getPermissionState,
@@ -202,9 +203,58 @@ export default function SettingsScreen() {
         <Ionicons name="chevron-forward" size={20} color={c.faint} />
       </PressableScale>
 
+      <SectionTitle>Privacy</SectionTitle>
+      <Card>
+        <Text style={st.hint}>
+          Everything that could share anything is off until you turn it on. There are no accounts, ads, analytics or crash reports, and your doses, times
+          and history never leave this phone.
+        </Text>
+        <ToggleRow
+          label="Online medicine search"
+          hint={
+            settings.onlineLookups
+              ? 'On. Search finds many more names and strengths, and the interaction check reads official US drug labels.'
+              : 'Off. The app never goes online. Search and the interaction check use only the built-in list.'
+          }
+          value={settings.onlineLookups}
+          onChange={(v) => update({ onlineLookups: v })}
+        />
+        <Text style={[st.hint, { marginTop: 6 }]}>When it's on, two free public services are used, and only a medicine name is sent to them:</Text>
+        <Text style={st.hint}>
+          {'\u2022'} US National Library of Medicine (RxNav): the list of medicine names, downloaded once a month, so what you type in search stays on the
+          phone. When you pick a medicine, its name is sent to look up the ingredient and strengths.
+        </Text>
+        <Text style={st.hint}>
+          {'\u2022'} US FDA (openFDA): when you open the interaction check, the active ingredient of each medicine is sent to read its official label.
+        </Text>
+        <Text style={st.hint}>Like any website, they can see your phone's internet address when it asks.</Text>
+        <ToggleRow
+          label="Show medicine names in reminders"
+          hint={
+            settings.showMedNames
+              ? "On. Reminders and refill alerts name your medicines, also on a paired watch. On the lock screen they're hidden if your phone hides sensitive notification content."
+              : 'Off. Reminders say "Time for your medicine" with the time and how many, everywhere, including the lock screen and your watch.'
+          }
+          value={settings.showMedNames}
+          onChange={(v) => update({ showMedNames: v })}
+        />
+        <Button
+          title="Delete downloaded medicine info"
+          kind="secondary"
+          onPress={() => {
+            const n = clearDownloads();
+            Alert.alert('Deleted', n ? 'Downloaded medicine names and labels were removed from this phone.' : 'Nothing was downloaded yet.');
+          }}
+          style={{ marginTop: 10 }}
+        />
+      </Card>
+
       <SectionTitle>Your data</SectionTitle>
       <Card>
-        <Text style={st.hint}>Everything stays on this phone. Export a backup now and then so you don't lose your history if you change phones.</Text>
+        <Text style={st.hint}>
+          Everything stays on this phone, and it isn't copied to Google's cloud backup. Export a backup now and then so you don't lose your history if you
+          change phones, and keep the file somewhere private, because it holds your full medicine list and history.
+        </Text>
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
           <Button title="Export backup" kind="secondary" onPress={exportBackup} style={{ flex: 1 }} />
           <Button title="Restore" kind="secondary" onPress={importBackup} style={{ flex: 1 }} />
