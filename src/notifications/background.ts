@@ -2,7 +2,7 @@
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
-import { syncNow } from '../sync/engine';
+import { pushShare, syncNow } from '../sync/engine';
 import { refreshWidgetNow } from '../widget/update';
 import { handleReminderAction, rescheduleAll } from './reminders';
 
@@ -15,6 +15,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_TASK,
   if ('actionIdentifier' in data) {
     await handleReminderAction(data.actionIdentifier, data.notification.request.content.data);
     await refreshWidgetNow();
+    // Caregivers see the answer right away (does nothing unless sharing is on).
+    await pushShare().catch(() => {});
   }
 });
 

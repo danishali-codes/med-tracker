@@ -41,13 +41,28 @@ async function setSession(s: pb.Session | null) {
   else await SecureStore.deleteItemAsync(SESSION);
 }
 
-async function keyFor(name: string): Promise<string> {
-  let k = await SecureStore.getItemAsync(name);
-  if (!k) {
-    k = newKey();
-    await SecureStore.setItemAsync(name, k);
+// One lookup per key at a time, so two callers never make two different keys.
+const pendingKeys = new Map<string, Promise<string>>();
+
+function keyFor(name: string): Promise<string> {
+  let p = pendingKeys.get(name);
+  if (!p) {
+    p = (async () => {
+      let k = await SecureStore.getItemAsync(name);
+      if (!k) {
+        k = newKey();
+        await SecureStore.setItemAsync(name, k);
+      }
+      return k;
+    })().finally(() => pendingKeys.delete(name));
+    pendingKeys.set(name, p);
   }
-  return k;
+  return p;
+}
+
+async function forgetKey(name: string) {
+  await pendingKeys.get(name)?.catch(() => {});
+  await SecureStore.deleteItemAsync(name);
 }
 
 /** The key that unlocks your backup. Needed to restore on a new phone; shown in Settings. */
@@ -67,14 +82,24 @@ export async function connect(server: string, email: string, password: string, c
 export async function disconnect(wipe: boolean) {
   const s = await getSession();
   if (s && wipe) {
+    // If a delete fails, stay signed in and keep the ids so it can be tried again.
     for (const k of ['backup_id', 'share_id']) {
       const id = repo.getKv(k);
-      if (id) await pb.deleteVault(f, s, id).catch(() => {});
+      if (!id) continue;
+      try {
+        await pb.deleteVault(f, s, id);
+      } catch (e) {
+        throw new Error(`Could not delete your copy on the server, so you are still signed in. ${e instanceof Error ? e.message : ''}`.trim());
+      }
+      repo.deleteKv(k);
     }
   }
+  // Signing out always tries to take down your shared status, so old codes show nothing stale.
+  const shareId = repo.getKv('share_id');
+  if (s && shareId && !wipe) await pb.deleteVault(f, s, shareId).catch(() => {});
   repo.deleteKv('backup_id');
   repo.deleteKv('share_id');
-  await SecureStore.deleteItemAsync(SHARE_KEY);
+  await forgetKey(SHARE_KEY);
   await setSession(null);
   const st = repo.getSettings();
   repo.saveSettings({ ...st, sync: { ...st.sync, enabled: false, backup: false, share: false } });
@@ -147,11 +172,25 @@ export async function pushBackup(): Promise<void> {
 export async function restoreBackup(key: string): Promise<void> {
   const s = await getSession();
   if (!s) throw new Error('Sign in to your server first.');
-  const v = await pb.findVault(f, s, 'backup');
-  if (!v) throw new Error('No backup on this server yet.');
-  const json = open(v.data, key.trim());
+  // There can be more than one backup (say, a new phone started its own before
+  // restoring), so use the one this key opens.
+  const all = await pb.listVaults(f, s, 'backup');
+  if (all.length === 0) throw new Error('No backup on this server yet.');
+  let v: (typeof all)[number] | null = null;
+  let json = '';
+  for (const candidate of all) {
+    try {
+      json = open(candidate.data, key.trim());
+      v = candidate;
+      break;
+    } catch {
+      // Not this one.
+    }
+  }
+  if (!v) throw new Error('This recovery key does not open any backup on this server. Check the key.');
   const keep = repo.getSettings().sync;
   repo.importAll(json);
+  await forgetKey(BACKUP_KEY);
   await SecureStore.setItemAsync(BACKUP_KEY, key.trim());
   repo.setKv('backup_id', v.id, false);
   const st = repo.getSettings();
@@ -171,9 +210,13 @@ export async function shareCode(): Promise<string | null> {
 export async function resetShare() {
   const s = await getSession();
   const id = repo.getKv('share_id');
-  if (s && id) await pb.deleteVault(f, s, id).catch(() => {});
+  if (id) {
+    if (!s) throw new Error('Sign in to your server first, so the old code can be removed.');
+    // Throws if the server can't be reached; the old id and key are kept so this can be retried.
+    await pb.deleteVault(f, s, id);
+  }
   repo.deleteKv('share_id');
-  await SecureStore.deleteItemAsync(SHARE_KEY);
+  await forgetKey(SHARE_KEY);
   await pushShare();
 }
 

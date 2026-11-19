@@ -99,6 +99,15 @@ export async function putVault(f: Fetch, session: Session, kind: VaultRecord['ki
   return r.id;
 }
 
+/** All your vaults of a kind, newest first. */
+export async function listVaults(f: Fetch, session: Session, kind: VaultRecord['kind']): Promise<VaultRecord[]> {
+  const q = encodeURIComponent(`kind="${kind}"`);
+  const r = await call<{ items: VaultRecord[] }>(f, `${session.server}/api/collections/vaults/records?filter=${q}&sort=-updated&perPage=50`, {
+    token: session.token,
+  });
+  return r.items;
+}
+
 export async function findVault(f: Fetch, session: Session, kind: VaultRecord['kind']): Promise<VaultRecord | null> {
   const q = encodeURIComponent(`kind="${kind}"`);
   const r = await call<{ items: VaultRecord[] }>(f, `${session.server}/api/collections/vaults/records?filter=${q}&sort=-updated&perPage=1`, {
