@@ -12,7 +12,9 @@ Your doses and history stay on your phone. There's no account and no server. The
 - **Doses that match the box:** each med has a strength and an amount, e.g. *500 mg × 3 tablets*. Half tablets and ml work too.
 - **Medicine search:** start typing a brand or generic name. It searches a built-in list of common UAE brands (Panadol, Adol, Concor, Glucophage…) plus the full US RxNorm list of names, fills in the active ingredient and offers the strengths it comes in.
 - **Interaction check:** with your other meds, alcohol and food, from a short built-in list of well-known interactions and the official US drug labels (openFDA). It always says the list isn't complete and to ask a doctor or pharmacist.
-- **Light and dark mode**, following the phone or picked in Settings.
+- **Light and dark mode**, following the phone or picked in Settings, with an optional true-black mode for OLED screens.
+- **Each med card shows its last 7 days** as coloured squares, and the Progress tab has month and year heatmaps.
+- **Pause a med** (e.g. when your doctor says stop for a week): no reminders, and the streak is safe.
 - **Home screen widget:** today's progress, your streak and the next dose, with a Take button when it's due.
 - **History calendar:** each day is coloured (all taken / some missed / missed / streak freeze used). Tap a day to see or fix what was logged.
 - **Refill reminders:** stock is counted in tablets (or ml, puffs…). Each dose uses its amount, and you get an alert with roughly how many days are left.

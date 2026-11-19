@@ -6,12 +6,15 @@ import { RoundButton, Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { formatDateLong } from '../../domain/dates';
 import { daysOfSupply, describeDose, isLowStock, units } from '../../domain/dose';
-import { medStreak } from '../../domain/progress';
-import { describeSchedule, indexLogs, nextDueDate } from '../../domain/schedule';
+import { medDays, medStreak } from '../../domain/progress';
+import { describeSchedule, indexLogs, isPausedOn, nextDueDate } from '../../domain/schedule';
+import type { DoseLog } from '../../domain/types';
 import type { Medication } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useToday } from '../../hooks/useData';
-import { FORM_EMOJI, makeStyles, useTheme } from '../../theme';
+import { MedIcon } from '../../components/MedIcon';
+import { WeekSquares } from '../../components/WeekSquares';
+import { makeStyles, useTheme } from '../../theme';
 
 export default function MedsScreen() {
   const c = useTheme();
@@ -50,7 +53,7 @@ export default function MedsScreen() {
       ) : null}
       {active.map((m, i) => (
         <FadeIn key={m.id} delay={i * 40}>
-          <MedCard med={m} today={today} streak={medStreak(m, logs, today)} />
+          <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}
       {archived.length > 0 ? (
@@ -64,26 +67,26 @@ export default function MedsScreen() {
           >
             Archived ({archived.length})
           </SectionTitle>
-          {showArchived ? archived.map((m) => <MedCard key={m.id} med={m} today={today} streak={0} />) : null}
+          {showArchived ? archived.map((m) => <MedCard key={m.id} med={m} today={today} streak={0} logs={logs} />) : null}
         </>
       ) : null}
     </Screen>
   );
 }
 
-function MedCard({ med, today, streak }: { med: Medication; today: string; streak: number }) {
+function MedCard({ med, today, streak, logs }: { med: Medication; today: string; streak: number; logs: Map<string, DoseLog> }) {
   const c = useTheme();
   const s = useStyles();
-  const next = med.archived || med.schedule.pattern.kind === 'asNeeded' ? null : nextDueDate(med.schedule, today);
+  const paused = isPausedOn(med, today);
+  const scheduled = !med.archived && med.schedule.pattern.kind !== 'asNeeded';
+  const next = !scheduled || paused ? null : nextDueDate(med.schedule, today);
   const low = isLowStock(med);
   const days = daysOfSupply(med);
   return (
     <PressableScale onPress={() => router.push({ pathname: '/med/[id]', params: { id: med.id } })} scaleTo={0.98}>
       <Card style={med.archived ? { opacity: 0.6 } : undefined}>
         <View style={s.row}>
-          <View style={[s.icon, { backgroundColor: med.color + (c.dark ? '33' : '1F') }]}>
-            <Text style={{ fontSize: 26 }}>{FORM_EMOJI[med.form]}</Text>
-          </View>
+          <MedIcon form={med.form} color={med.color} size={54} />
           <View style={{ flex: 1 }}>
             <Text style={s.name} numberOfLines={1}>
               {med.name}
@@ -96,7 +99,9 @@ function MedCard({ med, today, streak }: { med: Medication; today: string; strea
           <Text style={s.sub}>🗓️ {describeSchedule(med.schedule)}</Text>
           {next && next !== today ? <Text style={s.sub}>Next: {formatDateLong(next)}</Text> : null}
         </View>
+        {scheduled ? <WeekSquares days={medDays(med, logs, today)} color={med.color} today={today} /> : null}
         <View style={s.tags}>
+          {paused ? <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>⏸ Paused</Text> : null}
           {streak > 0 ? <Text style={[s.tag, { backgroundColor: c.warnSoft, color: c.flame }]}>🔥 {streak} in a row</Text> : null}
           {med.stock != null ? (
             <Text style={[s.tag, low ? { backgroundColor: c.badSoft, color: c.bad } : { backgroundColor: c.goodSoft, color: c.good }]}>

@@ -58,28 +58,38 @@ export const light: Palette = {
 
 export const dark: Palette = {
   dark: true,
-  bg: '#0D0C17',
-  card: '#1A1928',
-  sunken: '#232235',
-  text: '#F3F2FB',
-  muted: '#A19FBA',
-  faint: '#55536E',
-  border: '#2B2A40',
+  bg: '#0C0C10',
+  card: '#16161B',
+  sunken: '#202027',
+  text: '#F2F2F7',
+  muted: '#9A9AA6',
+  faint: '#4E4E5A',
+  border: '#26262D',
   primary: '#9B85FF',
-  primarySoft: '#2A2550',
+  primarySoft: '#251F45',
   onPrimary: '#140F33',
   good: '#3DD9A0',
-  goodSoft: '#173A30',
+  goodSoft: '#12302A',
   warn: '#FFB940',
-  warnSoft: '#3B2E14',
+  warnSoft: '#33280F',
   bad: '#FF6B85',
-  badSoft: '#3D1A24',
+  badSoft: '#361721',
   flame: '#FF8A50',
   ice: '#5CC8FF',
-  hero: ['#4B32C9', '#7B33C0', '#C84B83'],
+  hero: ['#3E2BA6', '#5F2C99', '#93386C'],
   rings: ['#FFFFFF', '#9DF0CB', '#FFD27A'],
   shadow: '#000000',
-  tabBar: '#1A1928',
+  tabBar: '#16161B',
+};
+
+/** Dark mode on pure black, for OLED screens. */
+export const black: Palette = {
+  ...dark,
+  bg: '#000000',
+  card: '#0E0E11',
+  sunken: '#18181D',
+  border: '#1F1F25',
+  tabBar: '#0E0E11',
 };
 
 export const ThemeContext = createContext<Palette>(light);

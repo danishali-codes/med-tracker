@@ -1,8 +1,10 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { Screen } from '../../components/Screen';
-import { Card, FadeIn, SectionTitle, Text } from '../../components/ui';
+import { HeatLegend, MonthHeatmap, YearHeatmap } from '../../components/Heatmap';
+import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { addDays, parseDateKey, weekdayOf } from '../../domain/dates';
 import { adherence, FREEZE_EVERY, MAX_FREEZES } from '../../domain/progress';
 import { useProgress } from '../../hooks/useData';
@@ -18,6 +20,7 @@ export default function ProgressScreen() {
   const toNextFreeze = progress.freezes >= MAX_FREEZES ? null : FREEZE_EVERY - (progress.currentStreak % FREEZE_EVERY);
   const days = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
   const earned = badges.filter((b) => b.has).length;
+  const [range, setRange] = useState<'weeks' | 'month' | 'year'>('weeks');
 
   return (
     <Screen title="Progress" subtitle="Keep it going">
@@ -40,23 +43,43 @@ export default function ProgressScreen() {
       </FadeIn>
 
       <FadeIn delay={60} style={s.grid}>
-        <Stat value={pct30 == null ? '–' : `${Math.round(pct30 * 100)}%`} label="last 30 days" color={c.primary} />
-        <Stat value={onTimePct == null ? '–' : `${onTimePct}%`} label="on time" color={c.good} />
-        <Stat value={`${progress.perfectDays}`} label="perfect days" color={c.warn} />
-        <Stat value={`${progress.totalTaken}`} label="doses taken" color={c.ice} />
+        <Stat icon="pie-chart-outline" value={pct30 == null ? '–' : `${Math.round(pct30 * 100)}%`} label="Last 30 days" color={c.primary} />
+        <Stat icon="time-outline" value={onTimePct == null ? '–' : `${onTimePct}%`} label="On time" color={c.good} />
+        <Stat icon="star-outline" value={`${progress.perfectDays}`} label="Perfect days" color={c.warn} />
+        <Stat icon="checkmark-done" value={`${progress.totalTaken}`} label="Doses taken" color={c.ice} />
       </FadeIn>
 
       <FadeIn delay={120}>
-        <SectionTitle>Last 2 weeks</SectionTitle>
+        <SectionTitle>History</SectionTitle>
+        <View style={s.segment}>
+          {(
+            [
+              ['weeks', '2 weeks'],
+              ['month', 'Month'],
+              ['year', 'Year'],
+            ] as const
+          ).map(([k, label]) => (
+            <PressableScale key={k} onPress={() => setRange(k)} haptic style={[s.segItem, range === k && { backgroundColor: c.primary }]}>
+              <Text style={[s.segText, range === k && { color: c.onPrimary }]}>{label}</Text>
+            </PressableScale>
+          ))}
+        </View>
         <Card>
-          <View style={s.chart}>
-            {days.map((d, i) => {
-              const sum = byDate.get(d);
-              const v = sum && sum.scheduled ? (sum.taken + sum.skipped) / sum.scheduled : 0;
-              const color = sum?.status === 'complete' ? c.good : sum?.status === 'missed' ? c.bad : sum?.status === 'partial' ? c.warn : c.primary;
-              return <Bar key={d} value={v} color={color} delay={i * 30} label={'MTWTFSS'[(weekdayOf(d) + 6) % 7]} sub={parseDateKey(d).d} highlight={d === today} />;
-            })}
-          </View>
+          {range === 'weeks' ? (
+            <View style={s.chart}>
+              {days.map((d, i) => {
+                const sum = byDate.get(d);
+                const v = sum && sum.scheduled ? (sum.taken + sum.skipped) / sum.scheduled : 0;
+                const color = sum?.status === 'complete' ? c.good : sum?.status === 'missed' ? c.bad : sum?.status === 'partial' ? c.warn : c.primary;
+                return <Bar key={d} value={v} color={color} delay={i * 30} label={'MTWTFSS'[(weekdayOf(d) + 6) % 7]} sub={parseDateKey(d).d} highlight={d === today} />;
+              })}
+            </View>
+          ) : range === 'month' ? (
+            <MonthHeatmap byDate={byDate} frozen={progress.frozenDays} today={today} />
+          ) : (
+            <YearHeatmap byDate={byDate} frozen={progress.frozenDays} today={today} />
+          )}
+          {range !== 'weeks' ? <HeatLegend /> : null}
           <Text style={s.hint}>Taking a dose late still counts. Only a dose missed all day breaks the streak, and a freeze covers one missed day.</Text>
         </Card>
       </FadeIn>
@@ -102,11 +125,15 @@ function Flame() {
   );
 }
 
-function Stat({ value, label, color }: { value: string; label: string; color: string }) {
+function Stat({ icon, value, label, color }: { icon: keyof typeof Ionicons.glyphMap; value: string; label: string; color: string }) {
+  const c = useTheme();
   const s = useStyles();
   return (
     <Card style={s.stat}>
-      <Text style={[s.statValue, { color }]}>{value}</Text>
+      <View style={[s.statIcon, { backgroundColor: color + (c.dark ? '2E' : '1C') }]}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={[s.statValue, { color: c.text }]}>{value}</Text>
       <Text style={s.statLabel}>{label}</Text>
     </Card>
   );
@@ -141,7 +168,11 @@ const useStyles = makeStyles((c) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   stat: { width: '48%', alignItems: 'flex-start', paddingVertical: 18 },
   statValue: { fontSize: 30, fontWeight: '900' },
-  statLabel: { fontSize: 13, color: c.muted, fontWeight: '700' },
+  statLabel: { fontSize: 11, color: c.muted, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
+  statIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  segment: { flexDirection: 'row', backgroundColor: c.sunken, borderRadius: 18, padding: 4, marginBottom: 12 },
+  segItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 14 },
+  segText: { fontSize: 14, fontWeight: '800', color: c.muted },
   chart: { flexDirection: 'row', justifyContent: 'space-between', height: 150, alignItems: 'flex-end' },
   barCol: { alignItems: 'center', flex: 1 },
   barTrack: { width: 12, height: 100, borderRadius: 6, backgroundColor: c.sunken, justifyContent: 'flex-end', overflow: 'hidden' },

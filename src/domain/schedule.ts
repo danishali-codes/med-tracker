@@ -35,13 +35,37 @@ export function isDueOn(schedule: Schedule, date: DateKey): boolean {
   }
 }
 
-/** All scheduled doses on a day, ordered by time. Archived meds are skipped. */
+export function isPausedOn(med: Pick<Medication, 'pauses'>, date: DateKey): boolean {
+  return (med.pauses ?? []).some((p) => date >= p.from && (p.to == null || date <= p.to));
+}
+
+/** Pause from `today` until resumed. Already paused: unchanged. */
+export function pauseMed<M extends Pick<Medication, 'pauses'>>(med: M, today: DateKey): M {
+  if (isPausedOn(med, today)) return med;
+  return { ...med, pauses: [...(med.pauses ?? []), { from: today, to: null }] };
+}
+
+/** End the current pause so doses are due again from today. */
+export function resumeMed<M extends Pick<Medication, 'pauses'>>(med: M, today: DateKey): M {
+  const pauses = (med.pauses ?? [])
+    .map((p) => (p.to == null || p.to >= today ? { ...p, to: addDays(today, -1) } : p))
+    .filter((p) => p.to == null || p.to >= p.from);
+  return { ...med, pauses };
+}
+
+/** Whether this med has doses on the day: its schedule, minus archived and paused days. */
+export function isMedDueOn(med: Medication, date: DateKey): boolean {
+  // Archived meds stop being due from the day they were archived, but stay in earlier history.
+  if (med.archived && (!med.archivedAt || date >= toDateKey(new Date(med.archivedAt)))) return false;
+  if (isPausedOn(med, date)) return false;
+  return isDueOn(med.schedule, date);
+}
+
+/** All scheduled doses on a day, ordered by time. Archived and paused meds are skipped. */
 export function dosesOn(meds: Medication[], date: DateKey): ScheduledDose[] {
   const out: ScheduledDose[] = [];
   for (const med of meds) {
-    // Archived meds stop being due from the day they were archived, but stay in earlier history.
-    if (med.archived && (!med.archivedAt || date >= toDateKey(new Date(med.archivedAt)))) continue;
-    if (!isDueOn(med.schedule, date)) continue;
+    if (!isMedDueOn(med, date)) continue;
     for (const time of med.schedule.times) {
       out.push({ slot: slotKey(med.id, date, time), medId: med.id, date, time });
     }

@@ -16,7 +16,8 @@ import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
 import { getPermissionState, requestExactAlarms, requestNotificationPermission, type PermissionState } from '../../notifications/permissions';
 import { rescheduleAll } from '../../notifications/reminders';
-import { FORM_EMOJI, makeStyles, useTheme } from '../../theme';
+import { MedIcon } from '../../components/MedIcon';
+import { makeStyles, useTheme } from '../../theme';
 
 function greeting(h: number) {
   if (h < 5) return 'Good night';
@@ -211,9 +212,7 @@ export default function TodayScreen() {
                 const last = todayLogs.filter((l) => l.medId === m.id).sort((a, b) => b.at.localeCompare(a.at))[0];
                 return (
                   <View key={m.id} style={s.prnRow}>
-                    <View style={[s.prnIcon, { backgroundColor: m.color + (c.dark ? '33' : '1F') }]}>
-                      <Text style={{ fontSize: 22 }}>{FORM_EMOJI[m.form]}</Text>
-                    </View>
+                    <MedIcon form={m.form} color={m.color} />
                     <View style={{ flex: 1 }}>
                       <Text style={s.prnName}>{m.name}</Text>
                       <Text style={s.prnSub}>{last ? `Last today at ${formatTime(timeFromDate(new Date(last.at)))}` : describeDose(m)}</Text>

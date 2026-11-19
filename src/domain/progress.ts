@@ -1,5 +1,5 @@
 import { addDays, diffDays, parseDateKey, daysInMonth, toDateKey, type DateKey } from './dates';
-import { dosesOn, isDueOn, punctuality, slotKey } from './schedule';
+import { dosesOn, isMedDueOn, punctuality, slotKey } from './schedule';
 import type { DoseLog, Medication } from './types';
 
 /**
@@ -173,7 +173,7 @@ export function medStreak(med: Medication, logs: Map<string, DoseLog>, today: Da
   for (let i = 0; i < 800; i++) {
     const date = addDays(today, -i);
     if (diffDays(trackedFrom(med), date) < 0) break;
-    if (!isDueOn(med.schedule, date)) continue;
+    if (!isMedDueOn(med, date)) continue;
     const answered = med.schedule.times.every((t) => logs.has(slotKey(med.id, date, t)));
     if (answered) n++;
     else if (i === 0) continue; // today still in progress
@@ -214,4 +214,26 @@ export function adherence(days: DaySummary[]): number | null {
     done += s.taken + s.skipped;
   }
   return due ? done / due : null;
+}
+
+export type DayMark = 'taken' | 'partial' | 'missed' | 'pending' | 'off';
+
+/**
+ * One mark per day for a single med over the last `days` days, oldest first:
+ * taken (every dose answered), partial, missed, pending (today, not done yet) or off (not due).
+ */
+export function medDays(med: Medication, logs: Map<string, DoseLog>, today: DateKey, days = 7): { date: DateKey; mark: DayMark }[] {
+  const out: { date: DateKey; mark: DayMark }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(today, -i);
+    if (diffDays(trackedFrom(med), date) < 0 || !isMedDueOn(med, date) || med.schedule.times.length === 0) {
+      out.push({ date, mark: 'off' });
+      continue;
+    }
+    const answered = med.schedule.times.filter((t) => logs.has(slotKey(med.id, date, t))).length;
+    const total = med.schedule.times.length;
+    const mark: DayMark = answered === total ? 'taken' : date === today ? 'pending' : answered > 0 ? 'partial' : 'missed';
+    out.push({ date, mark });
+  }
+  return out;
 }

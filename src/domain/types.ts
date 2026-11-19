@@ -44,6 +44,8 @@ export interface Medication {
   /** Alert when stock falls to this many units or fewer. */
   refillAt: number | null;
   archived: boolean;
+  /** Breaks (e.g. "stop for a week"): no doses or reminders, and the streak isn't affected. `to` null = until resumed. */
+  pauses?: { from: DateKey; to: DateKey | null }[];
   /** When it was archived; doses before this still show in history. */
   archivedAt?: string | null;
   createdAt: string;
@@ -84,6 +86,8 @@ export interface Settings {
   appearance: 'system' | 'light' | 'dark';
   /** Confetti when the day's doses are all done. */
   celebrate: boolean;
+  /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
+  trueBlack: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -95,4 +99,5 @@ export const DEFAULT_SETTINGS: Settings = {
   onTimeWindowMinutes: 60,
   appearance: 'system',
   celebrate: true,
+  trueBlack: false,
 };

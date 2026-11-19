@@ -15,7 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSettings } from '../hooks/useData';
 import { registerBackgroundTasks } from '../notifications/background';
 import { handleReminderAction, rescheduleAll, setupNotifications } from '../notifications/reminders';
-import { dark, FONT, light, ThemeContext } from '../theme';
+import { black, dark, FONT, light, ThemeContext } from '../theme';
 import { refreshWidget } from '../widget/update';
 
 // Show reminders even while the app is open.
@@ -39,7 +39,7 @@ export default function RootLayout() {
   }, [settings.appearance]);
 
   const isDark = settings.appearance === 'system' ? system === 'dark' : settings.appearance === 'dark';
-  const c = isDark ? dark : light;
+  const c = isDark ? (settings.trueBlack ? black : dark) : light;
   const navTheme = useMemo(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
     return { ...base, colors: { ...base.colors, background: c.bg, card: c.bg, text: c.text, primary: c.primary, border: c.border } };

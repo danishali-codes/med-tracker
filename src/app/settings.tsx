@@ -90,6 +90,12 @@ export default function SettingsScreen() {
             <Chip key={v} label={label} selected={settings.appearance === v} onPress={() => update({ appearance: v })} />
           ))}
         </View>
+        <ToggleRow
+          label="True black in dark mode"
+          hint="Pure black backgrounds. Looks great and saves battery on most Samsung screens."
+          value={settings.trueBlack}
+          onChange={(v) => update({ trueBlack: v })}
+        />
         <ToggleRow label="Confetti when the day is done" value={settings.celebrate} onChange={(v) => update({ celebrate: v })} />
       </Card>
 

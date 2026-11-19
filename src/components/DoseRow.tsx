@@ -7,7 +7,8 @@ import { formatTime, timeFromDate } from '../domain/dates';
 import { describeDose } from '../domain/dose';
 import { punctuality } from '../domain/schedule';
 import type { DoseLog, Medication, ScheduledDose } from '../domain/types';
-import { FORM_EMOJI, makeStyles, useTheme } from '../theme';
+import { makeStyles, useTheme } from '../theme';
+import { MedIcon } from './MedIcon';
 import { Text } from './ui';
 
 export function DoseRow({
@@ -61,9 +62,7 @@ export function DoseRow({
 
   return (
     <Pressable onLongPress={options} style={[s.row, log && { opacity: skipped ? 0.55 : 0.92 }]} delayLongPress={300}>
-      <View style={[s.icon, { backgroundColor: med.color + (c.dark ? '33' : '1F') }]}>
-        <Text style={s.emoji}>{FORM_EMOJI[med.form] ?? '💊'}</Text>
-      </View>
+      <MedIcon form={med.form} color={med.color} />
       <View style={{ flex: 1 }}>
         <Text style={[s.name, taken && s.nameDone]} numberOfLines={1}>
           {med.name}

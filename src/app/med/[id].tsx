@@ -7,12 +7,12 @@ import { removeMedication, saveMedication } from '../../actions';
 import { Button, Card, Chip, Field, Input, PressableScale, Text } from '../../components/ui';
 import { atTime, dateFromKey, formatDateLong, formatTime, timeFromDate, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
-import { describeSchedule, nextDueDate } from '../../domain/schedule';
+import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
 import type { MedForm, Medication, SchedulePattern } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { medicineDetails, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
-import { FORM_EMOJI, makeStyles, MED_COLORS, useTheme } from '../../theme';
+import { makeStyles, MED_COLORS, useTheme } from '../../theme';
 
 type Kind = SchedulePattern['kind'];
 
@@ -145,6 +145,7 @@ export default function MedEditor() {
     },
     stock: trackStock ? (parseAmount(stock) ?? 0) : null,
     refillAt: trackStock ? Math.max(0, parseInt(refillAt, 10) || 0) : null,
+    pauses: existing?.pauses ?? [],
     archived: existing?.archived ?? false,
     archivedAt: existing?.archivedAt ?? null,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
@@ -170,6 +171,13 @@ export default function MedEditor() {
   const archive = async () => {
     if (!existing) return;
     await saveMedication({ ...existing, archived: !existing.archived, archivedAt: existing.archived ? null : new Date().toISOString() });
+    router.back();
+  };
+
+  const paused = existing ? isPausedOn(existing, today) : false;
+  const togglePause = async () => {
+    if (!existing) return;
+    await saveMedication(paused ? resumeMed(existing, today) : pauseMed(existing, today));
     router.back();
   };
 
@@ -248,7 +256,7 @@ export default function MedEditor() {
           <Field label="Type">
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {FORMS.map((f) => (
-                <Chip key={f} label={`${FORM_EMOJI[f]} ${FORM_UNITS[f].label}`} selected={form === f} onPress={() => setForm(f)} />
+                <Chip key={f} label={FORM_UNITS[f].label} selected={form === f} onPress={() => setForm(f)} />
               ))}
             </ScrollView>
           </Field>
@@ -419,6 +427,20 @@ export default function MedEditor() {
         </Card>
 
         <Button title="Save" onPress={save} />
+        {existing && !existing.archived && kind !== 'asNeeded' ? (
+          <Button
+            title={paused ? 'Resume reminders' : 'Pause for now'}
+            kind="secondary"
+            onPress={togglePause}
+            style={{ marginTop: 12 }}
+            icon={<Ionicons name={paused ? 'play' : 'pause'} size={16} color={c.primary} />}
+          />
+        ) : null}
+        {existing && !existing.archived && kind !== 'asNeeded' ? (
+          <Text style={st.pauseHint}>
+            {paused ? 'Paused: no reminders, and your streak is safe.' : 'Pausing stops reminders without breaking your streak, e.g. when your doctor says to stop for a while.'}
+          </Text>
+        ) : null}
         {existing ? (
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
             <Button title={existing.archived ? 'Unarchive' : 'Archive'} kind="secondary" onPress={archive} style={{ flex: 1 }} />
@@ -520,5 +542,6 @@ const useStyles = makeStyles((c) => ({
   stepValue: { fontSize: 28, fontWeight: '900', color: c.text },
   stepUnit: { fontSize: 13, fontWeight: '700', color: c.muted },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  pauseHint: { fontSize: 12, color: c.muted, fontWeight: '600', textAlign: 'center', marginTop: 6, marginHorizontal: 12 },
   interactions: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, marginBottom: 14 },
 }));
