@@ -139,9 +139,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: repo
-      # One release per version in CHANGELOG.md (v0.1.0, v0.2.0...), with its notes and
-      # screenshots. A version that already has a release is left alone. The APK is
-      # attached to the version that matches app.json.
+      # One release per version in CHANGELOG.md (v0.1.0, v0.2.0, v0.5.1...), with its notes
+      # and screenshots. The APK is attached to the version that matches app.json. For a
+      # version that already has a release, the screenshots zip (and the APK, for the
+      # current version) are re-uploaded, so retaken screenshots reach old releases too.
       - name: Publish version releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -154,21 +155,22 @@ jobs:
             commit=$(echo "$line" | jq -r '.commit // empty')
             files=()
             if ls "repo/docs/screenshots/$version"/*.png >/dev/null 2>&1; then
+              rm -f "$GITHUB_WORKSPACE/screenshots-$version.zip"
               (cd "repo/docs/screenshots/$version" && zip -q "$GITHUB_WORKSPACE/screenshots-$version.zip" *.png)
               files+=("screenshots-$version.zip")
             fi
-            if gh release view "$tag" >/dev/null 2>&1; then
-              # Screenshots added after the release was made still get attached.
-              if [ ${#files[@]} -gt 0 ] && ! gh release view "$tag" --json assets -q '.assets[].name' | grep -qx "screenshots-$version.zip"; then
-                gh release upload "$tag" "screenshots-$version.zip"
-              fi
-              echo "$tag exists"; continue
-            fi
-            echo "$line" | jq -r .notes > notes.md
             if [ "$version" = "$current" ]; then
               cp dist/*.apk "sabr-$version.apk"
               files+=("sabr-$version.apk")
             fi
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "$tag exists, refreshing its files"
+              # APKs used to be named med-tracker-x.y.apk; don't leave a stale one next to the new one.
+              [ "$version" = "$current" ] && { gh release delete-asset "$tag" "med-tracker-$version.apk" -y 2>/dev/null || true; }
+              [ ${#files[@]} -gt 0 ] && gh release upload "$tag" "${files[@]}" --clobber
+              continue
+            fi
+            echo "$line" | jq -r .notes > notes.md
             latest=--latest=false
             [ "$version" = "$current" ] && latest=--latest
             gh release create "$tag" "${files[@]}" --target "${commit:-$GITHUB_SHA}" --title "Sabr $version" --notes-file notes.md $latest
