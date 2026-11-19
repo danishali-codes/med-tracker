@@ -1,5 +1,6 @@
 import Svg, { Circle, Ellipse, G, Line, Path, Rect } from 'react-native-svg';
-import type { MedForm, Medication, PillShape } from '../domain/types';
+import type { MedForm, PillShape } from '../domain/types';
+import { hasShape } from './pillLook';
 
 /** Shapes offered for tablets and capsules. */
 export const PILL_SHAPES: { id: PillShape; label: string }[] = [
@@ -15,22 +16,7 @@ export const PILL_SHAPES: { id: PillShape; label: string }[] = [
 /** Colours real pills come in. The first is plain white. */
 export const PILL_COLORS = ['#FFFFFF', '#F3E9D2', '#FBE37A', '#F7A541', '#F49AB6', '#E5484D', '#9CC9F5', '#3E7BE0', '#6CC58C', '#8B5E3C', '#A98BE8', '#9AA1AD'];
 
-/** Forms that can take a pill shape. Other forms are drawn as their container. */
-export const hasShape = (form: MedForm) => form === 'pill' || form === 'capsule';
-
-export function defaultShape(form: MedForm): PillShape {
-  return form === 'capsule' ? 'capsule' : 'round';
-}
-
-/** The look stored on a med, with defaults for meds saved before shapes existed. */
-export function lookOf(med: Pick<Medication, 'form' | 'shape' | 'pillColor' | 'pillColor2' | 'color'>) {
-  return {
-    form: med.form,
-    shape: med.shape ?? defaultShape(med.form),
-    color: med.pillColor ?? (hasShape(med.form) ? '#FFFFFF' : med.color),
-    color2: med.pillColor2 ?? null,
-  };
-}
+export { defaultShape, hasShape, lookOf } from './pillLook';
 
 const OUTLINE = 'rgba(0,0,0,0.28)';
 const LINE = 'rgba(0,0,0,0.18)';

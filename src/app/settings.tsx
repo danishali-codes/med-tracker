@@ -306,9 +306,20 @@ export default function SettingsScreen() {
           <SectionTitle>Home screen widget</SectionTitle>
           <Card>
             <Text style={st.hint}>
-              Long-press your home screen, tap Widgets, and find Sabr. It shows today's progress and your next dose, and you can mark the next dose as
-              taken right from it.
+              Long-press your home screen, tap Widgets, and find Sabr. There are three: Next dose (small, with Taken and Snooze), Today (your rings and
+              next dose) and Today's list (every dose). Resize any of them and it changes to fit. It turns green when the day is done, and gold when
+              every dose was on time.
             </Text>
+            <ToggleRow
+              label="Show medicine names on the widget"
+              hint={
+                settings.widgetShowNames
+                  ? 'On. Anyone who sees your home screen can read the names.'
+                  : 'Off. The widget shows the time, the dose and a drawing of the pill, but not the name.'
+              }
+              value={settings.widgetShowNames}
+              onChange={(v) => update({ widgetShowNames: v })}
+            />
           </Card>
           <SectionTitle>Smartwatch</SectionTitle>
           <Card>
