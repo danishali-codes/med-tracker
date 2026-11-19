@@ -88,6 +88,11 @@ export interface Settings {
   celebrate: boolean;
   /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
   trueBlack: boolean;
+  /**
+   * Offline mode: the app never goes online. Medicine search and the interaction check
+   * use only the built-in list (and anything already saved on the phone).
+   */
+  offline: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -100,4 +105,5 @@ export const DEFAULT_SETTINGS: Settings = {
   appearance: 'system',
   celebrate: true,
   trueBlack: false,
+  offline: false,
 };

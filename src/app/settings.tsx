@@ -8,6 +8,7 @@ import { Button, Card, Chip, SectionTitle, Text } from '../components/ui';
 import { toDateKey } from '../domain/dates';
 import type { Settings } from '../domain/types';
 import * as repo from '../db/repo';
+import { clearDownloads } from '../drugs/online';
 import { useSettings } from '../hooks/useData';
 import {
   getPermissionState,
@@ -155,9 +156,47 @@ export default function SettingsScreen() {
         <Text style={st.hint}>Late doses still count for your streak. Only doses never taken that day break it.</Text>
       </Card>
 
+      <SectionTitle>Privacy</SectionTitle>
+      <Card>
+        <ToggleRow
+          label="Offline mode"
+          hint={
+            settings.offline
+              ? 'The app never goes online. Search and the interaction check use only the built-in list and anything already saved on this phone.'
+              : 'Turn on to stop the app from ever going online. Search and the interaction check then use only the built-in list.'
+          }
+          value={settings.offline}
+          onChange={(v) => update({ offline: v })}
+        />
+        <Text style={[st.hint, { marginTop: 6 }]}>
+          There are no accounts, ads, analytics or crash reports, and your doses, times and history never leave this phone. With offline mode off, two
+          free public services are used, and only a medicine name is sent to them:
+        </Text>
+        <Text style={st.hint}>
+          {'\u2022'} US National Library of Medicine (RxNav): the list of medicine names, downloaded once a month, so what you type in search stays on the
+          phone. When you pick a medicine, its name is sent to look up the ingredient and strengths.
+        </Text>
+        <Text style={st.hint}>
+          {'\u2022'} US FDA (openFDA): when you open the interaction check, the active ingredient of each medicine is sent to read its official label.
+        </Text>
+        <Text style={st.hint}>Like any website, they can see your phone's internet address when it asks.</Text>
+        <Button
+          title="Delete downloaded medicine info"
+          kind="secondary"
+          onPress={() => {
+            const n = clearDownloads();
+            Alert.alert('Deleted', n ? 'Downloaded medicine names and labels were removed from this phone.' : 'Nothing was downloaded yet.');
+          }}
+          style={{ marginTop: 10 }}
+        />
+      </Card>
+
       <SectionTitle>Your data</SectionTitle>
       <Card>
-        <Text style={st.hint}>Everything stays on this phone. Export a backup now and then so you don't lose your history if you change phones.</Text>
+        <Text style={st.hint}>
+          Everything stays on this phone, and it isn't copied to Google's cloud backup. Export a backup now and then so you don't lose your history if you
+          change phones, and keep the file somewhere private, because it holds your full medicine list and history.
+        </Text>
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
           <Button title="Export backup" kind="secondary" onPress={exportBackup} style={{ flex: 1 }} />
           <Button title="Restore" kind="secondary" onPress={importBackup} style={{ flex: 1 }} />

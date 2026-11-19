@@ -1,26 +1,54 @@
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
+import { getSettings } from '../db/repo';
 import type { Label } from '../domain/interactions';
 import { LABEL_FIELDS } from '../domain/interactions';
 import { CATALOG } from './catalog';
 import { parseStrengths, rankNames, type NameHit, type StrengthOption } from './rank';
 
 /**
- * Online lookups. Only the medicine name is sent, never anything about the person:
+ * Online lookups. This file is the only place in the app that goes on the internet.
+ * Only a medicine or ingredient name is sent, never anything about the person:
  * - RxNav (US National Library of Medicine): the full list of drug names (~1 MB,
- *   downloaded once a month and kept on the phone), ingredients and strengths.
+ *   downloaded once a month and kept on the phone, so typing in search stays on the
+ *   phone), and the ingredients and strengths of a medicine once you pick it.
  * - openFDA: official US drug labels, read for interaction warnings.
- * Both are free and need no account. If the phone is offline, the built-in list still works.
+ * Both are free and need no account, and nothing is sent with a cookie, token or ID.
+ * With offline mode on (Settings, Privacy) nothing is sent at all, and the built-in
+ * list and anything already saved on the phone are used instead.
  */
 
 const RXNAV = 'https://rxnav.nlm.nih.gov/REST';
 const OPENFDA = 'https://api.fda.gov/drug/label.json';
 const MONTH = 30 * 24 * 3600 * 1000;
 
+export class OfflineModeError extends Error {
+  constructor() {
+    super('Offline mode is on');
+  }
+}
+
+/** True unless offline mode is on. Fails closed: if settings can't be read, stay offline. */
+export function onlineAllowed(): boolean {
+  try {
+    return !getSettings().offline;
+  } catch {
+    return false;
+  }
+}
+
+/** Every request goes through here, so offline mode can't be skipped by accident. */
 async function getJson<T>(url: string, timeoutMs = 12000): Promise<T> {
+  if (!onlineAllowed()) throw new OfflineModeError();
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json' },
+      // No cookies, and no cached copy shared with anything else.
+      credentials: 'omit',
+      cache: 'no-store',
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as T;
   } finally {
@@ -52,6 +80,24 @@ function writeCache(name: string, data: unknown) {
   } catch {
     // cache is best-effort
   }
+}
+
+/** Deletes the drug names and labels downloaded earlier. Your own data isn't touched. */
+export function clearDownloads(): number {
+  names = null;
+  loading = null;
+  let n = 0;
+  try {
+    for (const item of new Directory(Paths.cache).list()) {
+      if (item instanceof File && (item.name === 'rxnorm-names.json' || /^label-.*\.json$/.test(item.name))) {
+        item.delete();
+        n++;
+      }
+    }
+  } catch {
+    // nothing cached yet
+  }
+  return n;
 }
 
 // ---- names ----
