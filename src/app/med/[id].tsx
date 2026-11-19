@@ -11,6 +11,7 @@ import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } fro
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
 import type { DayTimes, MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
+import { scanBox } from '../../media/scanBox';
 import * as repo from '../../db/repo';
 import { medicineDetails, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
@@ -69,6 +70,8 @@ export default function MedEditor() {
   const [times, setTimes] = useState<TimeOfDay[]>(existing?.schedule.times.length ? existing.schedule.times : ['08:00']);
   const [dayTimes, setDayTimes] = useState<DayTimes[]>(existing?.schedule.dayTimes ?? []);
   const [photo, setPhoto] = useState<string | null>(existing?.photo ?? null);
+  const [barcode, setBarcode] = useState<string | null>(existing?.barcode ?? null);
+  const [scanning, setScanning] = useState(false);
   const [startDate, setStartDate] = useState<DateKey>(existing?.schedule.startDate ?? today);
   const [endDate, setEndDate] = useState<DateKey | null>(existing?.schedule.endDate ?? null);
   const [trackStock, setTrackStock] = useState(existing?.stock != null);
@@ -118,6 +121,51 @@ export default function MedEditor() {
     if (top && !existing) setForm(top);
   };
 
+  const scan = async () => {
+    setScanning(true);
+    let res: Awaited<ReturnType<typeof scanBox>>;
+    try {
+      res = await scanBox('camera');
+    } catch (e) {
+      setScanning(false);
+      Alert.alert('Could not scan', String(e instanceof Error ? e.message : e));
+      return;
+    }
+    setScanning(false);
+    if (!res) return;
+    // A box we've seen before: offer to add the pack to that medicine's stock.
+    const known = res.barcode ? repo.getMeds().find((m) => m.barcode === res!.barcode && m.id !== existing?.id) : null;
+    if (known) {
+      const n = res.packCount;
+      Alert.alert(`This is ${known.name}`, n && known.stock != null ? `Add ${n} to its stock?` : 'You already have this medicine.', [
+        { text: 'Cancel', style: 'cancel' },
+        ...(n && known.stock != null ? [{ text: `Add ${n}`, onPress: () => saveMedication({ ...known, stock: (known.stock ?? 0) + n }).then(() => router.back()) }] : []),
+        { text: 'Open it', onPress: () => router.replace(`/med/${known.id}`) },
+      ]);
+      return;
+    }
+    if (res.barcode) setBarcode(res.barcode);
+    const found: string[] = [];
+    if (res.form) setForm(res.form);
+    if (res.name) {
+      found.push(res.name);
+      await pick({ name: res.name, generic: res.generic, source: 'builtin' });
+    }
+    if (res.strength) {
+      setStrength(res.strength);
+      found.push(res.strength);
+    }
+    if (res.packCount && !existing) {
+      setTrackStock(true);
+      setStock(String(res.packCount));
+      found.push(`${res.packCount} in the pack`);
+    }
+    Alert.alert(
+      found.length ? 'Read from the box' : 'Nothing recognised',
+      found.length ? `${found.join(', ')}. Please check the details before saving.` : 'Try again with the name facing the camera in good light, or type the name.',
+    );
+  };
+
   const pattern = (): SchedulePattern => {
     switch (kind) {
       case 'daily':
@@ -145,6 +193,7 @@ export default function MedEditor() {
     rxcui,
     color,
     photo,
+    barcode,
     shape: hasShape(form) ? look.shape : undefined,
     pillColor: look.color,
     pillColor2: hasShape(form) && look.shape === 'capsule' ? pillColor2 : null,
@@ -224,6 +273,14 @@ export default function MedEditor() {
       <Stack.Screen options={{ title: existing ? 'Edit medication' : 'New medication' }} />
       <ScrollView contentContainerStyle={st.container} keyboardShouldPersistTaps="handled">
         <Card>
+          <Button
+            title={scanning ? 'Reading the box...' : 'Scan the box'}
+            kind="secondary"
+            small
+            icon={scanning ? <ActivityIndicator size="small" color={c.primary} /> : <Ionicons name="scan-outline" size={16} color={c.primary} />}
+            onPress={scan}
+            style={{ alignSelf: 'flex-start', marginBottom: 14 }}
+          />
           <Field label="Name" hint={hits.length === 0 && !generic ? 'Start typing to search brand or generic names' : undefined} style={{ marginBottom: 0 }}>
             <View>
               <Input

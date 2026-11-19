@@ -92,6 +92,8 @@ export interface Medication {
   pillColor2?: string | null;
   /** A photo of the pill, stored on the phone only. */
   photo?: string | null;
+  /** The box's barcode, so scanning it again finds this medicine. */
+  barcode?: string | null;
   notes?: string;
   schedule: Schedule;
   /** Units (tablets, ml...) on hand; null when stock isn't tracked. Each dose uses `amount` units. */

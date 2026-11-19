@@ -93,6 +93,7 @@ export default function RootLayout() {
             <Stack.Screen name="interactions" options={{ title: 'Interactions' }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
             <Stack.Screen name="times" options={{ title: 'Ramadan, travel and changes' }} />
+            <Stack.Screen name="report" options={{ title: 'Doctor report' }} />
           </Stack>
         </ThemeProvider>
       </ThemeContext.Provider>

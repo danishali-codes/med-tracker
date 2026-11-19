@@ -6,6 +6,24 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.4
+
+Share your history with your doctor, and add medicines by scanning the box.
+
+<p>
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.4/report.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.4/progress.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.4/today.png" width="200" />
+</p>
+
+### Added
+- Doctor report: a PDF for the last week, month, 3 or 6 months or any dates you pick. It lists each medication with doses due, taken, late, skipped and missed, a day-by-day grid, the missed doses, and mood and symptom notes. Made on the phone and shared only where you choose. You can print it too.
+- Scan the box: take a photo of a medicine box and the app reads the name, strength, form and pack size on the phone (Google's on-device text recognition) to fill in the form. Scanning a box you already have offers to add the pack to its stock.
+- A bigger home screen widget listing every dose today, with Take on each one that's due.
+
+### Changed
+- The small widget uses one calm colour instead of a purple-pink gradient.
+
 ## 0.3
 
 Reminders that fit real life: different times on different days, Ramadan, travel and busy weeks.

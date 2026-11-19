@@ -33,7 +33,11 @@ Med Tracker is a free, open-source Android app that does that. It's a simple, pr
 
 **Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Rings, a 7-day row for each med, month and year heatmaps and badges show how you're doing.
 
-**A home screen widget** with today's progress and a Take button for the next dose.
+**Reports for your doctor.** A PDF for any period with what was taken, late or missed, day by day, plus your mood and symptom notes.
+
+**Scan the box** to fill in a new medicine: the name, strength and pack size are read on the phone.
+
+**Home screen widgets**: a small one with today's progress and a Take button for the next dose, and a bigger one listing every dose today.
 
 **Light, dark and true-black modes.**
 
@@ -53,13 +57,13 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 | Edit a medication | <img src="docs/screenshots/0.1/medication.png" width="180" /> | <img src="docs/screenshots/0.2/medication.png" width="180" /> | <img src="docs/screenshots/0.3/medication.png" width="180" /> |
 
 - **0.1** (Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
+- **0.4** (Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
 - **0.3** (Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
 - **0.2.1** (Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
 - **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
 
 ## What's next
 
-- **0.4:** a doctor report PDF for any period, scanning the box to add a med, a bigger widget.
 - **0.5:** bug fixes, and optional sync and caregiver mode through a PocketBase server you host yourself. Both stay off unless you turn them on, so the app can always be fully private.
 
 ## Install on Android

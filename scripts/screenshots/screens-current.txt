@@ -6,3 +6,4 @@ medication med/demo-metformin
 interactions interactions
 settings settings
 times times
+report report
