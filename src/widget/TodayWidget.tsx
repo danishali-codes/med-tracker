@@ -4,6 +4,8 @@ import type { WidgetData } from './data';
 const BOLD = 'Nunito_800ExtraBold';
 const REG = 'Nunito_700Bold';
 
+// The widget library walks this tree itself: no fragments (<>), hooks or other React features.
+
 /** Home screen widget: today's progress, streak and the next dose, with a Take button when it's due. */
 export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean }) {
   const allDone = data.total > 0 && data.done === data.total;
@@ -35,7 +37,7 @@ export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean })
         {allDone ? (
           <TextWidget text="All done 🎉" style={{ fontSize: 16, fontFamily: BOLD, color: '#FFFFFF' }} />
         ) : data.next ? (
-          <>
+          <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
             <TextWidget text={data.next.due ? 'DUE NOW' : 'NEXT'} style={{ fontSize: 11, fontFamily: REG, color: '#FFFFFFCC' }} />
             <TextWidget text={data.next.label} style={{ fontSize: 18, fontFamily: BOLD, color: '#FFFFFF' }} />
             <TextWidget text={data.next.names} maxLines={1} truncate="END" style={{ fontSize: 12, fontFamily: REG, color: '#FFFFFFE6' }} />
@@ -48,7 +50,7 @@ export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean })
                 <TextWidget text="✓ Take" style={{ fontSize: 14, fontFamily: BOLD, color: from }} />
               </FlexWidget>
             ) : null}
-          </>
+          </FlexWidget>
         ) : (
           <TextWidget text="Nothing due" style={{ fontSize: 15, fontFamily: BOLD, color: '#FFFFFF' }} />
         )}
