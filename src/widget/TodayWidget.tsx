@@ -31,11 +31,11 @@ export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean })
           text={data.total ? `${data.done}/${data.total}` : '–'}
           style={{ fontSize: 34, fontFamily: BOLD, color: '#FFFFFF' }}
         />
-        <TextWidget text={`🔥 ${data.streak} day streak`} style={{ fontSize: 12, fontFamily: REG, color: '#FFFFFFE6' }} />
+        <TextWidget text={`${data.streak} day streak`} style={{ fontSize: 12, fontFamily: REG, color: '#FFFFFFE6' }} />
       </FlexWidget>
       <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
         {allDone ? (
-          <TextWidget text="All done 🎉" style={{ fontSize: 16, fontFamily: BOLD, color: '#FFFFFF' }} />
+          <TextWidget text="All done" style={{ fontSize: 16, fontFamily: BOLD, color: '#FFFFFF' }} />
         ) : data.next ? (
           <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
             <TextWidget text={data.next.due ? 'DUE NOW' : 'NEXT'} style={{ fontSize: 11, fontFamily: REG, color: '#FFFFFFCC' }} />
@@ -47,7 +47,7 @@ export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean })
                 clickActionData={{ time: data.next.time }}
                 style={{ marginTop: 6, backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 }}
               >
-                <TextWidget text="✓ Take" style={{ fontSize: 14, fontFamily: BOLD, color: from }} />
+                <TextWidget text="Take" style={{ fontSize: 14, fontFamily: BOLD, color: from }} />
               </FlexWidget>
             ) : null}
           </FlexWidget>

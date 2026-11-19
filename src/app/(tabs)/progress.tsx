@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { Screen } from '../../components/Screen';
@@ -25,7 +24,7 @@ export default function ProgressScreen() {
   return (
     <Screen title="Progress" subtitle="Keep it going">
       <FadeIn>
-        <LinearGradient colors={[c.flame, '#FF4F7B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.streak}>
+        <View style={[s.streak, { backgroundColor: c.flame }]}>
           <Flame />
           <View style={{ flex: 1 }}>
             <Text style={s.streakBig}>{progress.currentStreak}</Text>
@@ -33,13 +32,13 @@ export default function ProgressScreen() {
             <Text style={s.streakSub}>Best: {progress.bestStreak} days</Text>
           </View>
           <View style={s.freezeBox}>
-            <Text style={{ fontSize: 24 }}>{'❄️'.repeat(Math.max(1, progress.freezes))}</Text>
+            <Ionicons name="snow-outline" size={24} color="#fff" />
             <Text style={s.freezeText}>
               {progress.freezes} {progress.freezes === 1 ? 'freeze' : 'freezes'}
             </Text>
             {toNextFreeze != null ? <Text style={s.freezeSub}>next in {toNextFreeze}d</Text> : null}
           </View>
-        </LinearGradient>
+        </View>
       </FadeIn>
 
       <FadeIn delay={60} style={s.grid}>
@@ -90,7 +89,7 @@ export default function ProgressScreen() {
           {badges.map((b) => (
             <View key={b.id} style={[s.badge, !b.has && { opacity: 0.45 }]}>
               <View style={[s.badgeIcon, { backgroundColor: b.has ? c.primarySoft : c.sunken }]}>
-                <Text style={{ fontSize: 28 }}>{b.has ? b.emoji : '🔒'}</Text>
+                <Ionicons name={(b.has ? b.icon : 'lock-closed-outline') as keyof typeof Ionicons.glyphMap} size={26} color={b.has ? c.primary : c.faint} />
               </View>
               <Text style={s.badgeName} numberOfLines={1}>
                 {b.name}
@@ -119,9 +118,9 @@ function Flame() {
     return () => loop.stop();
   }, [v]);
   return (
-    <Animated.Text style={{ fontSize: 64, transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) }, { rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['-4deg', '4deg'] }) }] }}>
-      🔥
-    </Animated.Text>
+    <Animated.View style={{ transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }) }] }}>
+      <Ionicons name="flame" size={56} color="#fff" />
+    </Animated.View>
   );
 }
 

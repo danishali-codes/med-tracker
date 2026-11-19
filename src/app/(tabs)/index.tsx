@@ -19,13 +19,6 @@ import { rescheduleAll } from '../../notifications/reminders';
 import { MedIcon } from '../../components/MedIcon';
 import { makeStyles, useTheme } from '../../theme';
 
-function greeting(h: number) {
-  if (h < 5) return 'Good night';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export default function TodayScreen() {
   const c = useTheme();
   const s = useStyles();
@@ -76,7 +69,7 @@ export default function TodayScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Screen title={greeting(now.getHours())} subtitle={formatDateLong(today)}>
+      <Screen title="Today" subtitle={formatDateLong(today)}>
         {perm && (!perm.notifications || !perm.exactAlarms) ? (
           <FadeIn>
             <Card style={{ backgroundColor: c.warnSoft }}>
@@ -117,10 +110,12 @@ export default function TodayScreen() {
             </View>
             <View style={s.heroPills}>
               <View style={s.pill}>
-                <Text style={s.pillText}>🔥 {progress.currentStreak} day streak</Text>
+                <Ionicons name="flame" size={14} color="#fff" />
+                <Text style={s.pillText}>{progress.currentStreak} day streak</Text>
               </View>
               <View style={s.pill}>
-                <Text style={s.pillText}>❄️ {progress.freezes} {progress.freezes === 1 ? 'freeze' : 'freezes'}</Text>
+                <Ionicons name="snow-outline" size={14} color="#fff" />
+                <Text style={s.pillText}>{progress.freezes} {progress.freezes === 1 ? 'freeze' : 'freezes'}</Text>
               </View>
             </View>
           </LinearGradient>
@@ -155,10 +150,10 @@ export default function TodayScreen() {
         {allDone ? (
           <FadeIn>
             <Card style={[s.done, { backgroundColor: c.goodSoft }]}>
-              <Text style={{ fontSize: 30 }}>🎉</Text>
+              <Ionicons name="checkmark-circle" size={30} color={c.good} />
               <View style={{ flex: 1 }}>
                 <Text style={[s.bannerTitle, { color: c.good }]}>All done for today</Text>
-                <Text style={s.bannerText}>Every dose is logged. See you tomorrow!</Text>
+                <Text style={s.bannerText}>Every dose is logged.</Text>
               </View>
             </Card>
           </FadeIn>
@@ -167,7 +162,7 @@ export default function TodayScreen() {
         {activeCount === 0 ? (
           <FadeIn delay={120}>
             <Card style={{ alignItems: 'center', paddingVertical: 28 }}>
-              <Text style={{ fontSize: 46 }}>💊</Text>
+              <Ionicons name="medkit-outline" size={40} color={c.muted} />
               <Text style={s.emptyTitle}>Add your first medication</Text>
               <Text style={[s.bannerText, { textAlign: 'center' }]}>Set its schedule once and the app reminds you every time it's due.</Text>
               <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 16 }} />
@@ -251,7 +246,7 @@ const useStyles = makeStyles((c) => ({
   legendLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)' },
   legendValue: { fontSize: 17, fontWeight: '900', color: '#fff' },
   heroPills: { flexDirection: 'row', gap: 8, marginTop: 16 },
-  pill: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   pillText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   week: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 12 },
   weekDay: { alignItems: 'center', gap: 6 },

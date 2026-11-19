@@ -90,7 +90,6 @@ export function DoseRow({
 const useStyles = makeStyles((c) => ({
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 14 },
   icon: { width: 50, height: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 24 },
   name: { fontSize: 17, fontWeight: '800', color: c.text },
   nameDone: { color: c.muted },
   sub: { fontSize: 14, color: c.muted, marginTop: 1, fontWeight: '600' },

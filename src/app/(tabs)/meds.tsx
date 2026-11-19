@@ -46,7 +46,7 @@ export default function MedsScreen() {
 
       {active.length === 0 ? (
         <Card style={{ alignItems: 'center', paddingVertical: 28 }}>
-          <Text style={{ fontSize: 46 }}>🗂️</Text>
+          <Ionicons name="file-tray-outline" size={40} color={c.muted} />
           <Text style={s.emptyTitle}>No medications yet</Text>
           <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 16 }} />
         </Card>
@@ -96,16 +96,15 @@ function MedCard({ med, today, streak, logs }: { med: Medication; today: string;
           <Ionicons name="chevron-forward" size={20} color={c.faint} />
         </View>
         <View style={s.meta}>
-          <Text style={s.sub}>🗓️ {describeSchedule(med.schedule)}</Text>
+          <Text style={s.sub}>{describeSchedule(med.schedule)}</Text>
           {next && next !== today ? <Text style={s.sub}>Next: {formatDateLong(next)}</Text> : null}
         </View>
         {scheduled ? <WeekSquares days={medDays(med, logs, today)} color={med.color} today={today} /> : null}
         <View style={s.tags}>
-          {paused ? <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>⏸ Paused</Text> : null}
-          {streak > 0 ? <Text style={[s.tag, { backgroundColor: c.warnSoft, color: c.flame }]}>🔥 {streak} in a row</Text> : null}
+          {paused ? <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>Paused</Text> : null}
+          {streak > 0 ? <Text style={[s.tag, { backgroundColor: c.warnSoft, color: c.flame }]}>{streak} in a row</Text> : null}
           {med.stock != null ? (
             <Text style={[s.tag, low ? { backgroundColor: c.badSoft, color: c.bad } : { backgroundColor: c.goodSoft, color: c.good }]}>
-              {low ? '⚠️ ' : ''}
               {units(med.form, med.stock)} left{days != null ? ` · ~${days}d` : ''}
             </Text>
           ) : null}

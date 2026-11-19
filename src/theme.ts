@@ -50,7 +50,7 @@ export const light: Palette = {
   badSoft: '#FFE3E9',
   flame: '#FF7A3D',
   ice: '#3AB7F0',
-  hero: ['#6A4DF4', '#9B4DE8', '#F0689B'],
+  hero: ['#5B3FE6', '#6A4DF4', '#7457F5'],
   rings: ['#FFFFFF', '#B8F5D9', '#FFD98A'],
   shadow: '#4A3AA8',
   tabBar: '#FFFFFF',
@@ -76,7 +76,7 @@ export const dark: Palette = {
   badSoft: '#361721',
   flame: '#FF8A50',
   ice: '#5CC8FF',
-  hero: ['#3E2BA6', '#5F2C99', '#93386C'],
+  hero: ['#2E2378', '#342887', '#3A2D93'],
   rings: ['#FFFFFF', '#9DF0CB', '#FFD27A'],
   shadow: '#000000',
   tabBar: '#16161B',
@@ -128,15 +128,3 @@ export const FONT = {
 
 export const MED_COLORS = ['#6A4DF4', '#16B582', '#F29D0C', '#F04A68', '#3AB7F0', '#FF7A3D', '#C04DE8', '#64708A'];
 
-export const FORM_EMOJI: Record<string, string> = {
-  pill: '💊',
-  capsule: '💊',
-  liquid: '🧴',
-  injection: '💉',
-  drops: '💧',
-  inhaler: '🌬️',
-  patch: '🩹',
-  cream: '🧴',
-  sachet: '🥄',
-  other: '✳️',
-};

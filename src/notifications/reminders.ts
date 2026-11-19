@@ -39,7 +39,7 @@ export async function setupNotifications() {
   }
   const snooze = repo.getSettings().snoozeMinutes;
   await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
-    { identifier: ACTION_TAKEN, buttonTitle: '✓ Taken', options: { opensAppToForeground: false } },
+    { identifier: ACTION_TAKEN, buttonTitle: 'Taken', options: { opensAppToForeground: false } },
     { identifier: ACTION_SNOOZE, buttonTitle: `Snooze ${snooze} min`, options: { opensAppToForeground: false } },
     { identifier: ACTION_SKIP, buttonTitle: 'Skip', options: { opensAppToForeground: false, isDestructive: true } },
   ]);

@@ -185,7 +185,8 @@ export function medStreak(med: Medication, logs: Map<string, DoseLog>, today: Da
 export interface BadgeDef {
   id: string;
   name: string;
-  emoji: string;
+  /** Ionicons glyph name */
+  icon: string;
   description: string;
   earned: (s: BadgeStats) => boolean;
 }
@@ -193,16 +194,16 @@ export interface BadgeDef {
 export type BadgeStats = Progress;
 
 export const BADGES: BadgeDef[] = [
-  { id: 'first_dose', name: 'First step', emoji: '🌱', description: 'Log your first dose', earned: (s) => s.totalTaken >= 1 },
-  { id: 'perfect_day', name: 'Perfect day', emoji: '⭐', description: 'Take every dose in a day', earned: (s) => s.perfectDays >= 1 },
-  { id: 'streak_7', name: 'One week strong', emoji: '🔥', description: 'Reach a 7-day streak', earned: (s) => s.bestStreak >= 7 },
-  { id: 'streak_30', name: 'Monthly master', emoji: '🏅', description: 'Reach a 30-day streak', earned: (s) => s.bestStreak >= 30 },
-  { id: 'streak_100', name: 'Centurion', emoji: '💯', description: 'Reach a 100-day streak', earned: (s) => s.bestStreak >= 100 },
-  { id: 'streak_365', name: 'Year of care', emoji: '🏆', description: 'Reach a 365-day streak', earned: (s) => s.bestStreak >= 365 },
-  { id: 'doses_100', name: 'Hundred club', emoji: '💊', description: 'Take 100 doses', earned: (s) => s.totalTaken >= 100 },
-  { id: 'doses_500', name: 'Dedicated', emoji: '💎', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
-  { id: 'on_time_50', name: 'Like clockwork', emoji: '⏰', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
-  { id: 'perfect_month', name: 'Flawless month', emoji: '🌕', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
+  { id: 'first_dose', name: 'First step', icon: 'footsteps-outline', description: 'Log your first dose', earned: (s) => s.totalTaken >= 1 },
+  { id: 'perfect_day', name: 'Perfect day', icon: 'star-outline', description: 'Take every dose in a day', earned: (s) => s.perfectDays >= 1 },
+  { id: 'streak_7', name: 'One week strong', icon: 'flame-outline', description: 'Reach a 7-day streak', earned: (s) => s.bestStreak >= 7 },
+  { id: 'streak_30', name: 'Monthly master', icon: 'medal-outline', description: 'Reach a 30-day streak', earned: (s) => s.bestStreak >= 30 },
+  { id: 'streak_100', name: 'Centurion', icon: 'trending-up-outline', description: 'Reach a 100-day streak', earned: (s) => s.bestStreak >= 100 },
+  { id: 'streak_365', name: 'Year of care', icon: 'trophy-outline', description: 'Reach a 365-day streak', earned: (s) => s.bestStreak >= 365 },
+  { id: 'doses_100', name: 'Hundred club', icon: 'medical-outline', description: 'Take 100 doses', earned: (s) => s.totalTaken >= 100 },
+  { id: 'doses_500', name: 'Dedicated', icon: 'diamond-outline', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
+  { id: 'on_time_50', name: 'Like clockwork', icon: 'alarm-outline', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
+  { id: 'perfect_month', name: 'Flawless month', icon: 'calendar-outline', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
 ];
 
 /** Share of scheduled doses answered (taken or skipped) across these days, or null when none were due. */

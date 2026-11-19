@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useState } from 'react';
@@ -82,9 +83,9 @@ export default function SettingsScreen() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {(
             [
-              ['system', '📱 Match phone'],
-              ['light', '☀️ Light'],
-              ['dark', '🌙 Dark'],
+              ['system', 'Match phone'],
+              ['light', 'Light'],
+              ['dark', 'Dark'],
             ] as const
           ).map(([v, label]) => (
             <Chip key={v} label={label} selected={settings.appearance === v} onPress={() => update({ appearance: v })} />
@@ -188,9 +189,8 @@ function PermRow({ label, ok, action }: { label: string; ok?: boolean; action: (
   const st = useStyles();
   return (
     <View style={st.row}>
-      <Text style={[st.label, { flex: 1 }]}>
-        {ok ? '✅' : '⚠️'} {label}
-      </Text>
+      <Ionicons name={ok ? 'checkmark-circle' : 'alert-circle-outline'} size={20} color={ok ? c.good : c.warn} style={{ marginRight: 8 }} />
+      <Text style={[st.label, { flex: 1 }]}>{label}</Text>
       {ok ? <Text style={{ color: c.good, fontWeight: '800' }}>On</Text> : <Button title="Allow" small onPress={action} />}
     </View>
   );
