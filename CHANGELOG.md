@@ -6,6 +6,25 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.8
+
+A full check-up of the code: bug fixes, a leaner app, and a sturdier watch tile.
+
+### Fixed
+- Changing a dose time in a medicine no longer mixes up its "different times on some days", and can't silently merge two doses into one.
+- Moving a dose time keeps today's logged dose with it, so it doesn't show as due again. Removing a time and adding another doesn't carry the log over.
+- Days where a weekday time moves a dose past another dose keep each dose matched to its own log.
+- Watch tile: a Taken or Snooze the phone can't accept (not due yet, a new day) is undone on the tile instead of staying wrong. A slow watch connection no longer holds up the rest of the app, and a press that arrives while the app can't start is retried.
+- "Take all" logs each dose in turn and tells you if any couldn't be saved.
+- A damaged backup file is refused with a clear message instead of freezing the app.
+- Sync shows a clear message when the server address isn't a PocketBase server.
+
+### Privacy
+- While the app lock is on, the locked app is hidden from screen readers too.
+
+### Removed
+- Two unused libraries and a batch of unused code, for a smaller, simpler app. Nothing you use was taken away.
+
 ## 0.7
 
 New home screen widgets and a Galaxy Watch tile.
