@@ -1,0 +1,62 @@
+import { formatTime, type DateKey } from '../domain/dates';
+import { groupKey } from '../domain/reminders';
+import type { DoseLog, ScheduledDose } from '../domain/types';
+
+/**
+ * What the phone sends to the watch tile. Kept small on purpose: counts, times and each
+ * dose's state. Medicine names are only included when "Show medicine names" is on.
+ */
+export interface WatchPayload {
+  v: 1;
+  date: DateKey;
+  /** When this was made, so the watch can tell how old it is. */
+  made: number;
+  done: number;
+  total: number;
+  streak: number;
+  /** Every dose today in time order: t = time (HH:MM), s = state. Draws the ring. */
+  marks: { t: string; s: 'taken' | 'skipped' | 'open' }[];
+  /** Times that still have doses to take, earliest first. */
+  open: { time: string; label: string; at: number; count: number; names: string | null; snoozedUntil: number | null }[];
+}
+
+export function watchPayload(input: {
+  date: DateKey;
+  now: Date;
+  doses: ScheduledDose[];
+  logs: Map<string, DoseLog>;
+  names: Map<string, string>;
+  streak: number;
+  showNames: boolean;
+  /** Snoozed times: group key (date|time) to when the snooze ends. */
+  snoozes?: Map<string, number>;
+  dueAt: (date: DateKey, time: string) => Date;
+}): WatchPayload {
+  const { date, doses, logs, names, showNames } = input;
+  const sorted = [...doses].sort((a, b) => a.time.localeCompare(b.time));
+  const open = new Map<string, ScheduledDose[]>();
+  for (const d of sorted) {
+    if (logs.has(d.slot)) continue;
+    open.set(d.time, [...(open.get(d.time) ?? []), d]);
+  }
+  return {
+    v: 1,
+    date,
+    made: input.now.getTime(),
+    done: sorted.filter((d) => logs.has(d.slot)).length,
+    total: sorted.length,
+    streak: input.streak,
+    marks: sorted.map((d) => ({ t: d.time, s: logs.get(d.slot)?.status ?? 'open' })),
+    open: [...open.entries()].map(([time, group]) => {
+      const first = names.get(group[0].medId) ?? 'Medicine';
+      return {
+        time,
+        label: formatTime(time),
+        at: input.dueAt(date, time).getTime(),
+        count: group.length,
+        names: showNames ? (group.length > 1 ? `${first} +${group.length - 1}` : first) : null,
+        snoozedUntil: input.snoozes?.get(groupKey(date, time)) ?? null,
+      };
+    }),
+  };
+}

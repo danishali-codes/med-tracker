@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Sabr pill mark on a round violet background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:width="48dp"
+  android:height="48dp"
+  android:viewportWidth="64"
+  android:viewportHeight="64">
+  <path
+    android:fillColor="#6A4DF4"
+    android:pathData="M32,0a32,32 0 1,1 0,64a32,32 0 1,1 0,-64z" />
+  <group
+    android:pivotX="32"
+    android:pivotY="32"
+    android:rotation="-40">
+    <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M21,23h22a9,9 0 0,1 0,18h-22a9,9 0 0,1 0,-18z" />
+    <path
+      android:fillColor="#C9BEFF"
+      android:pathData="M32,23h11a9,9 0 0,1 0,18h-11z" />
+  </group>
+</vector>

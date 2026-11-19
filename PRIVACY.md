@@ -50,6 +50,24 @@ record and makes a new key. Turning the server off signs you out, takes down you
 status, and can delete your backup from the server. All sync requests are made from
 [`src/sync/pocketbase.ts`](src/sync/pocketbase.ts).
 
+## Watch tile (off by default)
+
+Reminders reach a paired watch the way any notification does. Settings > Smartwatch >
+**Watch tile** also sends today's summary to the Sabr watch app, so its tile can show your
+progress ring, the next dose time and Taken / Snooze buttons. While it's off, nothing is sent.
+
+| When | Sent to | What is sent |
+| --- | --- | --- |
+| A dose, medicine or setting changes, the app opens, or the watch asks | Your paired watch | Today's date, how many doses are due and done, each dose's time and whether it's taken, skipped or still open, any snooze, and your streak. Medicine names only if **Show medicine names in reminders** is on. |
+| You press Taken or Snooze on the tile | Your phone | The day and time the tile showed. |
+
+This uses Google's Wear OS data layer (part of Google Play services). It goes over the
+Bluetooth link between phone and watch; when Bluetooth isn't available, Google routes it through
+its servers, end-to-end encrypted ([Google's description](https://developer.android.com/training/wearables/data/overview)).
+Only the Sabr app on your own phone and watch, signed with the same key, can read it. Turning the tile
+off deletes the summary from the watch. All of it is in [`src/wear/sync.ts`](src/wear/sync.ts)
+and the [`wear/`](wear) watch app.
+
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so

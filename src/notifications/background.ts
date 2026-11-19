@@ -5,6 +5,7 @@ import * as TaskManager from 'expo-task-manager';
 import { pushShare, syncNow } from '../sync/engine';
 import { autoBackupIfDue } from '../backup/backup';
 import { refreshWidgetNow } from '../widget/update';
+import { pushToWatchNow } from '../wear/sync';
 import { handleReminderAction, rescheduleAll } from './reminders';
 
 export const NOTIFICATION_TASK = 'med-reminder-response';
@@ -16,6 +17,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_TASK,
   if ('actionIdentifier' in data) {
     await handleReminderAction(data.actionIdentifier, data.notification.request.content.data);
     await refreshWidgetNow();
+    await pushToWatchNow();
     // Caregivers see the answer right away (does nothing unless sharing is on).
     await pushShare().catch(() => {});
   }
@@ -26,6 +28,7 @@ TaskManager.defineTask(REFRESH_TASK, async () => {
   try {
     await rescheduleAll();
     await refreshWidgetNow();
+    await pushToWatchNow();
     await syncNow().catch(() => {});
     await autoBackupIfDue().catch(() => {});
     return BackgroundTask.BackgroundTaskResult.Success;

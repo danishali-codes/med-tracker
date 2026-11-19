@@ -19,7 +19,7 @@ export async function latestRelease() {
 export function pickRelease(releases) {
   const versioned = releases
     .filter((r) => !r.draft && !r.prerelease && /^v\d+(\.\d+)*$/.test(r.tag_name || ''))
-    .map((r) => ({ r, apk: (r.assets || []).find((a) => a.name.endsWith('.apk')) }))
+    .map((r) => ({ r, apk: (r.assets || []).find((a) => a.name.endsWith('.apk') && !a.name.includes('watch')) }))
     .filter((x) => x.apk)
     .sort((a, b) => compareVersions(b.r.tag_name, a.r.tag_name));
   if (!versioned.length) throw new Error('No versioned release with an APK');

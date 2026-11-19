@@ -76,6 +76,8 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Home screen widgets**: Next dose (small, with Taken and Snooze), Today (your rings and the next dose) and Today's list (every dose). Each one adapts when resized, turns green when the day is done and gold when every dose was on time. Medicine names stay off the widget unless you turn them on.
 
+**Galaxy Watch / Wear OS tile** (optional): today's ring, the next dose and Taken / Snooze on your watch. Setup: [docs/watch.md](docs/watch.md).
+
 **Light, dark and true-black modes.**
 
 <p>
@@ -144,6 +146,8 @@ The app uses native modules (notifications, SQLite, background tasks), so it nee
   - `interactions.ts`: built-in interactions and reading drug-label text
 - `src/drugs/`: medicine search (built-in list + RxNav) and label lookups (openFDA)
 - `src/widget/`: the Android home screen widget
+- `src/wear/` and `modules/sabr-wear/`: sends today's summary to the watch tile and handles its buttons
+- `wear/`: the Wear OS watch app with the Sabr tile ([docs/watch.md](docs/watch.md))
 - `src/db/`: SQLite storage
 - `src/notifications/`: scheduling, the notification buttons, background tasks and permissions
 - `src/app/`: screens (Expo Router)
