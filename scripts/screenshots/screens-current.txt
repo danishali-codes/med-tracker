@@ -9,3 +9,4 @@ times times
 report report
 sync sync
 care care
+notification settings @notify

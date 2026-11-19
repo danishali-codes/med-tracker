@@ -7,33 +7,66 @@ If you take one pill a day, a phone alarm is probably enough. Once it's five med
 Sabr (صبر, "patience") is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
 
 <p align="center">
-  <img src="docs/screenshots/0.3/today.png" width="200" alt="Today screen" />
-  <img src="docs/screenshots/0.3/meds.png" width="200" alt="Medications list" />
-  <img src="docs/screenshots/0.3/progress.png" width="200" alt="Progress and streak" />
-  <img src="docs/screenshots/0.3/today-dark.png" width="200" alt="Today screen in dark mode" />
+  <img src="docs/screenshots/latest/today.png" width="200" alt="Today screen" />
+  <img src="docs/screenshots/latest/meds.png" width="200" alt="Medications list" />
+  <img src="docs/screenshots/latest/progress.png" width="200" alt="Progress and streak" />
+  <img src="docs/screenshots/latest/today-dark.png" width="200" alt="Today screen in dark mode" />
 </p>
 
 ## Features
 
 **Schedules that fit real life.** Every day, chosen weekdays, every N days or weeks, on/off cycles (21 on, 7 off), monthly, or as needed. Each med can be due several times a day, with start and end dates. You can pause a med when your doctor says to stop for a week.
 
+<p>
+  <img src="docs/screenshots/latest/medication.png" width="200" />
+</p>
+
 **Times that follow your week.** Set different times on office days and at the weekend, move reminders for a busy week, keep home time while travelling, and switch on Ramadan mode to move doses to suhoor and iftar (from times you set or your city's prayer times, worked out on the phone).
 
+<p>
+  <img src="docs/screenshots/latest/times.png" width="200" />
+</p>
+
 **Reminders you can answer from the notification.** Each one has Taken, Snooze and Skip buttons, so you don't need to open the app. Android's alarm-clock delivery means battery saver can't delay them, and they can repeat until you answer.
+
+<p>
+  <img src="docs/screenshots/latest/notification.png" width="200" />
+</p>
 
 **Notes on how you feel.** A quick mood, symptoms like headache or nausea, and a few words for any day. Add a photo of each pill so they're easy to tell apart.
 
 **A clear answer to "did I take it?"** The Today screen lists what's due and what's done. The History calendar colours every day, and you can tap any day to see or fix what was logged.
 
+<p>
+  <img src="docs/screenshots/latest/today.png" width="200" />
+  <img src="docs/screenshots/latest/history.png" width="200" />
+</p>
+
 **Doses that match the box.** Strength and amount are separate, for example 500 mg, 3 tablets. Half tablets and ml work too. Stock is counted in tablets, and you get a refill alert with roughly how many days are left.
+
+<p>
+  <img src="docs/screenshots/latest/meds.png" width="200" />
+</p>
 
 **Medicine search.** Start typing a brand or generic name. It searches a built-in list of common UAE brands (Panadol, Adol, Concor, Glucophage...) and the US RxNorm list, then fills in the active ingredient and the strengths it comes in.
 
 **Interaction check.** Checks your meds against each other, alcohol and food, using a short built-in list and the official US drug labels (openFDA). It isn't a complete list, and the app says so.
 
+<p>
+  <img src="docs/screenshots/latest/interactions.png" width="200" />
+</p>
+
 **Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Rings, a 7-day row for each med, month and year heatmaps and badges show how you're doing.
 
+<p>
+  <img src="docs/screenshots/latest/progress.png" width="200" />
+</p>
+
 **Reports for your doctor.** A PDF for any period with what was taken, late or missed, day by day, plus your mood and symptom notes.
+
+<p>
+  <img src="docs/screenshots/latest/report.png" width="200" />
+</p>
 
 **Scan the box** to fill in a new medicine: the name, strength and pack size are read on the phone.
 
@@ -41,31 +74,29 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Light, dark and true-black modes.**
 
+<p>
+  <img src="docs/screenshots/latest/today.png" width="200" />
+  <img src="docs/screenshots/latest/today-dark.png" width="200" />
+</p>
+
 **Free and open source.** The full source is here, under the GPL-3.0 licence (see below). Anyone can read how it works, build it themselves, or improve it.
 
-**Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. You can export everything to a file and restore it on a new phone.
+**Private by default.** No account and no server. Doses and history stay on the phone. Online medicine search and medicine names in reminders are off until you turn them on, and Google's cloud backup is turned off for the app. You can export everything to a file and restore it on a new phone.
+
+<p>
+  <img src="docs/screenshots/latest/settings.png" width="200" />
+</p>
 
 **Optional backup and caregiver sharing, on your own server.** If you run a [PocketBase](https://pocketbase.io) server, the app can keep an encrypted backup there, and let a family member see whether today's doses were taken. Everything is encrypted on the phone first, so the server can't read it, and medicine names are only shared if you choose. Both are off until you turn them on. Setup: [server/README.md](server/README.md).
 
-## How it has changed
+<p>
+  <img src="docs/screenshots/latest/sync.png" width="200" />
+  <img src="docs/screenshots/latest/care.png" width="200" />
+</p>
 
-Screenshots of every version are kept in [docs/screenshots](docs/screenshots), taken on the same emulator with the same demo data, so you can compare them side by side.
+## Versions
 
-| | 0.5 | 0.4 | 0.3 | 0.2 | 0.1 |
-|---|---|---|---|---|---|
-| Today | <img src="docs/screenshots/0.5/today.png" width="150" /> | <img src="docs/screenshots/0.4/today.png" width="150" /> | <img src="docs/screenshots/0.3/today.png" width="150" /> | <img src="docs/screenshots/0.2/today.png" width="150" /> | <img src="docs/screenshots/0.1/today.png" width="150" /> |
-| Medications | <img src="docs/screenshots/0.5/meds.png" width="150" /> | <img src="docs/screenshots/0.4/meds.png" width="150" /> | <img src="docs/screenshots/0.3/meds.png" width="150" /> | <img src="docs/screenshots/0.2/meds.png" width="150" /> | <img src="docs/screenshots/0.1/meds.png" width="150" /> |
-| History | <img src="docs/screenshots/0.5/history.png" width="150" /> | <img src="docs/screenshots/0.4/history.png" width="150" /> | <img src="docs/screenshots/0.3/history.png" width="150" /> | <img src="docs/screenshots/0.2/history.png" width="150" /> | <img src="docs/screenshots/0.1/history.png" width="150" /> |
-| Edit a medication | <img src="docs/screenshots/0.5/medication.png" width="150" /> | <img src="docs/screenshots/0.4/medication.png" width="150" /> | <img src="docs/screenshots/0.3/medication.png" width="150" /> | <img src="docs/screenshots/0.2/medication.png" width="150" /> | <img src="docs/screenshots/0.1/medication.png" width="150" /> |
-
-Newest first:
-
-- **0.5** (19 Nov 2026): optional encrypted backup and caregiver sharing through a PocketBase server you host yourself, off unless you turn it on. Private by default: online search and medicine names in reminders are opt-in.
-- **0.4** (19 Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
-- **0.3** (19 Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
-- **0.2.1** (19 Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
-- **0.2** (19 Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
-- **0.1** (17 Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
+Every version's notes, APK and screenshots (light and dark, every screen) are on the [Releases](../../releases) page.
 
 ## Privacy
 
