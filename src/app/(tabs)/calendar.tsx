@@ -4,9 +4,10 @@ import { Pressable, View } from 'react-native';
 import { DoseRow } from '../../components/DoseRow';
 import { NoteCard } from '../../components/NoteCard';
 import { Screen } from '../../components/Screen';
-import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
+import { Button, Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { daysInMonth, diffDays, formatDateLong, formatTime, monthName, parseDateKey, weekdayOf, type DateKey } from '../../domain/dates';
-import type { DaySummary } from '../../domain/progress';
+import { isGoldDay, type DaySummary } from '../../domain/progress';
+import { logDose } from '../../actions';
 import { dosesOn, indexLogs } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
@@ -95,6 +96,7 @@ export default function CalendarScreen() {
               date={key}
               summary={key ? byDate.get(key) : undefined}
               frozen={!!key && progress.frozenDays.has(key)}
+              restored={!!key && progress.restoredDays.has(key)}
               isToday={key === today}
               selected={key === selected}
               onPress={() => key && setSelected(key)}
@@ -106,6 +108,11 @@ export default function CalendarScreen() {
           <Legend color={c.warn} label="Some missed" />
           <Legend color={c.bad} label="Missed" />
           <Legend color={c.ice} label="Freeze used" />
+          <Legend color={c.primary} label="Won back" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 10, marginTop: 4 }}>
+            <Ionicons name="star" size={11} color={c.warn} />
+            <Text style={{ fontSize: 12, color: c.muted, fontWeight: '600' }}>All on time</Text>
+          </View>
         </View>
       </Card>
       </FadeIn>
@@ -127,16 +134,37 @@ export default function CalendarScreen() {
         {dayDoses.map((d) => {
           const med = medById.get(d.medId);
           if (!med) return null;
-          if (isFuture)
+          if (isFuture) {
+            const skipped = dayLogs.get(d.slot)?.status === 'skipped';
             return (
               <View key={d.slot} style={st.futureRow}>
-                <Text style={st.futureText}>{med.name}</Text>
-                <Text style={st.futureTime}>{formatTime(d.time)}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[st.futureText, skipped && { color: c.muted, textDecorationLine: 'line-through' }]}>{med.name}</Text>
+                  <Text style={st.futureTime}>{skipped ? 'Skipped, no reminder' : formatTime(d.time)}</Text>
+                </View>
+                <Button title={skipped ? 'Undo' : 'Skip'} small kind="secondary" onPress={() => logDose(d, skipped ? null : 'skipped')} />
               </View>
             );
+          }
           return <DoseRow key={d.slot} dose={d} med={med} log={dayLogs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} showTime />;
         })}
       </Card>
+      {isFuture && dayDoses.length > 0 ? (
+        <>
+          {dayDoses.some((d) => !dayLogs.has(d.slot)) ? (
+            <Button
+              title="Skip this whole day"
+              kind="secondary"
+              onPress={() => dayDoses.filter((d) => !dayLogs.has(d.slot)).forEach((d) => logDose(d, 'skipped'))}
+              style={{ marginTop: 12 }}
+            />
+          ) : null}
+          <Text style={[st.hint, { marginTop: 10 }]}>
+            Planning a day off a medicine, say for a test or because your doctor said so? Skip it here. There's no reminder, and it doesn't use a freeze or
+            break your streak.
+          </Text>
+        </>
+      ) : null}
       {!isFuture && selected !== today && dayDoses.length > 0 ? (
         <Text style={st.hint}>Forgot to log something? Tap the circle to mark it taken, or tap it again to change it.</Text>
       ) : null}
@@ -153,6 +181,7 @@ function DayCell({
   date,
   summary,
   frozen,
+  restored,
   isToday,
   selected,
   onPress,
@@ -160,6 +189,7 @@ function DayCell({
   date: DateKey | null;
   summary?: DaySummary;
   frozen: boolean;
+  restored: boolean;
   isToday: boolean;
   selected: boolean;
   onPress: () => void;
@@ -171,6 +201,7 @@ function DayCell({
   let fg = c.text;
   if (summary) {
     if (frozen) bg = c.ice;
+    else if (restored) bg = c.primary;
     else if (summary.status === 'complete') bg = c.good;
     else if (summary.status === 'partial') bg = c.warn;
     else if (summary.status === 'missed') bg = c.bad;
@@ -187,6 +218,11 @@ function DayCell({
         ]}
       >
         <Text style={[st.dayText, { color: fg }]}>{parseDateKey(date).d}</Text>
+        {isGoldDay(summary) ? (
+          <View style={[st.star, { backgroundColor: c.card }]}>
+            <Ionicons name="star" size={10} color={c.warn} />
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -217,7 +253,8 @@ const useStyles = makeStyles((c) => ({
   statValue: { fontSize: 30, fontWeight: '900', color: c.primary },
   statLabel: { fontSize: 13, color: c.muted, textAlign: 'center', fontWeight: '600' },
   empty: { color: c.muted, paddingVertical: 12 },
-  futureRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
+  futureRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, gap: 10 },
+  star: { position: 'absolute', top: -3, right: -3, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   futureText: { fontSize: 16, fontWeight: '700', color: c.text },
   futureTime: { fontSize: 15, color: c.muted, fontWeight: '600' },
   hint: { fontSize: 13, color: c.muted, textAlign: 'center', marginHorizontal: 16 },

@@ -56,7 +56,11 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
   <img src="docs/screenshots/latest/interactions.png" width="200" />
 </p>
 
-**Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Rings, a 7-day row for each med, month and year heatmaps and badges show how you're doing.
+**Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Lost one anyway? Take every dose for the next 3 days and it comes back. Days you plan to skip (a test, a doctor's instruction) don't count against you at all. A consistency score, gold days (every dose on time), a perfect streak, milestones, rings, heatmaps and badges show how you're doing.
+
+**Routines and timing.** Group medicines you take together, like Breakfast at 8:00, under one reminder with Take all. Empty-stomach medicines start a timer that tells you when you can eat. If you always take a dose 40 minutes after its reminder, Sabr offers to move the reminder.
+
+**Month and year in review, and patterns.** A page on how each month and year went, and a view that lines up your mood and symptom notes with missed doses. All worked out on the phone.
 
 <p>
   <img src="docs/screenshots/latest/progress.png" width="200" />
@@ -81,7 +85,7 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Free and open source.** The full source is here, under the GPL-3.0 licence (see below). Anyone can read how it works, build it themselves, or improve it.
 
-**Private by default.** No account and no server. Doses and history stay on the phone. Online medicine search and medicine names in reminders are off until you turn them on, and Google's cloud backup is turned off for the app. You can export everything to a file and restore it on a new phone.
+**Private by default.** No account and no server. Doses and history stay on the phone. Online medicine search and medicine names in reminders are off until you turn them on, and Google's cloud backup is turned off for the app. Back up to a password-locked file (save it to Google Drive or anywhere you like, or let Sabr write one to a folder every week) and restore it on a new phone. An optional app lock asks for your fingerprint, face or phone PIN.
 
 <p>
   <img src="docs/screenshots/latest/settings.png" width="200" />

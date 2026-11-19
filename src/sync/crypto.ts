@@ -41,7 +41,7 @@ export function fromB64(s: string): Uint8Array {
 }
 
 // Small UTF-8 helpers, so this works on engines without TextEncoder/TextDecoder.
-const utf8 = {
+export const utf8 = {
   encode(s: string): Uint8Array {
     const bin = unescape(encodeURIComponent(s));
     const out = new Uint8Array(bin.length);

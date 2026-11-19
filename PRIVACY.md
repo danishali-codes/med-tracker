@@ -53,8 +53,15 @@ status, and can delete your backup from the server. All sync requests are made f
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so
-  the database isn't copied to Google Drive. Use Settings > Your data > Export backup instead, and keep
-  that file somewhere private.
+  the database isn't copied to Google Drive. Use Settings > Backup and restore instead. The app
+  never uploads a backup itself: it hands the file to the place you choose (Google Drive, Files...)
+  through Android's share sheet, or writes it to a folder you picked. With a password, the file is
+  locked on the phone (PBKDF2-SHA512 key from the password, then XSalsa20-Poly1305) and can't be
+  read without it. The password for automatic backups is kept in the phone's secure storage.
+  Without a password the file is plain JSON, and the app warns you before saving it.
+- **App lock:** uses the phone's own fingerprint, face or screen lock check. Sabr never sees
+  your fingerprint or PIN. **Hide in recent apps** also blocks screenshots of the app.
+- **Patterns, reviews and timing suggestions** are worked out on the phone from data already on it.
 - **Notifications:** by default reminders and refill alerts don't name your medicines
   ("Time for your 8:00 dose, 2 medicines to take"), on the lock screen and on a paired watch.
   With **Show medicine names in reminders** on, they do. Reminders are marked private, so

@@ -20,6 +20,8 @@ import { black, dark, FONT, light, ThemeContext } from '../theme';
 import { refreshWidget } from '../widget/update';
 import * as repo from '../db/repo';
 import { startSync, syncNow } from '../sync/engine';
+import { AppLockGate } from '../components/AppLock';
+import { autoBackupIfDue } from '../backup/backup';
 
 // Show reminders even while the app is open.
 Notifications.setNotificationHandler({
@@ -57,6 +59,7 @@ export default function RootLayout() {
     // Optional sync: does nothing unless turned on in Settings.
     startSync();
     syncNow().catch(() => {});
+    autoBackupIfDue().catch(() => {});
 
     // Buttons pressed while the app is open (Android also runs the background task; handling is idempotent).
     const responses = Notifications.addNotificationResponseReceivedListener((r) => {
@@ -68,6 +71,7 @@ export default function RootLayout() {
         checkTimeZone();
         rescheduleAll().catch(() => {});
         syncNow().catch(() => {});
+        autoBackupIfDue().catch(() => {});
       }
     });
     return () => {
@@ -83,6 +87,7 @@ export default function RootLayout() {
       <ThemeContext.Provider value={c}>
         <ThemeProvider value={navTheme}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
+          <AppLockGate>
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: c.bg },
@@ -101,7 +106,12 @@ export default function RootLayout() {
             <Stack.Screen name="report" options={{ title: 'Doctor report' }} />
             <Stack.Screen name="sync" options={{ title: 'Sync and sharing' }} />
             <Stack.Screen name="care" options={{ title: 'People I look after' }} />
+            <Stack.Screen name="backup" options={{ title: 'Backup and restore' }} />
+            <Stack.Screen name="routines" options={{ title: 'Routines' }} />
+            <Stack.Screen name="review" options={{ title: 'In review' }} />
+            <Stack.Screen name="patterns" options={{ title: 'Patterns' }} />
           </Stack>
+          </AppLockGate>
         </ThemeProvider>
       </ThemeContext.Provider>
     </SafeAreaProvider>

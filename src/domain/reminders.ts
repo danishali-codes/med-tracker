@@ -135,6 +135,19 @@ export function reminderText(
   r: Pick<PlannedReminder, 'kind' | 'time'>,
   meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form'>[],
   showNames: boolean,
+  /** The routine's name, e.g. "Breakfast", when this time has one. */
+  routine?: string,
+): { title: string; body: string } {
+  const t = reminderTextPlain(r, meds, showNames);
+  if (!routine || r.kind === 'missed') return t;
+  const title = r.kind === 'nag' ? `Still waiting: ${routine}` : r.kind === 'snoozed' ? `Snoozed: ${routine}` : `${routine}: ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`;
+  return { ...t, title };
+}
+
+function reminderTextPlain(
+  r: Pick<PlannedReminder, 'kind' | 'time'>,
+  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form'>[],
+  showNames: boolean,
 ): { title: string; body: string } {
   const when = formatTime(r.time);
   const count = meds.length === 1 ? '1 medicine' : `${meds.length} medicines`;

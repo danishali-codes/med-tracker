@@ -2,11 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { router } from 'expo-router';
+import Svg, { Line, Polyline } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { HeatLegend, MonthHeatmap, YearHeatmap } from '../../components/Heatmap';
 import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { addDays, parseDateKey, weekdayOf } from '../../domain/dates';
-import { adherence, FREEZE_EVERY, MAX_FREEZES } from '../../domain/progress';
+import { adherence, consistency, consistencySeries, FREEZE_EVERY, MAX_FREEZES, nextMilestone } from '../../domain/progress';
+import { lastMonth } from '../../domain/insights';
+import { monthName } from '../../domain/dates';
 import { useProgress } from '../../hooks/useData';
 import { makeStyles, useTheme } from '../../theme';
 
@@ -21,6 +24,12 @@ export default function ProgressScreen() {
   const days = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
   const earned = badges.filter((b) => b.has).length;
   const [range, setRange] = useState<'weeks' | 'month' | 'year'>('weeks');
+  const next = nextMilestone(progress.currentStreak);
+  const score = Math.round(consistency(summaries) * 100);
+  const series = consistencySeries(summaries).slice(-60);
+  const monthAgo = series.length > 30 ? Math.round(series[series.length - 31].score * 100) : null;
+  const lm = lastMonth(today);
+  const thisYear = Number(today.slice(0, 4));
 
   return (
     <Screen title="Progress" subtitle="Keep it going">
@@ -31,6 +40,7 @@ export default function ProgressScreen() {
             <Text style={s.streakBig}>{progress.currentStreak}</Text>
             <Text style={s.streakLabel}>day streak</Text>
             <Text style={s.streakSub}>Best: {progress.bestStreak} days</Text>
+            {next ? <Text style={s.streakSub}>Next milestone: {next} days</Text> : null}
           </View>
           <View style={s.freezeBox}>
             <Ionicons name="snow-outline" size={24} color="#fff" />
@@ -41,6 +51,30 @@ export default function ProgressScreen() {
           </View>
         </View>
       </FadeIn>
+
+      <FadeIn delay={30}>
+        <Card style={s.scoreCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.scoreLabel}>Consistency</Text>
+            <Text style={s.scoreBig}>{score}</Text>
+            <Text style={s.hintTight}>
+              {monthAgo == null ? 'Builds up over the first few weeks.' : score >= monthAgo ? `Up ${score - monthAgo} from a month ago.` : `Down ${monthAgo - score} from a month ago.`}
+            </Text>
+          </View>
+          <Spark values={series.map((p) => p.score)} color={c.primary} />
+        </Card>
+        <Text style={[s.hint, { marginTop: 0, marginBottom: 12, marginHorizontal: 6 }]}>
+          A score out of 100 that rises with every day you take your doses and drops a little on a missed day, so one bad day never wipes out a good month.
+        </Text>
+      </FadeIn>
+
+      <FadeIn delay={45} style={s.grid}>
+        <Stat icon="star" value={`${progress.perfectStreak}`} label="Perfect streak" color={c.warn} />
+        <Stat icon="ribbon-outline" value={`${progress.bestPerfectStreak}`} label="Best perfect streak" color={c.warn} />
+      </FadeIn>
+      <Text style={[s.hint, { marginTop: 0, marginBottom: 12, marginHorizontal: 6 }]}>
+        The perfect streak counts days in a row with every dose done and no freeze or win-back used.
+      </Text>
 
       <FadeIn delay={60} style={s.grid}>
         <Stat icon="pie-chart-outline" value={pct30 == null ? '–' : `${Math.round(pct30 * 100)}%`} label="Last 30 days" color={c.primary} />
@@ -55,6 +89,42 @@ export default function ProgressScreen() {
           <View style={{ flex: 1 }}>
             <Text style={s.reportTitle}>Doctor report</Text>
             <Text style={[s.hint, { marginTop: 2 }]}>A PDF of doses, missed days and symptoms for any period</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
+      </FadeIn>
+
+      <FadeIn delay={100}>
+        <SectionTitle>Look back</SectionTitle>
+        <PressableScale onPress={() => router.push({ pathname: '/review', params: { kind: 'month', y: today.slice(0, 4), m: String(Number(today.slice(5, 7))) } })} style={s.reportLink}>
+          <Ionicons name="calendar-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.reportTitle}>{monthName(Number(today.slice(5, 7)))} so far</Text>
+            <Text style={[s.hint, { marginTop: 2 }]}>
+              Or{' '}
+              <Text
+                style={{ color: c.primary, fontWeight: '800' }}
+                onPress={() => router.push({ pathname: '/review', params: { kind: 'month', y: String(lm.y), m: String(lm.m) } })}
+              >
+                {monthName(lm.m)} in review
+              </Text>
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
+        <PressableScale onPress={() => router.push({ pathname: '/review', params: { kind: 'year', y: String(thisYear) } })} style={s.reportLink}>
+          <Ionicons name="albums-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.reportTitle}>{thisYear} in review</Text>
+            <Text style={[s.hint, { marginTop: 2 }]}>Your year so far, month by month</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
+        <PressableScale onPress={() => router.push('/patterns')} style={s.reportLink}>
+          <Ionicons name="pulse-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.reportTitle}>Patterns</Text>
+            <Text style={[s.hint, { marginTop: 2 }]}>How your mood and symptoms line up with your doses</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={c.faint} />
         </PressableScale>
@@ -91,7 +161,10 @@ export default function ProgressScreen() {
             <YearHeatmap byDate={byDate} frozen={progress.frozenDays} today={today} />
           )}
           {range !== 'weeks' ? <HeatLegend /> : null}
-          <Text style={s.hint}>Taking a dose late still counts. Only a dose missed all day breaks the streak, and a freeze covers one missed day.</Text>
+          <Text style={s.hint}>
+            Taking a dose late still counts. Only a dose missed all day breaks the streak, and a freeze covers one missed day. With no freeze left, taking
+            every dose for the next 3 days wins the streak back.
+          </Text>
         </Card>
       </FadeIn>
 
@@ -114,6 +187,21 @@ export default function ProgressScreen() {
         </View>
       </FadeIn>
     </Screen>
+  );
+}
+
+/** A small line of the consistency score over the last two months. */
+function Spark({ values, color }: { values: number[]; color: string }) {
+  const c = useTheme();
+  const w = 120,
+    h = 54;
+  if (values.length < 2) return null;
+  const pts = values.map((v, i) => `${((i / (values.length - 1)) * w).toFixed(1)},${(h - v * h).toFixed(1)}`).join(' ');
+  return (
+    <Svg width={w} height={h}>
+      <Line x1={0} y1={h - 0.5} x2={w} y2={h - 0.5} stroke={c.border} strokeWidth={1} />
+      <Polyline points={pts} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+    </Svg>
   );
 }
 
@@ -169,6 +257,10 @@ function Bar({ value, color, delay, label, sub, highlight }: { value: number; co
 }
 
 const useStyles = makeStyles((c) => ({
+  scoreCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  scoreLabel: { fontSize: 11, color: c.muted, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
+  scoreBig: { fontSize: 40, fontWeight: '900', color: c.text, lineHeight: 46 },
+  hintTight: { fontSize: 12, color: c.muted, fontWeight: '600' },
   reportLink: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginBottom: 14 },
   reportTitle: { fontSize: 16, fontWeight: '800', color: c.text },
   streak: { borderRadius: 32, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },

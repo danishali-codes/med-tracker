@@ -10,7 +10,9 @@ import { Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, Ring, Rings, SectionTitle, Text } from '../../components/ui';
 import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
 import { describeDose } from '../../domain/dose';
-import { adherence } from '../../domain/progress';
+import { adherence, isGoldDay } from '../../domain/progress';
+import { routineAt } from '../../domain/routines';
+import { EarnBackCard, FoodTimerCard, MilestoneCard, ReviewPrompt, TimingCard } from '../../components/TodayCards';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
@@ -29,7 +31,8 @@ export default function TodayScreen() {
   const settings = useSettings();
   const people = useFollowing();
   const version = useDbVersion();
-  const { today, progress, byDate } = useProgress();
+  const { today, progress, byDate, summaries } = useProgress();
+  const summariesCount = summaries.length;
   const [perm, setPerm] = useState<PermissionState | null>(null);
   const [celebrate, setCelebrate] = useState(false);
 
@@ -49,6 +52,7 @@ export default function TodayScreen() {
   const onTime = taken.filter((d) => punctuality(d, new Date(logs.get(d.slot)!.at), settings.onTimeWindowMinutes) === 'onTime').length;
   const now = new Date();
   const allDone = doses.length > 0 && answered === doses.length;
+  const goldToday = allDone && taken.length > 0 && onTime === taken.length;
 
   // This week, Monday first.
   const monday = addDays(today, -((weekdayOf(today) + 6) % 7));
@@ -121,6 +125,12 @@ export default function TodayScreen() {
                 <Ionicons name="snow-outline" size={14} color="#fff" />
                 <Text style={s.pillText}>{progress.freezes} {progress.freezes === 1 ? 'freeze' : 'freezes'}</Text>
               </View>
+              {goldToday ? (
+                <View style={[s.pill, { backgroundColor: c.warn }]}>
+                  <Ionicons name="star" size={14} color="#fff" />
+                  <Text style={s.pillText}>All on time</Text>
+                </View>
+              ) : null}
             </View>
           </LinearGradient>
         </FadeIn>
@@ -140,9 +150,13 @@ export default function TodayScreen() {
                     total={future ? 0 : (sum?.scheduled ?? 0)}
                     size={34}
                     stroke={5}
-                    color={sum?.status === 'complete' ? c.good : sum?.status === 'missed' ? c.bad : c.primary}
+                    color={isGoldDay(sum) ? c.warn : sum?.status === 'complete' ? c.good : sum?.status === 'missed' ? c.bad : c.primary}
                   >
-                    {sum?.status === 'complete' ? <Ionicons name="checkmark" size={14} color={c.good} /> : null}
+                    {isGoldDay(sum) ? (
+                      <Ionicons name="star" size={13} color={c.warn} />
+                    ) : sum?.status === 'complete' ? (
+                      <Ionicons name="checkmark" size={14} color={c.good} />
+                    ) : null}
                   </Ring>
                   <Text style={[s.weekNum, isToday && { color: c.primary, fontWeight: '900' }]}>{parseDateKey(d).d}</Text>
                 </PressableScale>
@@ -151,17 +165,24 @@ export default function TodayScreen() {
           </Card>
         </FadeIn>
 
+        <MilestoneCard progress={progress} />
+        <EarnBackCard progress={progress} />
+        <FoodTimerCard key={version} />
+
         {allDone ? (
           <FadeIn>
-            <Card style={[s.done, { backgroundColor: c.goodSoft }]}>
-              <Ionicons name="checkmark-circle" size={30} color={c.good} />
+            <Card style={[s.done, { backgroundColor: goldToday ? c.warnSoft : c.goodSoft }]}>
+              <Ionicons name={goldToday ? 'star' : 'checkmark-circle'} size={30} color={goldToday ? c.warn : c.good} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.bannerTitle, { color: c.good }]}>All done for today</Text>
-                <Text style={s.bannerText}>Every dose is logged.</Text>
+                <Text style={[s.bannerTitle, { color: goldToday ? c.warn : c.good }]}>{goldToday ? 'A gold day' : 'All done for today'}</Text>
+                <Text style={s.bannerText}>{goldToday ? 'Every dose taken, and every one on time.' : 'Every dose is logged.'}</Text>
               </View>
             </Card>
           </FadeIn>
         ) : null}
+
+        <TimingCard meds={meds} settings={settings} today={today} version={version} />
+        <ReviewPrompt today={today} hasHistory={summariesCount > 20} />
 
         {activeCount === 0 ? (
           <FadeIn delay={120}>
@@ -188,7 +209,7 @@ export default function TodayScreen() {
                   ) : null
                 }
               >
-                {formatTime(g.time)}
+                {routineAt(g.time, settings.routines) ? `${routineAt(g.time, settings.routines)!.name} · ${formatTime(g.time)}` : formatTime(g.time)}
               </SectionTitle>
               <Card style={{ paddingVertical: 6 }}>
                 {g.doses.map((d) => {

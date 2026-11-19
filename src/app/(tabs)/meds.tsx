@@ -6,7 +6,8 @@ import { RoundButton, Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { formatDateLong } from '../../domain/dates';
 import { daysOfSupply, describeDose, isLowStock, units } from '../../domain/dose';
-import { medDays, medStreak } from '../../domain/progress';
+import { medConsistency, medDays, medStreak } from '../../domain/progress';
+import { foodLabel } from '../../domain/routines';
 import { describeSchedule, indexLogs, isPausedOn, nextDueDate } from '../../domain/schedule';
 import type { DoseLog } from '../../domain/types';
 import type { Medication } from '../../domain/types';
@@ -103,6 +104,12 @@ function MedCard({ med, today, streak, logs }: { med: Medication; today: string;
         <View style={s.tags}>
           {paused ? <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>Paused</Text> : null}
           {streak > 0 ? <Text style={[s.tag, { backgroundColor: c.warnSoft, color: c.flame }]}>{streak} in a row</Text> : null}
+          {scheduled && !paused ? (
+            <Text style={[s.tag, { backgroundColor: c.primarySoft, color: c.primary }]}>Consistency {Math.round(medConsistency(med, logs, today) * 100)}</Text>
+          ) : null}
+          {foodLabel(med.food, med.foodWaitMinutes) ? (
+            <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>{foodLabel(med.food, med.foodWaitMinutes)}</Text>
+          ) : null}
           {med.stock != null ? (
             <Text style={[s.tag, low ? { backgroundColor: c.badSoft, color: c.bad } : { backgroundColor: c.goodSoft, color: c.good }]}>
               {units(med.form, med.stock)} left{days != null ? ` · ~${days}d` : ''}

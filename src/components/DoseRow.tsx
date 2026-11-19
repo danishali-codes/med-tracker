@@ -5,6 +5,7 @@ import { Animated, Image, Pressable, View } from 'react-native';
 import { logDose, snoozeDoses } from '../actions';
 import { formatTime, timeFromDate, toDateKey } from '../domain/dates';
 import { describeDose } from '../domain/dose';
+import { foodLabel } from '../domain/routines';
 import { punctuality } from '../domain/schedule';
 import type { DoseLog, Medication, ScheduledDose } from '../domain/types';
 import { makeStyles, useTheme } from '../theme';
@@ -77,7 +78,7 @@ export function DoseRow({
           {med.name}
         </Text>
         <Text style={s.sub} numberOfLines={1}>
-          {[showTime ? formatTime(dose.time) : null, describeDose(med)].filter(Boolean).join(' · ')}
+          {[showTime ? formatTime(dose.time) : null, describeDose(med), foodLabel(med.food, med.foodWaitMinutes)].filter(Boolean).join(' · ')}
         </Text>
         {dose.usualTime ? <Text style={s.moved}>Moved from {formatTime(dose.usualTime)}</Text> : null}
         {status ? <Text style={[s.status, { color: status.color }]}>{status.text}</Text> : null}
