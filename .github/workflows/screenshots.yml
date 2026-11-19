@@ -94,6 +94,10 @@ jobs:
           profile: pixel_7
           disable-animations: true
           script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt ${{ env.PKG }}
+      # The newest version's screenshots are also kept in docs/screenshots/latest for the README.
+      - name: Copy as latest
+        if: matrix.key == 'current' && env.SKIP != '1'
+        run: mkdir -p shots/latest && cp shots/${{ env.VERSION }}/*.png shots/latest/
       - uses: actions/upload-artifact@v4
         if: always() && env.SKIP != '1'
         with:
