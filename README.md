@@ -51,7 +51,7 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 
 ## Privacy
 
-No accounts, ads, analytics or crash reports, and your data stays on your phone. Medicine search and the interaction check send only a medicine name to free US government services, and offline mode in Settings turns that off too. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
+No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
 
 ## What's next
 

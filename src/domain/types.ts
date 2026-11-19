@@ -89,10 +89,13 @@ export interface Settings {
   /** Pure black backgrounds in dark mode (saves battery on OLED screens). */
   trueBlack: boolean;
   /**
-   * Offline mode: the app never goes online. Medicine search and the interaction check
-   * use only the built-in list (and anything already saved on the phone).
+   * Online medicine search and interaction lookups (off by default). When off, the app
+   * never goes online: search and the interaction check use only the built-in list and
+   * anything already saved on the phone.
    */
-  offline: boolean;
+  onlineLookups: boolean;
+  /** Show medicine names in reminders and refill alerts (off by default, so they say "your medicine"). */
+  showMedNames: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -105,5 +108,6 @@ export const DEFAULT_SETTINGS: Settings = {
   appearance: 'system',
   celebrate: true,
   trueBlack: false,
-  offline: false,
+  onlineLookups: false,
+  showMedNames: false,
 };

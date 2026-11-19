@@ -1,4 +1,5 @@
-import { addDays, atTime, toDateKey, type DateKey, type TimeOfDay } from './dates';
+import { addDays, atTime, formatTime, toDateKey, type DateKey, type TimeOfDay } from './dates';
+import { describeDose } from './dose';
 import { dosesOn, groupByTime } from './schedule';
 import type { DoseLog, Medication, Settings } from './types';
 
@@ -76,4 +77,37 @@ export function planReminders(opts: {
   }
   out.sort((a, b) => a.at.getTime() - b.at.getTime());
   return out.slice(0, maxCount);
+}
+
+/**
+ * The words a reminder shows. Medicine names are only included when the person turned
+ * them on, so by default nothing on the lock screen or a watch says what they take.
+ */
+export function reminderText(
+  r: Pick<PlannedReminder, 'kind' | 'time'>,
+  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form'>[],
+  showNames: boolean,
+): { title: string; body: string } {
+  const when = formatTime(r.time);
+  const count = meds.length === 1 ? '1 medicine' : `${meds.length} medicines`;
+  if (!showNames) {
+    const title = r.kind === 'nag' ? `Still waiting: ${when} dose` : r.kind === 'snoozed' ? `Snoozed reminder: ${when} dose` : `Time for your ${when} dose`;
+    return { title, body: `${count} to take` };
+  }
+  const title =
+    r.kind === 'nag'
+      ? `Still waiting: ${when} meds`
+      : r.kind === 'snoozed'
+        ? `Snoozed reminder: ${when} meds`
+        : meds.length === 1
+          ? `Time for ${meds[0].name}`
+          : `Time for your ${when} meds`;
+  return { title, body: meds.map((m) => `${m.name} (${describeDose(m)})`).join(', ') };
+}
+
+/** Refill alert words, without the name unless the person turned names on. */
+export function refillText(name: string, left: string, showNames: boolean): { title: string; body: string } {
+  return showNames
+    ? { title: `Running low on ${name}`, body: `${left}. Time to order a refill.` }
+    : { title: 'Running low on a medicine', body: 'Open the app to see which one needs a refill.' };
 }

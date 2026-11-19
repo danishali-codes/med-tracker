@@ -158,20 +158,21 @@ export default function SettingsScreen() {
 
       <SectionTitle>Privacy</SectionTitle>
       <Card>
-        <ToggleRow
-          label="Offline mode"
-          hint={
-            settings.offline
-              ? 'The app never goes online. Search and the interaction check use only the built-in list and anything already saved on this phone.'
-              : 'Turn on to stop the app from ever going online. Search and the interaction check then use only the built-in list.'
-          }
-          value={settings.offline}
-          onChange={(v) => update({ offline: v })}
-        />
-        <Text style={[st.hint, { marginTop: 6 }]}>
-          There are no accounts, ads, analytics or crash reports, and your doses, times and history never leave this phone. With offline mode off, two
-          free public services are used, and only a medicine name is sent to them:
+        <Text style={st.hint}>
+          Everything that could share anything is off until you turn it on. There are no accounts, ads, analytics or crash reports, and your doses, times
+          and history never leave this phone.
         </Text>
+        <ToggleRow
+          label="Online medicine search"
+          hint={
+            settings.onlineLookups
+              ? 'On. Search finds many more names and strengths, and the interaction check reads official US drug labels.'
+              : 'Off. The app never goes online. Search and the interaction check use only the built-in list.'
+          }
+          value={settings.onlineLookups}
+          onChange={(v) => update({ onlineLookups: v })}
+        />
+        <Text style={[st.hint, { marginTop: 6 }]}>When it's on, two free public services are used, and only a medicine name is sent to them:</Text>
         <Text style={st.hint}>
           {'\u2022'} US National Library of Medicine (RxNav): the list of medicine names, downloaded once a month, so what you type in search stays on the
           phone. When you pick a medicine, its name is sent to look up the ingredient and strengths.
@@ -180,6 +181,16 @@ export default function SettingsScreen() {
           {'\u2022'} US FDA (openFDA): when you open the interaction check, the active ingredient of each medicine is sent to read its official label.
         </Text>
         <Text style={st.hint}>Like any website, they can see your phone's internet address when it asks.</Text>
+        <ToggleRow
+          label="Show medicine names in reminders"
+          hint={
+            settings.showMedNames
+              ? "On. Reminders and refill alerts name your medicines, also on a paired watch. On the lock screen they're hidden if your phone hides sensitive notification content."
+              : 'Off. Reminders say "Time for your medicine" with the time and how many, everywhere, including the lock screen and your watch.'
+          }
+          value={settings.showMedNames}
+          onChange={(v) => update({ showMedNames: v })}
+        />
         <Button
           title="Delete downloaded medicine info"
           kind="secondary"

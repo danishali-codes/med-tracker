@@ -60,8 +60,8 @@ export default function InteractionsScreen() {
         </Text>
         <Text style={[s.noticeText, { marginTop: 8 }]}>
           {online
-            ? 'Only the active ingredient names are sent to the US FDA to look this up. Nothing about you is sent. Turn on offline mode in Settings to check the built-in list only.'
-            : 'Offline mode is on, so only the built-in list and labels already saved on this phone were checked. Nothing was sent.'}
+            ? 'Only the active ingredient names are sent to the US FDA to look this up. Nothing about you is sent. You can turn online search off in Settings > Privacy.'
+            : 'Online search is off, so only the built-in list and labels already saved on this phone were checked. Nothing was sent. You can turn it on in Settings > Privacy to also read official US drug labels.'}
         </Text>
       </Card>
 

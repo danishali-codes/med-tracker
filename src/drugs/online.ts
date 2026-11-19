@@ -13,8 +13,9 @@ import { parseStrengths, rankNames, type NameHit, type StrengthOption } from './
  *   phone), and the ingredients and strengths of a medicine once you pick it.
  * - openFDA: official US drug labels, read for interaction warnings.
  * Both are free and need no account, and nothing is sent with a cookie, token or ID.
- * With offline mode on (Settings, Privacy) nothing is sent at all, and the built-in
- * list and anything already saved on the phone are used instead.
+ * All of this is off unless online search is turned on in Settings > Privacy. While it
+ * is off nothing is sent at all, and the built-in list and anything already saved on
+ * the phone are used instead.
  */
 
 const RXNAV = 'https://rxnav.nlm.nih.gov/REST';
@@ -23,20 +24,20 @@ const MONTH = 30 * 24 * 3600 * 1000;
 
 export class OfflineModeError extends Error {
   constructor() {
-    super('Offline mode is on');
+    super('Online search is off');
   }
 }
 
-/** True unless offline mode is on. Fails closed: if settings can't be read, stay offline. */
+/** True only when online search is turned on. Fails closed: if settings can't be read, stay offline. */
 export function onlineAllowed(): boolean {
   try {
-    return !getSettings().offline;
+    return getSettings().onlineLookups === true;
   } catch {
     return false;
   }
 }
 
-/** Every request goes through here, so offline mode can't be skipped by accident. */
+/** Every request goes through here, so the Privacy setting can't be skipped by accident. */
 async function getJson<T>(url: string, timeoutMs = 12000): Promise<T> {
   if (!onlineAllowed()) throw new OfflineModeError();
   const ctrl = new AbortController();

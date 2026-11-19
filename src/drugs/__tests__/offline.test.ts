@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Settings and the phone's cache are mocked so the real request code can run here.
-const settings = { offline: true };
+const settings = { onlineLookups: false };
 vi.mock('../../db/repo', () => ({ getSettings: () => settings }));
 vi.mock('expo-file-system', () => {
   class File {
@@ -31,9 +31,10 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-describe('offline mode', () => {
-  it('sends nothing for search, details or labels', async () => {
-    settings.offline = true;
+describe('online search setting', () => {
+  it('sends nothing while online search is off (the default)', async () => {
+    settings.onlineLookups = false;
+    expect((await import('../../domain/types')).DEFAULT_SETTINGS.onlineLookups).toBe(false);
     const online = await import('../online');
     const hits = await online.searchMedicines('panadol');
     const details = await online.medicineDetails('Panadol', 'paracetamol');
@@ -44,8 +45,8 @@ describe('offline mode', () => {
     expect(label).toBeNull();
   });
 
-  it('goes online when offline mode is off, with no cookies', async () => {
-    settings.offline = false;
+  it('goes online only once turned on, with no cookies', async () => {
+    settings.onlineLookups = true;
     const online = await import('../online');
     await online.fetchLabel('paracetamol');
     expect(fetchMock).toHaveBeenCalledTimes(1);

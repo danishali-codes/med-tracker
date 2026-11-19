@@ -3,10 +3,13 @@
 Med Tracker has no accounts, ads, analytics, crash reporting or tracking. Your medicines,
 times, doses and history are stored only in the app's database on your phone.
 
+Anything that could share or show what you take is **off until you turn it on** in
+Settings > Privacy.
+
 ## What leaves the phone
 
-Only two things ever go online, both to free US government services, and both send a
-medicine or ingredient name only. Nothing identifies you, and no cookies, tokens or IDs
+Out of the box, nothing. With **Online medicine search** turned on, two things go online,
+both to free US government services, and both send a medicine or ingredient name only. Nothing identifies you, and no cookies, tokens or IDs
 are sent. Like any website, the service can see the phone's internet address.
 
 | When | Sent to | What is sent |
@@ -17,19 +20,23 @@ are sent. Like any website, the service can see the phone's internet address.
 
 All requests are made from one file, [`src/drugs/online.ts`](src/drugs/online.ts).
 
-## Offline mode
+## Online medicine search (off by default)
 
-Settings > Privacy > Offline mode stops all of the above. Search and the interaction check
-then use only the built-in list and anything already saved on the phone. The same screen
-can delete the downloaded names and labels.
+While it is off, the app sends nothing. Search and the interaction check use only the
+built-in list and anything already saved on the phone. Every request goes through one
+check of this setting, which also counts as off if settings can't be read. Settings >
+Privacy can also delete the downloaded names and labels.
 
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so
   the database isn't copied to Google Drive. Use Settings > Your data > Export backup instead, and keep
   that file somewhere private.
-- **Notifications:** reminders show the medicine name, on the lock screen and on a paired
-  watch. They are local notifications; no push service is used.
+- **Notifications:** by default reminders and refill alerts don't name your medicines
+  ("Time for your 8:00 dose, 2 medicines to take"), on the lock screen and on a paired watch.
+  With **Show medicine names in reminders** on, they do. Reminders are marked private, so
+  if your phone hides sensitive notification content on the lock screen, the text is hidden
+  there and shown once unlocked. They are local notifications; no push service is used.
 - **Keyboard:** your phone's keyboard app can see what you type in any app. Gboard and
   Samsung Keyboard have their own settings for this.
 - **Future caregiver sync** (planned for 0.5) will only talk to a server you host yourself,
