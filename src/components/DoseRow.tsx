@@ -62,7 +62,7 @@ export function DoseRow({
 
   return (
     <Pressable onLongPress={options} style={[s.row, log && { opacity: skipped ? 0.55 : 0.92 }]} delayLongPress={300}>
-      <MedIcon form={med.form} color={med.color} />
+      <MedIcon med={med} />
       <View style={{ flex: 1 }}>
         <Text style={[s.name, taken && s.nameDone]} numberOfLines={1}>
           {med.name}

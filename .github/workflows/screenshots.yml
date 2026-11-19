@@ -5,10 +5,15 @@ name: Screenshots
 # in docs/screenshots/<version>/. Runs when the screenshot tools change, or by hand.
 on:
   push:
+    branches-ignore: [main]
     paths:
       - scripts/screenshots/**
       - .github/workflows/screenshots.yml
   workflow_dispatch:
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   shoot:
@@ -17,9 +22,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - version: '0.1'
+          # Released versions are pinned to their commit; "current" is this push.
+          - key: '0.1'
             ref: c22ec81cf21bd9634260f4d9885a3cba65dd3019
-          - version: '0.2'
+          - key: '0.2'
+            ref: b93ed248d30b6928f5613d150c4256930a4966a0
+          - key: current
             ref: ''
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +45,8 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
+      - name: Read the version
+        run: echo "VERSION=$(node -p "require('./app/app.json').expo.version.replace(/\\.0$/, '')")" >> "$GITHUB_ENV"
       - name: Add demo data
         working-directory: app
         run: |
@@ -62,10 +72,39 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
-          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ matrix.version }} tools/scripts/screenshots/screens-${{ matrix.version }}.txt
+          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: screenshots-${{ matrix.version }}
+          name: screenshots-${{ matrix.key }}
           path: shots/
           if-no-files-found: warn
+
+  # Commits the new screenshots to docs/screenshots/<version>/ on the same branch,
+  # so they show up in the pull request (and in the README and release notes once merged).
+  save:
+    needs: shoot
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: screenshots-*
+          path: shots
+          merge-multiple: true
+      - name: Commit screenshots
+        run: |
+          for dir in shots/*/; do
+            v=$(basename "$dir")
+            mkdir -p "docs/screenshots/$v"
+            cp "$dir"*.png "docs/screenshots/$v/" 2>/dev/null || true
+          done
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git -c user.name=danishali-codes -c user.email=76103337+danishali-codes@users.noreply.github.com commit -m "Update screenshots"
+          git push

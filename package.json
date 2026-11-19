@@ -46,5 +46,6 @@
     "test": "vitest run",
     "prebuild": "expo prebuild --platform android --no-install"
   },
-  "private": true
+  "private": true,
+  "license": "GPL-3.0-or-later"
 }
