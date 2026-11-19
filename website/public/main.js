@@ -42,4 +42,12 @@
       el.textContent = 'Version ' + rel.version + mb + date + '. Free, no account needed.';
     });
   }).catch(function () {});
+  // danishali.dev shows this page in a window. GitHub and other sites refuse to load
+  // inside it, so outside links open in a new tab there.
+  if (window.top !== window.self) {
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+      a.target = '_blank';
+      a.rel = 'noopener';
+    });
+  }
 })();
