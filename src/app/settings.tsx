@@ -173,6 +173,14 @@ export default function SettingsScreen() {
               taken right from it.
             </Text>
           </Card>
+          <SectionTitle>Smartwatch</SectionTitle>
+          <Card>
+            <Text style={st.hint}>
+              Reminders show on your watch with the Taken, Snooze and Skip buttons once the watch is allowed to show this app. On a Galaxy Watch, open the
+              Galaxy Wearable app, go to Watch settings, then Notifications, then App notifications, and turn on Med Tracker. The watch only buzzes while
+              the phone screen is off.
+            </Text>
+          </Card>
         </>
       ) : null}
 
