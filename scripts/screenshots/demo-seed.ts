@@ -52,7 +52,16 @@ function seed() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const repo = require('./db/repo');
-    if (typeof repo.saveNote === 'function') repo.saveNote({ date: today, mood: 4, symptoms: ['Tired'], text: 'Slept badly, felt fine after lunch.' });
+    if (typeof repo.saveNote === 'function') {
+      // A few weeks of mood notes so Patterns and the month review have something to show (0.6 onwards).
+      for (let i = 1; i <= 30; i++) {
+        const date = addDays(today, -i);
+        const roll = rand();
+        const mood = date === addDays(missedDay, 1) || roll < 0.15 ? 2 : roll < 0.5 ? 3 : 4;
+        repo.saveNote({ date, mood, symptoms: mood === 2 ? ['Tired', 'Headache'] : roll > 0.9 ? ['Tired'] : [], text: '' });
+      }
+      repo.saveNote({ date: today, mood: 4, symptoms: ['Tired'], text: 'Slept badly, felt fine after lunch.' });
+    }
   } catch {
     // older versions have no notes
   }

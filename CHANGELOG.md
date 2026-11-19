@@ -6,6 +6,35 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.6
+
+Ideas borrowed from habit trackers: keeping your data safe, fairer streaks, routines and a look back at how it's going.
+
+<p>
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.6/today.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.6/progress.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.6/review.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.6/backup.png" width="200" />
+</p>
+
+### Added
+- Backup and restore (Settings): lock a backup with a password, then save it to Google Drive, Files or anywhere through the share sheet. Restoring asks for the password. Without a password the app warns you first.
+- Automatic backup: once a day, week or fortnight, a password-locked backup is written to a folder you choose, keeping the last 4.
+- App lock: fingerprint, face or the phone's PIN to open Sabr, locking again after the time you pick. Reminders and their buttons keep working while it's locked. Optional: hide the app in recent apps (this also blocks screenshots).
+- Win back a streak: when a streak of 3 days or more breaks with no freeze left, taking every dose for the next 3 days brings it back.
+- Planned skips: on the History tab, skip a future dose or a whole day (a test, a doctor's instruction). There's no reminder, and it neither uses a freeze nor breaks the streak.
+- Consistency score out of 100, overall and per medicine, after Loop Habit Tracker's habit strength: it rises with each good day and only dips on a missed one.
+- Gold days, with a star, when every dose was taken on time. A perfect streak counts days in a row with every dose done and no freeze or win-back used.
+- Milestones at 7, 14, 30, 60, 100, 180 and 365 days and beyond, plus new badges.
+- Routines: name a time, like Breakfast at 8:00, and pick its medicines. They share one reminder that says the routine's name, and Today groups them with Take all.
+- Food timers: mark a medicine as taken on an empty stomach and how long to wait. After you take it, Today counts down and a notice says when you can eat.
+- Learns your timing: if you usually take a dose 20 minutes or more before or after its reminder, Sabr offers to move the reminder.
+- Month and year in review: taken, on time, full and gold days, longest run, consistency, the hardest time of day, mood and symptoms. Today offers last month's review in the first week of a month.
+- Patterns: mood and symptoms on days after a missed dose compared with days after everything was taken, per medicine too. Worked out on the phone, with a reminder that it isn't medical advice.
+
+### Changed
+- A day where every dose was skipped on purpose no longer counts towards the streak; it's neutral, like a day with nothing due.
+
 ## 0.5.1
 
 The first signed build, under the app's final ID.

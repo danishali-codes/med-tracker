@@ -1,5 +1,5 @@
 import { addDays, daysInMonth, diffDays, eachDay, monthName, parseTime, type DateKey, type TimeOfDay } from './dates';
-import { consistencySeries, isPerfectDay, trackedFrom, type DaySummary } from './progress';
+import { consistencySeries, isFullDay, isGoldDay, trackedFrom, type DaySummary } from './progress';
 import { isMedDueOn, slotKey } from './schedule';
 import type { DayNote, DoseLog, Medication } from './types';
 
@@ -23,7 +23,10 @@ export interface Review {
   /** Share of due doses taken (skips left out), or null when nothing was due. */
   takenPct: number | null;
   onTimePct: number | null;
+  /** Days with every dose done. */
   perfectDays: number;
+  /** Days with every dose done on time. */
+  goldDays: number;
   missedDays: number;
   freezesUsed: number;
   /** Longest run of complete days inside the period. */
@@ -83,6 +86,7 @@ export function buildReview(opts: {
     skipped = 0,
     onTime = 0,
     perfectDays = 0,
+    goldDays = 0,
     missedDays = 0,
     daysWithDoses = 0,
     run = 0,
@@ -94,7 +98,8 @@ export function buildReview(opts: {
     skipped += s.skipped;
     onTime += s.onTime;
     if (s.scheduled > 0) daysWithDoses++;
-    if (isPerfectDay(s)) perfectDays++;
+    if (isFullDay(s)) perfectDays++;
+    if (isGoldDay(s)) goldDays++;
     if (s.status === 'partial' || s.status === 'missed') missedDays++;
     if (opts.frozenDays.has(s.date)) freezesUsed++;
     if (s.status === 'complete') longestRun = Math.max(longestRun, ++run);
@@ -156,6 +161,7 @@ export function buildReview(opts: {
     takenPct: due > 0 ? taken / due : null,
     onTimePct: taken > 0 ? onTime / taken : null,
     perfectDays,
+    goldDays,
     missedDays,
     freezesUsed,
     longestRun,

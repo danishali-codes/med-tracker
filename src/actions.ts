@@ -4,6 +4,7 @@ import { dosesOn } from './domain/schedule';
 import type { DoseStatus, Medication } from './domain/types';
 import * as repo from './db/repo';
 import { dismissGroup, notifyLowStock, rescheduleAll } from './notifications/reminders';
+import { startFoodTimer } from './notifications/food';
 
 /** Log, change or clear (null) a dose from inside the app, then refresh reminders. */
 export async function logDose(
@@ -11,6 +12,7 @@ export async function logDose(
   status: DoseStatus | null,
 ) {
   const low = repo.setDose(dose, status);
+  if (status === 'taken') startFoodTimer([dose.medId]).catch(() => {});
   const group = groupKey(dose.date, dose.time);
   const stillPending = dosesOn(repo.getMeds(), dose.date).some((d) => d.time === dose.time && !repo.getLog(d.slot));
   if (!stillPending) {
@@ -28,6 +30,7 @@ export async function logAsNeeded(med: Medication) {
   const time = timeFromDate(now);
   const slot = `${med.id}|${date}|prn-${now.getTime()}`;
   const low = repo.setDose({ slot, medId: med.id, date, time }, 'taken', now);
+  startFoodTimer([med.id], now).catch(() => {});
   await notifyLowStock(low).catch(() => {});
 }
 

@@ -9,3 +9,7 @@ times times
 report report
 sync sync
 care care
+backup backup
+routines routines
+review review
+patterns patterns

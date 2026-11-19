@@ -9,7 +9,7 @@ import { Button, Card, Chip, Field, Input, PressableScale, Select, Text } from '
 import { formatDateLong, formatTime, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
-import type { DayTimes, MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
+import { FOOD_RULES, type DayTimes, type FoodRule, type MedForm, type Medication, type PillShape, type SchedulePattern } from '../../domain/types';
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
 import { scanBox } from '../../media/scanBox';
 import * as repo from '../../db/repo';
@@ -59,6 +59,8 @@ export default function MedEditor() {
   const [pillColor2, setPillColor2] = useState<string | null>(existing?.pillColor2 ?? null);
   const look = lookOf({ form, shape, pillColor, pillColor2, color });
   const [notes, setNotes] = useState(existing?.notes ?? '');
+  const [food, setFood] = useState<FoodRule | 'none'>(existing?.food ?? 'none');
+  const [foodWait, setFoodWait] = useState<number>(existing?.foodWaitMinutes ?? 30);
   const p = existing?.schedule.pattern;
   const [kind, setKind] = useState<Kind>(p?.kind ?? 'daily');
   const [days, setDays] = useState<number[]>(p?.kind === 'weekdays' ? p.days : [1, 3, 5]);
@@ -199,6 +201,8 @@ export default function MedEditor() {
     pillColor: look.color,
     pillColor2: hasShape(form) && look.shape === 'capsule' ? pillColor2 : null,
     notes: notes.trim() || undefined,
+    food: food === 'none' ? null : food,
+    foodWaitMinutes: food === 'empty' ? foodWait : null,
     schedule: {
       pattern: pattern(),
       times: kind === 'asNeeded' ? [] : [...new Set(times)].sort(),
@@ -611,6 +615,23 @@ export default function MedEditor() {
               ))}
             </View>
           </Field>
+          <Field label="Food" hint={food === 'empty' ? 'After you mark it taken, Sabr tells you when you can eat.' : undefined}>
+            <Select
+              title="Food"
+              value={food}
+              onChange={setFood}
+              options={[{ value: 'none' as const, label: "Doesn't matter" }, ...FOOD_RULES]}
+            />
+          </Field>
+          {food === 'empty' ? (
+            <Field label="Wait before eating">
+              <View style={st.wrap}>
+                {[15, 30, 45, 60, 120].map((m) => (
+                  <Chip key={m} label={m < 60 ? `${m} min` : `${m / 60} h`} selected={foodWait === m} onPress={() => setFoodWait(m)} />
+                ))}
+              </View>
+            </Field>
+          ) : null}
           <Field label="Notes" style={{ marginBottom: 0 }}>
             <Input value={notes} onChangeText={setNotes} placeholder="e.g. take with food" multiline style={{ minHeight: 70, textAlignVertical: 'top' }} />
           </Field>

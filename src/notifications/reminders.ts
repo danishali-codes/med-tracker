@@ -6,6 +6,8 @@ import { groupFromReminderId, groupKey, planReminders, refillText, REMINDER_PREF
 import { dosesOn, slotKey } from '../domain/schedule';
 import type { Medication } from '../domain/types';
 import * as repo from '../db/repo';
+import { routineAt } from '../domain/routines';
+import { setupTimerChannel, startFoodTimer } from './food';
 
 // Android doesn't let an app change a channel's lock screen setting once it exists, so the
 // channel got a new id when it became private. The old one is deleted in setupNotifications.
@@ -42,6 +44,7 @@ export async function setupNotifications() {
       importance: Notifications.AndroidImportance.DEFAULT,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
+    await setupTimerChannel().catch(() => {});
     for (const id of OLD_CHANNEL_IDS) await Notifications.deleteNotificationChannelAsync(id).catch(() => {});
   }
   const snooze = repo.getSettings().snoozeMinutes;
@@ -58,9 +61,9 @@ export function resetNotificationSetup() {
   setupDone = false;
 }
 
-function contentFor(r: PlannedReminder, meds: Map<string, Medication>, showNames: boolean): Notifications.NotificationContentInput {
+function contentFor(r: PlannedReminder, meds: Map<string, Medication>, showNames: boolean, routineName?: string): Notifications.NotificationContentInput {
   const due = r.medIds.map((id) => meds.get(id)).filter((m): m is Medication => !!m);
-  const { title, body } = reminderText(r, due, showNames);
+  const { title, body } = reminderText(r, due, showNames, routineName);
   if (r.kind === 'missed') {
     return {
       title,
@@ -136,7 +139,7 @@ async function rescheduleOnce() {
   for (const r of plan) {
     await Notifications.scheduleNotificationAsync({
       identifier: r.id,
-      content: contentFor(r, byId, settings.showMedNames),
+      content: contentFor(r, byId, settings.showMedNames, r.kind === 'missed' ? undefined : routineAt(r.time, settings.routines)?.name),
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: r.at,
@@ -195,6 +198,7 @@ export async function handleReminderAction(actionId: string, rawData: unknown) {
       const dose = today.get(slot) ?? { slot, medId, date: data.date, time: data.time };
       low.push(...repo.setDose(dose, status, now));
     });
+    if (status === 'taken') await startFoodTimer(data.medIds, now).catch(() => {});
     repo.clearSnooze(group);
     await notifyLowStock(low);
   } else if (actionId === ACTION_SNOOZE) {

@@ -290,9 +290,14 @@ export function medDays(med: Medication, logs: Map<string, DoseLog>, today: Date
   return out;
 }
 
-/** A day with every dose done (skips are fine) and at least one taken. */
-export function isPerfectDay(s: DaySummary | undefined): boolean {
+/** A complete day with at least one dose taken (skips are fine). */
+export function isFullDay(s: DaySummary | undefined): boolean {
   return !!s && s.status === 'complete' && s.taken > 0;
+}
+
+/** A gold day: every dose taken, and every one on time. A bonus marker; late doses never cost anything. */
+export function isGoldDay(s: DaySummary | undefined): boolean {
+  return isFullDay(s) && s!.late === 0;
 }
 
 /** The highest milestone reached by this streak that hasn't been shown yet, or null. */

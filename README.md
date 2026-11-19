@@ -31,7 +31,11 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Interaction check.** Checks your meds against each other, alcohol and food, using a short built-in list and the official US drug labels (openFDA). It isn't a complete list, and the app says so.
 
-**Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Rings, a 7-day row for each med, month and year heatmaps and badges show how you're doing.
+**Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Lost one anyway? Take every dose for the next 3 days and it comes back. Days you plan to skip (a test, a doctor's instruction) don't count against you at all. A consistency score, gold days (every dose on time), a perfect streak, milestones, rings, heatmaps and badges show how you're doing.
+
+**Routines and timing.** Group medicines you take together, like Breakfast at 8:00, under one reminder with Take all. Empty-stomach medicines start a timer that tells you when you can eat. If you always take a dose 40 minutes after its reminder, Sabr offers to move the reminder.
+
+**Month and year in review, and patterns.** A page on how each month and year went, and a view that lines up your mood and symptom notes with missed doses. All worked out on the phone.
 
 **Reports for your doctor.** A PDF for any period with what was taken, late or missed, day by day, plus your mood and symptom notes.
 
@@ -43,7 +47,7 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Free and open source.** The full source is here, under the GPL-3.0 licence (see below). Anyone can read how it works, build it themselves, or improve it.
 
-**Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. You can export everything to a file and restore it on a new phone.
+**Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. Back up to a password-locked file (save it to Google Drive or anywhere you like, or let Sabr write one to a folder every week) and restore it on a new phone. An optional app lock asks for your fingerprint, face or phone PIN.
 
 **Optional backup and caregiver sharing, on your own server.** If you run a [PocketBase](https://pocketbase.io) server, the app can keep an encrypted backup there, and let a family member see whether today's doses were taken. Everything is encrypted on the phone first, so the server can't read it, and medicine names are only shared if you choose. Both are off until you turn them on. Setup: [server/README.md](server/README.md).
 
@@ -60,6 +64,7 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 
 Newest first:
 
+- **0.6** (19 Nov 2026): password-locked backups and automatic backup to a folder, app lock, win back a lost streak, planned skips, consistency score, gold days, perfect streak and milestones, routines, food timers, reminders that learn your timing, month and year in review, and patterns.
 - **0.5** (19 Nov 2026): optional encrypted backup and caregiver sharing through a PocketBase server you host yourself, off unless you turn it on. Private by default: online search and medicine names in reminders are opt-in.
 - **0.4** (19 Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
 - **0.3** (19 Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
