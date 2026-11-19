@@ -40,3 +40,11 @@ export async function removeMedication(id: string) {
   repo.deleteMed(id);
   await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
 }
+
+/** Remind again in a few minutes for every dose due at this time. */
+export async function snoozeDoses(date: DateKey, time: string, minutes: number) {
+  const group = groupKey(date, time);
+  repo.setSnooze(group, new Date(Date.now() + minutes * 60_000));
+  await dismissGroup(group).catch(() => {});
+  await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
+}

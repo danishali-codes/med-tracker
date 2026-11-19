@@ -2,8 +2,8 @@ import { getDb } from './database';
 import { addDays, diffDays, eachDay, toDateKey, type DateKey } from '../domain/dates';
 import { isLowStock, normalizeMed } from '../domain/dose';
 import { summarizeDay, trackedFrom, type DaySummary } from '../domain/progress';
-import { indexLogs } from '../domain/schedule';
-import { DEFAULT_SETTINGS, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
+import { getTimeRules, indexLogs, setTimeRules } from '../domain/schedule';
+import { DEFAULT_SETTINGS, type DayNote, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
 
 // ---- change notifications so screens refresh after any write ----
 
@@ -28,6 +28,8 @@ function changed() {
 // ---- medications ----
 
 export function getMeds(): Medication[] {
+  // Dose times depend on the saved settings (Ramadan, temporary changes, travel); load them once.
+  if (!getTimeRules()) getSettings();
   const rows = getDb().getAllSync<{ data: string }>('SELECT data FROM meds ORDER BY created_at');
   return rows.map((r) => normalizeMed(JSON.parse(r.data)));
 }
@@ -185,12 +187,43 @@ export function setKv(key: string, value: string) {
 
 export function getSettings(): Settings {
   const raw = getKv('settings');
-  return { ...DEFAULT_SETTINGS, ...(raw ? (JSON.parse(raw) as Partial<Settings>) : {}) };
+  const saved = raw ? (JSON.parse(raw) as Partial<Settings>) : {};
+  const s: Settings = {
+    ...DEFAULT_SETTINGS,
+    ...saved,
+    ramadan: { ...DEFAULT_SETTINGS.ramadan, ...(saved.ramadan ?? {}) },
+    quietHours: { ...DEFAULT_SETTINGS.quietHours, ...(saved.quietHours ?? {}) },
+  };
+  // Weekday times live on each med; Ramadan, temporary changes and travel live here.
+  setTimeRules({ ramadan: s.ramadan, timeChanges: s.timeChanges, travelMode: s.travelMode, homeTimeZone: s.homeTimeZone });
+  return s;
 }
 
 export function saveSettings(s: Settings) {
+  setTimeRules({ ramadan: s.ramadan, timeChanges: s.timeChanges, travelMode: s.travelMode, homeTimeZone: s.homeTimeZone });
   // Finished days keep their summaries; a new on-time window applies from today on.
   getDb().runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', 'settings', JSON.stringify(s));
+  changed();
+}
+
+// ---- day notes ----
+
+export function getNote(date: DateKey): DayNote | null {
+  const row = getDb().getFirstSync<{ data: string }>('SELECT data FROM day_note WHERE date = ?', date);
+  return row ? (JSON.parse(row.data) as DayNote) : null;
+}
+
+export function getNotes(from: DateKey, to: DateKey): DayNote[] {
+  return getDb()
+    .getAllSync<{ data: string }>('SELECT data FROM day_note WHERE date >= ? AND date <= ? ORDER BY date', from, to)
+    .map((r) => JSON.parse(r.data) as DayNote);
+}
+
+/** Saves the note, or removes it when it's empty. */
+export function saveNote(note: DayNote) {
+  const empty = note.mood == null && note.symptoms.length === 0 && !note.text.trim();
+  if (empty) getDb().runSync('DELETE FROM day_note WHERE date = ?', note.date);
+  else getDb().runSync('INSERT OR REPLACE INTO day_note (date, data) VALUES (?, ?)', note.date, JSON.stringify(note));
   changed();
 }
 
@@ -241,7 +274,7 @@ export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySumm
 // day_summary is included: it holds finished days as they were, which can't be rebuilt
 // once a med has been archived or its schedule changed. purchase and placement belong to
 // the room decorating, which is switched off for now; they stay so nothing is lost.
-const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv'] as const;
+const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv', 'day_note'] as const;
 
 export function exportAll(): string {
   const db = getDb();

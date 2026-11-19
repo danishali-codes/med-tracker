@@ -1,5 +1,6 @@
-import { addDays, daysInMonth, toDateKey, diffDays, ordinal, parseDateKey, weekdayOf, weekdayShort, formatTime, type DateKey, type TimeOfDay } from './dates';
-import type { DoseLog, Medication, Schedule, ScheduledDose } from './types';
+import { addDays, atTime, daysInMonth, toDateKey, diffDays, ordinal, parseDateKey, weekdayOf, weekdayShort, formatTime, type DateKey, type TimeOfDay } from './dates';
+import { CITIES, localOffsetMinutes, prayerTimes } from './prayer';
+import type { DoseLog, Medication, RamadanSettings, Schedule, ScheduledDose, Settings, TimeChange } from './types';
 
 export function slotKey(medId: string, date: DateKey, time: TimeOfDay): string {
   return `${medId}|${date}|${time}`;
@@ -61,16 +62,154 @@ export function isMedDueOn(med: Medication, date: DateKey): boolean {
   return isDueOn(med.schedule, date);
 }
 
+// ---- time rules: things that move a dose's time on some days ----
+
+/** The parts of Settings that move dose times. Set from the saved settings by the repo. */
+export type TimeRules = Pick<Settings, 'ramadan' | 'timeChanges' | 'travelMode' | 'homeTimeZone'>;
+
+let rules: TimeRules | null = null;
+
+export function setTimeRules(r: TimeRules | null) {
+  rules = r;
+}
+
+export function getTimeRules(): TimeRules | null {
+  return rules;
+}
+
+const toMin = (t: TimeOfDay) => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+};
+const fromMin = (n: number): TimeOfDay => {
+  const c = Math.min(Math.max(Math.round(n), 0), 23 * 60 + 59);
+  return `${String(Math.floor(c / 60)).padStart(2, '0')}:${String(c % 60).padStart(2, '0')}`;
+};
+
+/** The schedule's own times on a day, after weekday-specific times. */
+export function scheduleTimesOn(s: Schedule, date: DateKey): TimeOfDay[] {
+  const wd = weekdayOf(date);
+  const rule = (s.dayTimes ?? []).find((r) => r.days.includes(wd) && r.times.length > 0);
+  return rule ? [...rule.times].sort() : s.times;
+}
+
+export function isRamadanOn(r: RamadanSettings | undefined | null, date: DateKey): boolean {
+  return !!r && r.enabled && date >= r.from && date <= r.to;
+}
+
+/** Suhoor and iftar dose times on a day, from the set times or the city's prayer times. */
+export function ramadanTimes(r: RamadanSettings, date: DateKey): { suhoor: TimeOfDay; iftar: TimeOfDay } {
+  if (r.mode === 'city') {
+    const city = CITIES.find((c) => c.id === r.cityId);
+    const p = city ? prayerTimes(date, city, r.method, localOffsetMinutes(date)) : null;
+    if (p) return { suhoor: fromMin(toMin(p.fajr) - r.suhoorBeforeFajr), iftar: fromMin(toMin(p.maghrib) + r.iftarAfterMaghrib) };
+  }
+  return { suhoor: r.suhoor, iftar: r.iftar };
+}
+
+/**
+ * Where a med's doses go during Ramadan. One dose: morning doses at suhoor, later
+ * ones at iftar. Two: iftar and suhoor. Three: iftar, halfway through the night
+ * (capped before midnight) and suhoor. More: spread from iftar to just before midnight.
+ */
+export function ramadanMove(times: TimeOfDay[], t: { suhoor: TimeOfDay; iftar: TimeOfDay }): TimeOfDay[] {
+  const n = times.length;
+  if (n === 0) return times;
+  const iftar = toMin(t.iftar);
+  const suhoor = toMin(t.suhoor);
+  const late = 23 * 60 + 30;
+  if (n === 1) return [toMin(times[0]) < 12 * 60 ? t.suhoor : t.iftar];
+  if (n === 2) return [t.suhoor, t.iftar];
+  if (n === 3) return [t.suhoor, t.iftar, fromMin(Math.min(late, iftar + (24 * 60 - iftar + suhoor) / 2))];
+  const spread = Array.from({ length: n - 1 }, (_, i) => fromMin(iftar + ((late - iftar) * i) / (n - 2)));
+  return [t.suhoor, ...spread];
+}
+
+function applies(c: TimeChange, medId: string, date: DateKey) {
+  return date >= c.from && date <= c.to && (c.medIds == null || c.medIds.includes(medId));
+}
+
+/**
+ * A med's doses on a day: which usual time each one belongs to (`base`, which keeps
+ * the dose's identity) and when it's due after weekday times, Ramadan and temporary changes.
+ */
+export function timesOn(med: Medication, date: DateKey, r: TimeRules | null = rules): { base: TimeOfDay; time: TimeOfDay }[] {
+  const base = med.schedule.times;
+  let times = scheduleTimesOn(med.schedule, date);
+  if (r && isRamadanOn(r.ramadan, date) && (r.ramadan.medIds == null || r.ramadan.medIds.includes(med.id))) {
+    times = ramadanMove(times, ramadanTimes(r.ramadan, date));
+  }
+  for (const c of r?.timeChanges ?? []) {
+    if (!applies(c, med.id, date)) continue;
+    if (c.moveFrom && c.moveTo) times = times.map((t) => (t === c.moveFrom ? c.moveTo! : t));
+    else if (c.shiftMinutes) times = times.map((t) => fromMin(toMin(t) + c.shiftMinutes!));
+  }
+  // The n-th dose of the day keeps the n-th usual time as its identity, so a log
+  // stays matched to its dose even if the day's times change later.
+  return times.map((time, i) => ({ base: base[i] ?? time, time }));
+}
+
 /** All scheduled doses on a day, ordered by time. Archived and paused meds are skipped. */
 export function dosesOn(meds: Medication[], date: DateKey): ScheduledDose[] {
   const out: ScheduledDose[] = [];
   for (const med of meds) {
     if (!isMedDueOn(med, date)) continue;
-    for (const time of med.schedule.times) {
-      out.push({ slot: slotKey(med.id, date, time), medId: med.id, date, time });
+    const seen = new Set<string>();
+    for (const { base, time } of timesOn(med, date)) {
+      const slot = slotKey(med.id, date, base);
+      if (seen.has(slot)) continue;
+      seen.add(slot);
+      out.push(time === base ? { slot, medId: med.id, date, time } : { slot, medId: med.id, date, time, usualTime: base });
     }
   }
   return out.sort((a, b) => (a.time === b.time ? a.medId.localeCompare(b.medId) : a.time < b.time ? -1 : 1));
+}
+
+// ---- travel: home time zone ----
+
+/** Offset from UTC (minutes) of a time zone at an instant, using the phone's time zone data. */
+export function zoneOffsetMinutes(timeZone: string, at: Date): number | null {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).formatToParts(at);
+    const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+    const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'));
+    return Math.round((asUtc - Math.floor(at.getTime() / 60000) * 60000) / 60000);
+  } catch {
+    return null;
+  }
+}
+
+export function phoneTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The moment a dose is due. Normally the phone's local time. With travel mode on,
+ * the time is read in the home time zone, so 8:00 stays 8:00 at home while abroad.
+ */
+export function dueAt(date: DateKey, time: TimeOfDay, r: TimeRules | null = rules): Date {
+  const local = atTime(date, time);
+  if (!r?.travelMode || !r.homeTimeZone || r.homeTimeZone === phoneTimeZone()) return local;
+  const { y, m, d } = parseDateKey(date);
+  const [h, min] = time.split(':').map(Number);
+  const wall = Date.UTC(y, m - 1, d, h, min);
+  let off = zoneOffsetMinutes(r.homeTimeZone, new Date(wall));
+  if (off == null) return local;
+  // Second pass in case the offset changes between the guess and the answer (DST).
+  off = zoneOffsetMinutes(r.homeTimeZone, new Date(wall - off * 60000)) ?? off;
+  return new Date(wall - off * 60000);
 }
 
 /** Doses grouped by time (one reminder per time slot). */
@@ -88,9 +227,7 @@ export type Punctuality = 'onTime' | 'late';
 
 /** On time when taken within the window either side of the scheduled time, on the same day. */
 export function punctuality(dose: { date: DateKey; time: TimeOfDay }, takenAt: Date, windowMinutes: number): Punctuality {
-  const { y, m, d } = parseDateKey(dose.date);
-  const [h, min] = dose.time.split(':').map(Number);
-  const due = new Date(y, m - 1, d, h, min).getTime();
+  const due = dueAt(dose.date, dose.time).getTime();
   return Math.abs(takenAt.getTime() - due) <= windowMinutes * 60_000 ? 'onTime' : 'late';
 }
 

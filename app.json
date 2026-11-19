@@ -73,6 +73,14 @@
             }
           ]
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Lets you choose a photo of each pill so they're easy to tell apart.",
+          "cameraPermission": "Lets you take a photo of each pill so they're easy to tell apart.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

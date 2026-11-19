@@ -4,7 +4,9 @@ import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useState } from 'react';
 import * as Application from 'expo-application';
 import { Alert, Platform, ScrollView, Switch, View } from 'react-native';
-import { Button, Card, Chip, SectionTitle, Text } from '../components/ui';
+import { router } from 'expo-router';
+import { TimeButton } from '../components/Pickers';
+import { Button, Card, Chip, PressableScale, SectionTitle, Text } from '../components/ui';
 import { toDateKey } from '../domain/dates';
 import type { Settings } from '../domain/types';
 import * as repo from '../db/repo';
@@ -29,6 +31,8 @@ export default function SettingsScreen() {
   }, []);
   useEffect(refresh, [refresh]);
 
+  const c = useTheme();
+  const activeChanges = settings.timeChanges.filter((x) => x.to >= toDateKey(new Date())).length;
   const update = (patch: Partial<Settings>) => {
     repo.saveSettings({ ...settings, ...patch });
     if (patch.snoozeMinutes) resetNotificationSetup();
@@ -142,7 +146,37 @@ export default function SettingsScreen() {
           <>
             <Options label="Repeat every" value={settings.nagEveryMinutes} options={[5, 10, 15, 30]} suffix="min" onChange={(v) => update({ nagEveryMinutes: v })} />
             <Options label="Up to" value={settings.nagCount} options={[1, 2, 3, 5, 8]} suffix="times" onChange={(v) => update({ nagCount: v })} />
+            <ToggleRow
+              label="Remind more often if I don't answer"
+              hint="Each repeat comes a bit sooner than the last, down to every 5 minutes."
+              value={settings.nagEscalate}
+              onChange={(v) => update({ nagEscalate: v })}
+            />
           </>
+        ) : null}
+        <ToggleRow
+          label="Quiet hours"
+          hint="No repeat reminders at night. A dose that's due still gets its first reminder."
+          value={settings.quietHours.enabled}
+          onChange={(v) => update({ quietHours: { ...settings.quietHours, enabled: v } })}
+        />
+        {settings.quietHours.enabled ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <TimeButton value={settings.quietHours.from} onChange={(from) => update({ quietHours: { ...settings.quietHours, from } })} />
+            <Text style={st.label}>to</Text>
+            <TimeButton value={settings.quietHours.to} onChange={(to) => update({ quietHours: { ...settings.quietHours, to } })} />
+          </View>
+        ) : null}
+        <ToggleRow
+          label="Evening check"
+          hint="One last notice listing anything from earlier in the day that isn't logged yet."
+          value={settings.missedNotice}
+          onChange={(v) => update({ missedNotice: v })}
+        />
+        {settings.missedNotice ? (
+          <View style={{ marginBottom: 6 }}>
+            <TimeButton value={settings.missedNoticeAt} onChange={(missedNoticeAt) => update({ missedNoticeAt })} />
+          </View>
         ) : null}
         <Options label="Snooze for" value={settings.snoozeMinutes} options={[5, 10, 15, 30, 60]} suffix="min" onChange={(v) => update({ snoozeMinutes: v })} />
         <Options
@@ -154,6 +188,19 @@ export default function SettingsScreen() {
         />
         <Text style={st.hint}>Late doses still count for your streak. Only doses never taken that day break it.</Text>
       </Card>
+
+      <PressableScale onPress={() => router.push('/times')} style={st.linkCard}>
+        <Ionicons name="moon-outline" size={22} color={c.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={st.label}>Ramadan, travel and time changes</Text>
+          <Text style={st.hint}>
+            {[settings.ramadan.enabled ? 'Ramadan on' : null, settings.travelMode ? 'Keeping home time' : null, activeChanges ? `${activeChanges} change${activeChanges > 1 ? 's' : ''} planned` : null]
+              .filter(Boolean)
+              .join(' · ') || 'Move reminders for Ramadan, trips or a busy week'}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.faint} />
+      </PressableScale>
 
       <SectionTitle>Your data</SectionTitle>
       <Card>
@@ -233,6 +280,7 @@ function Options({ label, value, options, suffix, onChange }: { label: string; v
 }
 
 const useStyles = makeStyles((c) => ({
+  linkCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginTop: 14 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
   label: { fontSize: 15, color: c.text, fontWeight: '800' },
   hint: { fontSize: 13, color: c.muted, marginTop: 2, fontWeight: '600', lineHeight: 18 },

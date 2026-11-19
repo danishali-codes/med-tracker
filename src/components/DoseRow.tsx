@@ -1,15 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useRef } from 'react';
-import { Alert, Animated, Pressable, View } from 'react-native';
-import { logDose } from '../actions';
-import { formatTime, timeFromDate } from '../domain/dates';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Image, Pressable, View } from 'react-native';
+import { logDose, snoozeDoses } from '../actions';
+import { formatTime, timeFromDate, toDateKey } from '../domain/dates';
 import { describeDose } from '../domain/dose';
 import { punctuality } from '../domain/schedule';
 import type { DoseLog, Medication, ScheduledDose } from '../domain/types';
 import { makeStyles, useTheme } from '../theme';
 import { MedIcon } from './MedIcon';
-import { Text } from './ui';
+import { ActionSheet, Text, type SheetAction } from './ui';
 
 export function DoseRow({
   dose,
@@ -39,12 +39,21 @@ export function DoseRow({
     prev.current = taken;
   }, [taken, pop]);
 
-  const options = () =>
-    Alert.alert(med.name, `${formatTime(dose.time)} · ${describeDose(med)}`, [
-      ...(!skipped ? [{ text: 'Skip this dose', onPress: () => logDose(dose, 'skipped') }] : []),
-      ...(log ? [{ text: 'Undo', onPress: () => logDose(dose, null) }] : []),
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
+  const [sheet, setSheet] = useState(false);
+  const options = () => setSheet(true);
+  const isToday = dose.date === toDateKey(new Date());
+  const actions: SheetAction[] = [
+    ...(!taken ? [{ label: 'Taken', icon: 'checkmark-circle-outline' as const, onPress: () => logDose(dose, 'taken') }] : []),
+    ...(!log && isToday
+      ? [10, 30, 60].map((m) => ({
+          label: m === 60 ? 'Remind me in 1 hour' : `Remind me in ${m} minutes`,
+          icon: 'alarm-outline' as const,
+          onPress: () => snoozeDoses(dose.date, dose.time, m),
+        }))
+      : []),
+    ...(!skipped ? [{ label: 'Skip this dose', icon: 'remove-circle-outline' as const, onPress: () => logDose(dose, 'skipped') }] : []),
+    ...(log ? [{ label: 'Undo', icon: 'arrow-undo-outline' as const, onPress: () => logDose(dose, null), destructive: true }] : []),
+  ];
 
   const toggle = () => {
     if (log) return options();
@@ -62,7 +71,7 @@ export function DoseRow({
 
   return (
     <Pressable onLongPress={options} style={[s.row, log && { opacity: skipped ? 0.55 : 0.92 }]} delayLongPress={300}>
-      <MedIcon med={med} />
+      {med.photo ? <Image source={{ uri: med.photo }} style={s.photo} accessibilityLabel={`Photo of ${med.name}`} /> : <MedIcon med={med} />}
       <View style={{ flex: 1 }}>
         <Text style={[s.name, taken && s.nameDone]} numberOfLines={1}>
           {med.name}
@@ -70,6 +79,7 @@ export function DoseRow({
         <Text style={s.sub} numberOfLines={1}>
           {[showTime ? formatTime(dose.time) : null, describeDose(med)].filter(Boolean).join(' · ')}
         </Text>
+        {dose.usualTime ? <Text style={s.moved}>Moved from {formatTime(dose.usualTime)}</Text> : null}
         {status ? <Text style={[s.status, { color: status.color }]}>{status.text}</Text> : null}
       </View>
       <Pressable onPress={toggle} hitSlop={10} accessibilityRole="button" accessibilityLabel={log ? `${status?.text}. Change` : `Take ${med.name}`}>
@@ -83,11 +93,22 @@ export function DoseRow({
           {taken ? <Ionicons name="checkmark" size={24} color="#fff" /> : skipped ? <Ionicons name="remove" size={22} color={c.muted} /> : null}
         </Animated.View>
       </Pressable>
+      <ActionSheet
+        visible={sheet}
+        title={med.name}
+        subtitle={`${formatTime(dose.time)} · ${describeDose(med)}`}
+        header={med.photo ? <Image source={{ uri: med.photo }} style={s.photoBig} /> : null}
+        actions={actions}
+        onClose={() => setSheet(false)}
+      />
     </Pressable>
   );
 }
 
 const useStyles = makeStyles((c) => ({
+  photo: { width: 48, height: 48, borderRadius: 16, backgroundColor: c.sunken },
+  photoBig: { width: '100%', height: 220, borderRadius: 22, marginBottom: 14, backgroundColor: c.sunken },
+  moved: { fontSize: 12, fontWeight: '700', color: c.primary, marginTop: 2 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 14 },
   icon: { width: 50, height: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   name: { fontSize: 17, fontWeight: '800', color: c.text },

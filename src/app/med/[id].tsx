@@ -1,15 +1,16 @@
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
 import { removeMedication, saveMedication } from '../../actions';
 import { defaultShape, hasShape, lookOf, PILL_COLORS, PILL_SHAPES, PillArt } from '../../components/PillArt';
+import { DateButton, TimeButton } from '../../components/Pickers';
 import { Button, Card, Chip, Field, Input, PressableScale, Select, Text } from '../../components/ui';
-import { atTime, dateFromKey, formatDateLong, formatTime, timeFromDate, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
+import { formatDateLong, formatTime, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
-import type { MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
+import type { DayTimes, MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
+import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
 import * as repo from '../../db/repo';
 import { medicineDetails, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
@@ -66,6 +67,8 @@ export default function MedEditor() {
   const [offDays, setOffDays] = useState(String(p?.kind === 'cycle' ? p.offDays : 7));
   const [dayOfMonth, setDayOfMonth] = useState(String(p?.kind === 'monthly' ? p.dayOfMonth : new Date().getDate()));
   const [times, setTimes] = useState<TimeOfDay[]>(existing?.schedule.times.length ? existing.schedule.times : ['08:00']);
+  const [dayTimes, setDayTimes] = useState<DayTimes[]>(existing?.schedule.dayTimes ?? []);
+  const [photo, setPhoto] = useState<string | null>(existing?.photo ?? null);
   const [startDate, setStartDate] = useState<DateKey>(existing?.schedule.startDate ?? today);
   const [endDate, setEndDate] = useState<DateKey | null>(existing?.schedule.endDate ?? null);
   const [trackStock, setTrackStock] = useState(existing?.stock != null);
@@ -141,6 +144,7 @@ export default function MedEditor() {
     generic: generic.trim() || null,
     rxcui,
     color,
+    photo,
     shape: hasShape(form) ? look.shape : undefined,
     pillColor: look.color,
     pillColor2: hasShape(form) && look.shape === 'capsule' ? pillColor2 : null,
@@ -148,6 +152,7 @@ export default function MedEditor() {
     schedule: {
       pattern: pattern(),
       times: kind === 'asNeeded' ? [] : [...new Set(times)].sort(),
+      dayTimes: kind === 'asNeeded' ? [] : dayTimes.filter((d) => d.days.length > 0 && d.times.length > 0).map((d) => ({ days: [...d.days].sort(), times: [...d.times].sort() })),
       startDate,
       endDate,
     },
@@ -173,6 +178,7 @@ export default function MedEditor() {
     if (kind !== 'asNeeded' && times.length === 0) return Alert.alert('Add a time', 'When should you take it?');
     if (kind === 'weekdays' && days.length === 0) return Alert.alert('Pick a day', 'Choose at least one day of the week.');
     await saveMedication(build());
+    if (existing?.photo && existing.photo !== photo) deletePillPhoto(existing.photo);
     router.back();
   };
 
@@ -196,7 +202,10 @@ export default function MedEditor() {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          if (existing) await removeMedication(existing.id);
+          if (existing) {
+            await removeMedication(existing.id);
+            deletePillPhoto(existing.photo);
+          }
           router.back();
         },
       },
@@ -375,6 +384,43 @@ export default function MedEditor() {
             </Field>
           ) : null}
 
+          {kind !== 'asNeeded' ? (
+            <Field label="Different times on some days" hint="For example earlier on office days and later at the weekend. Other days use the times above.">
+              {dayTimes.map((rule, ri) => {
+                const taken = new Set(dayTimes.flatMap((d, j) => (j === ri ? [] : d.days)));
+                const update = (next: DayTimes) => setDayTimes(dayTimes.map((d, j) => (j === ri ? next : d)));
+                return (
+                  <View key={ri} style={st.dayRule}>
+                    <View style={st.wrap}>
+                      {WEEK_ORDER.map((d) => (
+                        <Chip
+                          key={d}
+                          label={weekdayShort(d)}
+                          selected={rule.days.includes(d)}
+                          onPress={() => (taken.has(d) ? null : update({ ...rule, days: rule.days.includes(d) ? rule.days.filter((x) => x !== d) : [...rule.days, d] }))}
+                        />
+                      ))}
+                    </View>
+                    {rule.times.map((t, ti) => (
+                      <View key={`${t}-${ti}`} style={st.timeRow}>
+                        <Text style={st.ruleLabel}>{times[ti] ? `Instead of ${formatTime(times[ti])}` : 'Extra dose'}</Text>
+                        <TimeButton value={t} onChange={(v) => update({ ...rule, times: rule.times.map((x, j) => (j === ti ? v : x)) })} />
+                      </View>
+                    ))}
+                    <Button title="Remove these days" kind="ghost" small onPress={() => setDayTimes(dayTimes.filter((_, j) => j !== ri))} style={{ alignSelf: 'flex-start' }} />
+                  </View>
+                );
+              })}
+              <Button
+                title={dayTimes.length ? 'Add more days' : 'Set times for some days'}
+                kind="secondary"
+                small
+                onPress={() => setDayTimes([...dayTimes, { days: [], times: [...times].sort() }])}
+                style={{ alignSelf: 'flex-start' }}
+              />
+            </Field>
+          ) : null}
+
           <View style={st.inline}>
             <Field label="Starts" style={{ flex: 1 }}>
               <DateButton value={startDate} onChange={setStartDate} />
@@ -431,8 +477,32 @@ export default function MedEditor() {
         <Card>
           <Text style={st.cardTitle}>Look</Text>
           <View style={st.lookPreview}>
-            <PillArt {...look} size={96} />
+            {photo ? <Image source={{ uri: photo }} style={st.photo} /> : <PillArt {...look} size={96} />}
           </View>
+          <View style={[st.inline, { marginBottom: 16, flexWrap: 'wrap' }]}>
+            <Button
+              title={photo ? 'New photo' : 'Take a photo'}
+              kind="secondary"
+              small
+              icon={<Ionicons name="camera-outline" size={16} color={c.primary} />}
+              onPress={async () => {
+                const uri = await pickPillPhoto('camera', draft.id);
+                if (uri) setPhoto(uri);
+              }}
+            />
+            <Button
+              title="From gallery"
+              kind="secondary"
+              small
+              icon={<Ionicons name="images-outline" size={16} color={c.primary} />}
+              onPress={async () => {
+                const uri = await pickPillPhoto('library', draft.id);
+                if (uri) setPhoto(uri);
+              }}
+            />
+            {photo ? <Button title="Remove photo" kind="ghost" small onPress={() => setPhoto(null)} /> : null}
+          </View>
+          <Text style={[st.hint, { marginBottom: 14 }]}>The photo stays on this phone. It shows on Today so pills are easy to tell apart.</Text>
           {hasShape(form) ? (
             <Field label="Shape">
               <View style={st.wrap}>
@@ -499,65 +569,13 @@ export default function MedEditor() {
   );
 }
 
-function TimeButton({ value, onChange }: { value: TimeOfDay; onChange: (t: TimeOfDay) => void }) {
-  const c = useTheme();
-  const st = useStyles();
-  const [open, setOpen] = useState(false);
-  const date = atTime(toDateKey(new Date()), value);
-  const press = () => {
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: date,
-        mode: 'time',
-        is24Hour: false,
-        onChange: (e, d) => e.type === 'set' && d && onChange(timeFromDate(d)),
-      });
-    } else setOpen(!open);
-  };
-  return (
-    <View>
-      <PressableScale onPress={press} style={st.pickerBtn}>
-        <Ionicons name="time-outline" size={18} color={c.primary} />
-        <Text style={st.pickerText}>{formatTime(value)}</Text>
-      </PressableScale>
-      {open && Platform.OS !== 'android' ? (
-        <DateTimePicker value={date} mode="time" display="spinner" onChange={(_, d) => d && onChange(timeFromDate(d))} />
-      ) : null}
-    </View>
-  );
-}
-
-function DateButton({ value, onChange }: { value: DateKey; onChange: (d: DateKey) => void }) {
-  const c = useTheme();
-  const st = useStyles();
-  const [open, setOpen] = useState(false);
-  const date = dateFromKey(value);
-  const press = () => {
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: date,
-        mode: 'date',
-        onChange: (e, d) => e.type === 'set' && d && onChange(toDateKey(d)),
-      });
-    } else setOpen(!open);
-  };
-  return (
-    <View>
-      <PressableScale onPress={press} style={st.pickerBtn}>
-        <Ionicons name="calendar-outline" size={18} color={c.primary} />
-        <Text style={st.pickerText}>{formatDateLong(value)}</Text>
-      </PressableScale>
-      {open && Platform.OS !== 'android' ? (
-        <DateTimePicker value={date} mode="date" display="inline" onChange={(_, d) => d && onChange(toDateKey(d))} />
-      ) : null}
-    </View>
-  );
-}
-
 const useStyles = makeStyles((c) => ({
   container: { padding: 16, paddingBottom: 60 },
   cardTitle: { fontSize: 18, fontWeight: '900', color: c.text, marginBottom: 14 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  photo: { width: 160, height: 160, borderRadius: 22 },
+  dayRule: { borderWidth: 1.5, borderColor: c.border, borderRadius: 18, padding: 12, marginBottom: 10 },
+  ruleLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: c.muted },
   lookPreview: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.sunken, borderRadius: 22, paddingVertical: 18, marginBottom: 16 },
   shapeTile: { width: 76, alignItems: 'center', paddingVertical: 8, borderRadius: 16, borderWidth: 1.5, borderColor: c.border, marginRight: 8, marginBottom: 8 },
   shapeText: { fontSize: 12, fontWeight: '700', color: c.muted, marginTop: 2 },
