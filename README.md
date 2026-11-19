@@ -1,23 +1,27 @@
-# Med Tracker
+# Sabr: Medicine Tracker
 
 Do you struggle to take your meds on time? Do you forget how many tablets you're meant to take, and when? Have you ever stood in the kitchen wondering whether you actually took this morning's dose, or just thought about taking it?
 
 If you take one pill a day, a phone alarm is probably enough. Once it's five meds, some twice a day, one only on Fridays and one every other week, alarms stop being enough. You need something that knows the schedule, asks "did you take it?", and remembers the answer.
 
-Med Tracker is a free Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
+Sabr (صبر, "patience") is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
 
 <p align="center">
-  <img src="docs/screenshots/0.2/today.png" width="200" alt="Today screen" />
-  <img src="docs/screenshots/0.2/meds.png" width="200" alt="Medications list" />
-  <img src="docs/screenshots/0.2/progress.png" width="200" alt="Progress and streak" />
-  <img src="docs/screenshots/0.2/today-dark.png" width="200" alt="Today screen in dark mode" />
+  <img src="docs/screenshots/0.3/today.png" width="200" alt="Today screen" />
+  <img src="docs/screenshots/0.3/meds.png" width="200" alt="Medications list" />
+  <img src="docs/screenshots/0.3/progress.png" width="200" alt="Progress and streak" />
+  <img src="docs/screenshots/0.3/today-dark.png" width="200" alt="Today screen in dark mode" />
 </p>
 
 ## Features
 
 **Schedules that fit real life.** Every day, chosen weekdays, every N days or weeks, on/off cycles (21 on, 7 off), monthly, or as needed. Each med can be due several times a day, with start and end dates. You can pause a med when your doctor says to stop for a week.
 
+**Times that follow your week.** Set different times on office days and at the weekend, move reminders for a busy week, keep home time while travelling, and switch on Ramadan mode to move doses to suhoor and iftar (from times you set or your city's prayer times, worked out on the phone).
+
 **Reminders you can answer from the notification.** Each one has Taken, Snooze and Skip buttons, so you don't need to open the app. Android's alarm-clock delivery means battery saver can't delay them, and they can repeat until you answer.
+
+**Notes on how you feel.** A quick mood, symptoms like headache or nausea, and a few words for any day. Add a photo of each pill so they're easy to tell apart.
 
 **A clear answer to "did I take it?"** The Today screen lists what's due and what's done. The History calendar colours every day, and you can tap any day to see or fix what was logged.
 
@@ -29,31 +33,47 @@ Med Tracker is a free Android app that does that. It's a simple, private replace
 
 **Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Rings, a 7-day row for each med, month and year heatmaps and badges show how you're doing.
 
-**A home screen widget** with today's progress and a Take button for the next dose.
+**Reports for your doctor.** A PDF for any period with what was taken, late or missed, day by day, plus your mood and symptom notes.
+
+**Scan the box** to fill in a new medicine: the name, strength and pack size are read on the phone.
+
+**Home screen widgets**: a small one with today's progress and a Take button for the next dose, and a bigger one listing every dose today.
 
 **Light, dark and true-black modes.**
 
+**Free and open source.** The full source is here, under the GPL-3.0 licence (see below). Anyone can read how it works, build it themselves, or improve it.
+
 **Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. You can export everything to a file and restore it on a new phone.
+
+**Optional backup and caregiver sharing, on your own server.** If you run a [PocketBase](https://pocketbase.io) server, the app can keep an encrypted backup there, and let a family member see whether today's doses were taken. Everything is encrypted on the phone first, so the server can't read it, and medicine names are only shared if you choose. Both are off until you turn them on. Setup: [server/README.md](server/README.md).
 
 ## How it has changed
 
 Screenshots of every version are kept in [docs/screenshots](docs/screenshots), taken on the same emulator with the same demo data, so you can compare them side by side.
 
-| | 0.1 | 0.2 |
-|---|---|---|
-| Today | <img src="docs/screenshots/0.1/today.png" width="180" /> | <img src="docs/screenshots/0.2/today.png" width="180" /> |
-| Medications | <img src="docs/screenshots/0.1/meds.png" width="180" /> | <img src="docs/screenshots/0.2/meds.png" width="180" /> |
-| History | <img src="docs/screenshots/0.1/history.png" width="180" /> | <img src="docs/screenshots/0.2/history.png" width="180" /> |
-| Edit a medication | <img src="docs/screenshots/0.1/medication.png" width="180" /> | <img src="docs/screenshots/0.2/medication.png" width="180" /> |
+| | 0.5 | 0.4 | 0.3 | 0.2 | 0.1 |
+|---|---|---|---|---|---|
+| Today | <img src="docs/screenshots/0.5/today.png" width="150" /> | <img src="docs/screenshots/0.4/today.png" width="150" /> | <img src="docs/screenshots/0.3/today.png" width="150" /> | <img src="docs/screenshots/0.2/today.png" width="150" /> | <img src="docs/screenshots/0.1/today.png" width="150" /> |
+| Medications | <img src="docs/screenshots/0.5/meds.png" width="150" /> | <img src="docs/screenshots/0.4/meds.png" width="150" /> | <img src="docs/screenshots/0.3/meds.png" width="150" /> | <img src="docs/screenshots/0.2/meds.png" width="150" /> | <img src="docs/screenshots/0.1/meds.png" width="150" /> |
+| History | <img src="docs/screenshots/0.5/history.png" width="150" /> | <img src="docs/screenshots/0.4/history.png" width="150" /> | <img src="docs/screenshots/0.3/history.png" width="150" /> | <img src="docs/screenshots/0.2/history.png" width="150" /> | <img src="docs/screenshots/0.1/history.png" width="150" /> |
+| Edit a medication | <img src="docs/screenshots/0.5/medication.png" width="150" /> | <img src="docs/screenshots/0.4/medication.png" width="150" /> | <img src="docs/screenshots/0.3/medication.png" width="150" /> | <img src="docs/screenshots/0.2/medication.png" width="150" /> | <img src="docs/screenshots/0.1/medication.png" width="150" /> |
 
-- **0.1** (Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
-- **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
+Newest first:
+
+- **0.5** (19 Nov 2026): optional encrypted backup and caregiver sharing through a PocketBase server you host yourself, off unless you turn it on. Private by default: online search and medicine names in reminders are opt-in.
+- **0.4** (19 Nov 2026): doctor report PDF, scanning a medicine box, a bigger widget.
+- **0.3** (19 Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
+- **0.2.1** (19 Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
+- **0.2** (19 Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
+- **0.1** (17 Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
+
+## Privacy
+
+No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
 
 ## What's next
 
-- **0.3:** different times on different weekdays, temporary time changes, travel and Ramadan modes, better snooze, mood and symptom notes, pill photos.
-- **0.4:** a doctor report PDF for any period, scanning the box to add a med, a bigger widget.
-- **0.5:** caregiver mode through a self-hosted PocketBase server, and a Galaxy Watch tile.
+- **0.5.x:** fixes from testing 0.5 on a phone.
 
 ## Install on Android
 
@@ -61,12 +81,12 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 2. Open it. Android will ask you to allow installs from your browser or files app; allow it once.
 3. In the app, open **Settings** and:
    - allow **Notifications** and **Alarms & reminders**;
-   - tap **Battery → Open** and choose *Unrestricted*. On Samsung phones, also check *Settings → Battery → Background usage limits* and make sure Med Tracker isn't in "Sleeping apps";
+   - tap **Battery → Open** and choose *Unrestricted*. On Samsung phones, also check *Settings → Battery → Background usage limits* and make sure Sabr isn't in "Sleeping apps";
    - tap **Send a test reminder** to check it works.
 
 Builds from pull requests are under the **Actions** tab, as the `med-tracker-apk` artifact.
 
-> Med Tracker is a reminder tool, not medical advice. Always follow your doctor's or pharmacist's instructions.
+> Sabr is a reminder tool, not medical advice. Always follow your doctor's or pharmacist's instructions.
 
 ## Development
 
@@ -103,3 +123,9 @@ Release APKs are signed with the app's own key when these repository secrets exi
 
 - [RxNav / RxNorm](https://lhncbc.nlm.nih.gov/RxNav/) from the US National Library of Medicine: drug names, ingredients and strengths. Free, no key.
 - [openFDA drug labels](https://open.fda.gov/apis/drug/label/): official US label text, read for interaction warnings. Free, no key (rate limited per phone).
+
+## Licence
+
+Sabr is free and open-source software, released under the [GNU General Public License v3.0 or later](LICENSE). You can use, study, share and change it. If you share a changed version, it has to stay open source under the same licence.
+
+Contributions are welcome: open an issue or a pull request.

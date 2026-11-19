@@ -55,11 +55,16 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon
+        # Maven Central sometimes answers "429 Too Many Requests" to shared CI runners;
+        # retry downloads with backoff instead of failing the build.
+        run: >-
+          ./gradlew assembleRelease --no-daemon
+          -Dorg.gradle.internal.repository.max.retries=8
+          -Dorg.gradle.internal.repository.initial.backoff=2000
       - name: Name the APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/med-tracker-${GITHUB_SHA::7}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/sabr-${GITHUB_SHA::7}.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: med-tracker-apk
@@ -72,6 +77,10 @@ jobs:
     needs: apk
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: app.json
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v4
         with:
           name: med-tracker-apk
@@ -81,6 +90,8 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Read the app id
+        run: echo "PKG=$(node -p "require('./app.json').expo.android.package")" >> "$GITHUB_ENV"
       - name: Open the app on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -91,12 +102,12 @@ jobs:
           script: |
             adb install -r apk/*.apk
             adb logcat -c
-            adb shell monkey -p com.danishalicodes.medtracker -c android.intent.category.LAUNCHER 1
+            adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1
             sleep 30
             adb exec-out screencap -p > screenshot.png || true
             adb logcat -d -v brief AndroidRuntime:E ReactNativeJS:V '*:S' > crash.txt || true
             cat crash.txt
-            adb shell pidof com.danishalicodes.medtracker && echo "App is running" || (echo "App crashed" && exit 1)
+            adb shell pidof $PKG && echo "App is running" || (echo "App crashed" && exit 1)
             if grep -q "FATAL EXCEPTION" crash.txt; then echo "Crash found in log" && exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -137,13 +148,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          current=$(node -p "require('./repo/app.json').expo.version.replace(/\.0$/, '')")
+          current=$(node -p "require('./repo/app.json').expo.version.replace(/\\.0$/, '')")
           node repo/scripts/release-notes.js repo/CHANGELOG.md | while read -r line; do
             version=$(echo "$line" | jq -r .version)
             tag=$(echo "$line" | jq -r .tag)
             commit=$(echo "$line" | jq -r '.commit // empty')
             files=()
-            if [ -d "repo/docs/screenshots/$version" ]; then
+            if ls "repo/docs/screenshots/$version"/*.png >/dev/null 2>&1; then
               rm -f "$GITHUB_WORKSPACE/screenshots-$version.zip"
               (cd "repo/docs/screenshots/$version" && zip -q "$GITHUB_WORKSPACE/screenshots-$version.zip" *.png)
               files+=("screenshots-$version.zip")

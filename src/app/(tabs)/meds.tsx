@@ -86,7 +86,7 @@ function MedCard({ med, today, streak, logs }: { med: Medication; today: string;
     <PressableScale onPress={() => router.push({ pathname: '/med/[id]', params: { id: med.id } })} scaleTo={0.98}>
       <Card style={med.archived ? { opacity: 0.6 } : undefined}>
         <View style={s.row}>
-          <MedIcon form={med.form} color={med.color} size={54} />
+          <MedIcon med={med} size={54} />
           <View style={{ flex: 1 }}>
             <Text style={s.name} numberOfLines={1}>
               {med.name}

@@ -1,9 +1,12 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useRef, type ReactNode } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
+  Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text as RNText,
   TextInput,
@@ -119,6 +122,116 @@ export function Chip({ label, selected, onPress, color }: { label: string; selec
     <PressableScale onPress={onPress} haptic style={[s.chip, selected && { backgroundColor: color ?? c.primary, borderColor: color ?? c.primary }]}>
       <Text style={[s.chipText, selected && { color: c.onPrimary, fontWeight: '700' }]}>{label}</Text>
     </PressableScale>
+  );
+}
+
+/**
+ * A dropdown: shows the chosen option with a chevron, and opens a list to pick from.
+ * Each option can have a small picture on the left.
+ */
+export function Select<T extends string>({
+  value,
+  options,
+  onChange,
+  title,
+}: {
+  value: T;
+  options: { value: T; label: string; icon?: ReactNode }[];
+  onChange: (v: T) => void;
+  title?: string;
+}) {
+  const c = useTheme();
+  const s = useStyles();
+  const [open, setOpen] = useState(false);
+  const current = options.find((o) => o.value === value);
+  return (
+    <>
+      <PressableScale onPress={() => setOpen(true)} style={[s.input, s.select]} accessibilityRole="button" accessibilityLabel={title}>
+        {current?.icon}
+        <Text style={s.selectText}>{current?.label ?? ''}</Text>
+        <Ionicons name="chevron-down" size={20} color={c.muted} />
+      </PressableScale>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={s.backdrop} onPress={() => setOpen(false)}>
+          <Pressable style={s.sheet}>
+            {title ? <Text style={s.sheetTitle}>{title}</Text> : null}
+            <ScrollView style={{ maxHeight: 420 }}>
+              {options.map((o) => {
+                const on = o.value === value;
+                return (
+                  <Pressable
+                    key={o.value}
+                    onPress={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                    }}
+                    style={[s.option, on && { backgroundColor: c.primarySoft }]}
+                  >
+                    {o.icon}
+                    <Text style={[s.optionText, on && { color: c.primary, fontWeight: '800' }]}>{o.label}</Text>
+                    {on ? <Ionicons name="checkmark" size={20} color={c.primary} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+export interface SheetAction {
+  label: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  destructive?: boolean;
+}
+
+/** A bottom sheet with a title and a list of actions. Closes after an action. */
+export function ActionSheet({
+  visible,
+  title,
+  subtitle,
+  header,
+  actions,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  subtitle?: string;
+  header?: ReactNode;
+  actions: SheetAction[];
+  onClose: () => void;
+}) {
+  const c = useTheme();
+  const s = useStyles();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={s.backdrop} onPress={onClose}>
+        <Pressable style={s.sheet}>
+          {header}
+          <Text style={s.sheetTitle}>{title}</Text>
+          {subtitle ? <Text style={[s.optionText, { color: c.muted, marginLeft: 8, marginTop: -6, marginBottom: 8, flex: 0 }]}>{subtitle}</Text> : null}
+          {actions.map((a) => (
+            <Pressable
+              key={a.label}
+              onPress={() => {
+                onClose();
+                a.onPress();
+              }}
+              style={s.option}
+            >
+              {a.icon ? <Ionicons name={a.icon} size={22} color={a.destructive ? c.bad : c.primary} /> : null}
+              <Text style={[s.optionText, a.destructive && { color: c.bad }]}>{a.label}</Text>
+            </Pressable>
+          ))}
+          <Pressable onPress={onClose} style={[s.option, { justifyContent: 'center' }]}>
+            <Text style={[s.optionText, { flex: 0, color: c.muted }]}>Cancel</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -293,4 +406,11 @@ export const useStyles = makeStyles((c) => ({
     backgroundColor: c.card,
     fontFamily: 'Nunito_600SemiBold',
   },
+  select: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  selectText: { flex: 1, fontSize: 16, fontWeight: '700', color: c.text },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: c.card, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, padding: 16, paddingBottom: 28 },
+  sheetTitle: { fontSize: 18, fontWeight: '900', color: c.text, marginBottom: 10, marginLeft: 8 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 14 },
+  optionText: { flex: 1, fontSize: 16, fontWeight: '600', color: c.text },
 }));

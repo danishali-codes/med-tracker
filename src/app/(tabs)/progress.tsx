@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
+import { router } from 'expo-router';
 import { Screen } from '../../components/Screen';
 import { HeatLegend, MonthHeatmap, YearHeatmap } from '../../components/Heatmap';
 import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
@@ -46,6 +47,17 @@ export default function ProgressScreen() {
         <Stat icon="time-outline" value={onTimePct == null ? '–' : `${onTimePct}%`} label="On time" color={c.good} />
         <Stat icon="star-outline" value={`${progress.perfectDays}`} label="Perfect days" color={c.warn} />
         <Stat icon="checkmark-done" value={`${progress.totalTaken}`} label="Doses taken" color={c.ice} />
+      </FadeIn>
+
+      <FadeIn delay={90}>
+        <PressableScale onPress={() => router.push('/report')} style={s.reportLink}>
+          <Ionicons name="document-text-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.reportTitle}>Doctor report</Text>
+            <Text style={[s.hint, { marginTop: 2 }]}>A PDF of doses, missed days and symptoms for any period</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
       </FadeIn>
 
       <FadeIn delay={120}>
@@ -157,6 +169,8 @@ function Bar({ value, color, delay, label, sub, highlight }: { value: number; co
 }
 
 const useStyles = makeStyles((c) => ({
+  reportLink: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginBottom: 14 },
+  reportTitle: { fontSize: 16, fontWeight: '800', color: c.text },
   streak: { borderRadius: 32, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   streakBig: { fontSize: 48, fontWeight: '900', color: '#fff', lineHeight: 52 },
   streakLabel: { fontSize: 16, fontWeight: '800', color: '#fff' },
