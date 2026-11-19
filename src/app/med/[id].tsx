@@ -261,9 +261,21 @@ export default function MedEditor() {
       },
     ]);
 
+  // Keep weekday rules one-to-one with the usual times when doses are added or removed.
+  const changeTimes = (next: TimeOfDay[], edit: { removed?: number; added?: TimeOfDay }) => {
+    setTimes(next);
+    setDayTimes((rules) =>
+      rules.map((r) => {
+        let kept = [...r.times];
+        if (edit.removed != null) kept = kept.filter((_, j) => j !== edit.removed);
+        if (edit.added != null) kept.splice(next.indexOf(edit.added), 0, edit.added);
+        return { ...r, times: next.map((t, i) => kept[i] ?? t) };
+      }),
+    );
+  };
   const addTime = () => {
-    const next = SUGGESTED_TIMES.find((t) => !times.includes(t)) ?? '12:00';
-    setTimes([...times, next].sort());
+    const added = SUGGESTED_TIMES.find((t) => !times.includes(t)) ?? '12:00';
+    changeTimes([...times, added].sort(), { added });
   };
 
   const step = stepFor(form);
@@ -432,7 +444,7 @@ export default function MedEditor() {
                 <View key={`${t}-${i}`} style={st.timeRow}>
                   <TimeButton value={t} onChange={(v) => setTimes(times.map((x, j) => (j === i ? v : x)).sort())} />
                   {times.length > 1 ? (
-                    <Pressable onPress={() => setTimes(times.filter((_, j) => j !== i))} hitSlop={10}>
+                    <Pressable onPress={() => changeTimes(times.filter((_, j) => j !== i), { removed: i })} hitSlop={10}>
                       <Ionicons name="close-circle" size={24} color={c.faint} />
                     </Pressable>
                   ) : null}

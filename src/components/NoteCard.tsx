@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import type { DateKey } from '../domain/dates';
 import { COMMON_SYMPTOMS, MOODS, type DayNote } from '../domain/types';
@@ -14,16 +14,25 @@ export function NoteCard({ date, title = 'How are you feeling?' }: { date: DateK
   const s = useStyles();
   const [note, setNote] = useState<DayNote>(() => repo.getNote(date) ?? empty(date));
   const [open, setOpen] = useState(false);
+  // While typing, the text box owns the note; saves from elsewhere (the other tab,
+  // a mood tap) reload it otherwise, so a later tap never writes back stale data.
+  const typing = useRef(false);
   useEffect(() => {
-    setNote(repo.getNote(date) ?? empty(date));
+    const load = () => {
+      if (!typing.current) setNote(repo.getNote(date) ?? empty(date));
+    };
+    load();
+    return repo.subscribe(load);
   }, [date]);
 
-  const save = (next: DayNote) => {
+  // Merge onto the latest saved note so only the field you touched changes.
+  const save = (change: (n: DayNote) => DayNote) => {
+    const next = change(repo.getNote(date) ?? empty(date));
     setNote(next);
     repo.saveNote(next);
   };
   const toggleSymptom = (sym: string) =>
-    save({ ...note, symptoms: note.symptoms.includes(sym) ? note.symptoms.filter((x) => x !== sym) : [...note.symptoms, sym] });
+    save((n) => ({ ...n, symptoms: n.symptoms.includes(sym) ? n.symptoms.filter((x) => x !== sym) : [...n.symptoms, sym] }));
   const extra = note.symptoms.filter((x) => !COMMON_SYMPTOMS.includes(x));
 
   return (
@@ -36,7 +45,7 @@ export function NoteCard({ date, title = 'How are you feeling?' }: { date: DateK
             <PressableScale
               key={m.value}
               haptic
-              onPress={() => save({ ...note, mood: on ? null : m.value })}
+              onPress={() => save((n) => ({ ...n, mood: on ? null : m.value }))}
               style={[s.mood, on && { backgroundColor: c.primary, borderColor: c.primary }]}
               accessibilityLabel={`Mood: ${m.label}`}
             >
@@ -56,8 +65,12 @@ export function NoteCard({ date, title = 'How are you feeling?' }: { date: DateK
           </View>
           <Input
             value={note.text}
+            onFocus={() => (typing.current = true)}
             onChangeText={(text) => setNote({ ...note, text })}
-            onEndEditing={() => repo.saveNote(note)}
+            onEndEditing={() => {
+              typing.current = false;
+              save((n) => ({ ...n, text: note.text }));
+            }}
             placeholder="Anything else? Side effects, sleep, what you ate..."
             multiline
             style={{ minHeight: 64, textAlignVertical: 'top', marginTop: 6 }}
