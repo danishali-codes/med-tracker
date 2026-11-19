@@ -162,6 +162,14 @@ export interface Settings {
   /** Repeat reminders come closer together each time. */
   nagEscalate: boolean;
   /**
+   * Online medicine search and interaction lookups (off by default). When off, the app
+   * never goes online: search and the interaction check use only the built-in list and
+   * anything already saved on the phone.
+   */
+  onlineLookups: boolean;
+  /** Show medicine names in reminders and refill alerts (off by default, so they say "your medicine"). */
+  showMedNames: boolean;
+  /**
    * Optional sync with a PocketBase server you run. Off by default: with it off, nothing
    * ever leaves the phone. Everything sent is end-to-end encrypted first.
    */
@@ -218,6 +226,8 @@ export const DEFAULT_SETTINGS: Settings = {
   missedNotice: true,
   missedNoticeAt: '22:00',
   nagEscalate: false,
+  onlineLookups: false,
+  showMedNames: false,
   sync: { enabled: false, backup: false, share: false, shareNames: false, shareAs: '' },
   care: { alerts: true, graceMinutes: 30 },
 };
