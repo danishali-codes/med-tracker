@@ -74,3 +74,32 @@ jobs:
           name: screenshots-${{ matrix.key }}
           path: shots/
           if-no-files-found: warn
+
+  # Commits the new screenshots to docs/screenshots/<version>/ on the same branch,
+  # so they show up in the pull request (and in the README and release notes once merged).
+  save:
+    needs: shoot
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: screenshots-*
+          path: shots
+          merge-multiple: true
+      - name: Commit screenshots
+        run: |
+          for dir in shots/*/; do
+            v=$(basename "$dir")
+            mkdir -p "docs/screenshots/$v"
+            cp "$dir"*.png "docs/screenshots/$v/" 2>/dev/null || true
+          done
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git -c user.name=danishali-codes -c user.email=76103337+danishali-codes@users.noreply.github.com commit -m "Update screenshots"
+          git push
