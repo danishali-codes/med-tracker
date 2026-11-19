@@ -154,6 +154,8 @@ jobs:
             fi
             if gh release view "$tag" >/dev/null 2>&1; then
               echo "$tag exists, refreshing its files"
+              # APKs used to be named med-tracker-x.y.apk; don't leave a stale one next to the new one.
+              [ "$version" = "$current" ] && { gh release delete-asset "$tag" "med-tracker-$version.apk" -y 2>/dev/null || true; }
               [ ${#files[@]} -gt 0 ] && gh release upload "$tag" "${files[@]}" --clobber
               continue
             fi
