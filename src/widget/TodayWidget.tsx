@@ -9,8 +9,8 @@ const REG = 'Nunito_700Bold';
 /** Home screen widget: today's progress, streak and the next dose, with a Take button when it's due. */
 export function TodayWidget({ data, dark }: { data: WidgetData; dark: boolean }) {
   const allDone = data.total > 0 && data.done === data.total;
-  const from = dark ? '#4B32C9' : '#6A4DF4';
-  const to = dark ? '#C84B83' : '#F0689B';
+  const from = dark ? '#342887' : '#6A4DF4';
+  const to = dark ? '#3A2D93' : '#7457F5';
   return (
     <FlexWidget
       clickAction="OPEN_APP"

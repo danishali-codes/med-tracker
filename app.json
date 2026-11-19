@@ -3,7 +3,7 @@
     "name": "Med Tracker",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.danishalicodes.medtracker",
-      "versionCode": 4,
+      "versionCode": 5,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -72,6 +72,17 @@
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TodayList",
+              "label": "Med Tracker: Today's list",
+              "description": "Every dose today, with Take on the ones that are due",
+              "minWidth": "250dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 3,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
             }
           ]
         }
@@ -82,6 +93,13 @@
           "photosPermission": "Lets you choose a photo of each pill so they're easy to tell apart.",
           "cameraPermission": "Lets you take a photo of each pill so they're easy to tell apart.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Lets you scan a medicine box to fill in its details.",
+          "recordAudioAndroid": false
         }
       ]
     ],
