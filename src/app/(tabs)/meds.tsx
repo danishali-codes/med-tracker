@@ -1,16 +1,24 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, SectionTitle } from '../../components/ui';
+import { Pressable, View } from 'react-native';
+import { RoundButton, Screen } from '../../components/Screen';
+import { Button, Card, FadeIn, PressableScale, SectionTitle, Text } from '../../components/ui';
 import { formatDateLong } from '../../domain/dates';
-import { medStreak } from '../../domain/progress';
-import { describeSchedule, indexLogs, nextDueDate } from '../../domain/schedule';
+import { daysOfSupply, describeDose, isLowStock, units } from '../../domain/dose';
+import { medDays, medStreak } from '../../domain/progress';
+import { describeSchedule, indexLogs, isPausedOn, nextDueDate } from '../../domain/schedule';
+import type { DoseLog } from '../../domain/types';
 import type { Medication } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useToday } from '../../hooks/useData';
-import { colors, FORM_EMOJI } from '../../theme';
+import { MedIcon } from '../../components/MedIcon';
+import { WeekSquares } from '../../components/WeekSquares';
+import { makeStyles, useTheme } from '../../theme';
 
 export default function MedsScreen() {
+  const c = useTheme();
+  const s = useStyles();
   const meds = useMeds();
   const today = useToday();
   const version = useDbVersion();
@@ -20,71 +28,103 @@ export default function MedsScreen() {
   const archived = meds.filter((m) => m.archived);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      <Button title="+ Add medication" onPress={() => router.push('/med/new')} style={{ marginBottom: 16 }} />
-      {active.length === 0 ? <Text style={st.empty}>No medications yet.</Text> : null}
-      {active.map((m) => (
-        <MedCard key={m.id} med={m} today={today} streak={medStreak(m, logs, today)} />
+    <Screen title="Medications" subtitle={`${active.length} active`} right={<RoundButton icon="add" label="Add medication" onPress={() => router.push('/med/new')} />}>
+      {active.length >= 2 ? (
+        <FadeIn>
+          <PressableScale onPress={() => router.push('/interactions')} style={[s.check, { backgroundColor: c.primarySoft }]}>
+            <View style={[s.checkIcon, { backgroundColor: c.primary }]}>
+              <Ionicons name="shield-checkmark" size={20} color={c.onPrimary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.checkTitle, { color: c.primary }]}>Check interactions</Text>
+              <Text style={s.sub}>Your meds together, plus alcohol and food</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={c.primary} />
+          </PressableScale>
+        </FadeIn>
+      ) : null}
+
+      {active.length === 0 ? (
+        <Card style={{ alignItems: 'center', paddingVertical: 28 }}>
+          <Ionicons name="file-tray-outline" size={40} color={c.muted} />
+          <Text style={s.emptyTitle}>No medications yet</Text>
+          <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 16 }} />
+        </Card>
+      ) : null}
+      {active.map((m, i) => (
+        <FadeIn key={m.id} delay={i * 40}>
+          <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
+        </FadeIn>
       ))}
       {archived.length > 0 ? (
         <>
           <SectionTitle
             right={
-              <Pressable onPress={() => setShowArchived(!showArchived)}>
-                <Text style={{ color: colors.primary }}>{showArchived ? 'Hide' : 'Show'}</Text>
+              <Pressable onPress={() => setShowArchived(!showArchived)} hitSlop={10}>
+                <Text style={{ color: c.primary, fontWeight: '800' }}>{showArchived ? 'Hide' : 'Show'}</Text>
               </Pressable>
             }
           >
             Archived ({archived.length})
           </SectionTitle>
-          {showArchived ? archived.map((m) => <MedCard key={m.id} med={m} today={today} streak={0} />) : null}
+          {showArchived ? archived.map((m) => <MedCard key={m.id} med={m} today={today} streak={0} logs={logs} />) : null}
         </>
       ) : null}
-    </ScrollView>
+    </Screen>
   );
 }
 
-function MedCard({ med, today, streak }: { med: Medication; today: string; streak: number }) {
-  const next = med.archived || med.schedule.pattern.kind === 'asNeeded' ? null : nextDueDate(med.schedule, today);
-  const low = med.stock != null && med.refillAt != null && med.stock <= med.refillAt;
+function MedCard({ med, today, streak, logs }: { med: Medication; today: string; streak: number; logs: Map<string, DoseLog> }) {
+  const c = useTheme();
+  const s = useStyles();
+  const paused = isPausedOn(med, today);
+  const scheduled = !med.archived && med.schedule.pattern.kind !== 'asNeeded';
+  const next = !scheduled || paused ? null : nextDueDate(med.schedule, today);
+  const low = isLowStock(med);
+  const days = daysOfSupply(med);
   return (
-    <Pressable onPress={() => router.push({ pathname: '/med/[id]', params: { id: med.id } })}>
+    <PressableScale onPress={() => router.push({ pathname: '/med/[id]', params: { id: med.id } })} scaleTo={0.98}>
       <Card style={med.archived ? { opacity: 0.6 } : undefined}>
-        <View style={st.row}>
-          <View style={[st.icon, { backgroundColor: med.color + '22' }]}>
-            <Text style={{ fontSize: 22 }}>{FORM_EMOJI[med.form]}</Text>
-          </View>
+        <View style={s.row}>
+          <MedIcon form={med.form} color={med.color} size={54} />
           <View style={{ flex: 1 }}>
-            <Text style={st.name}>
-              {med.name} {med.dose ? <Text style={st.dose}>{med.dose}</Text> : null}
+            <Text style={s.name} numberOfLines={1}>
+              {med.name}
             </Text>
-            <Text style={st.sub}>{describeSchedule(med.schedule)}</Text>
-            {next && next !== today ? <Text style={st.sub}>Next: {formatDateLong(next)}</Text> : null}
-            <View style={st.tags}>
-              {streak > 0 ? <Text style={st.tag}>🔥 {streak}</Text> : null}
-              {med.stock != null ? (
-                <Text style={[st.tag, low && { backgroundColor: colors.badSoft, color: colors.bad }]}>
-                  {low ? '⚠️ ' : ''}
-                  {med.stock} left
-                </Text>
-              ) : null}
-            </View>
+            <Text style={s.dose}>{describeDose(med)}</Text>
           </View>
-          <Text style={st.chev}>›</Text>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </View>
+        <View style={s.meta}>
+          <Text style={s.sub}>{describeSchedule(med.schedule)}</Text>
+          {next && next !== today ? <Text style={s.sub}>Next: {formatDateLong(next)}</Text> : null}
+        </View>
+        {scheduled ? <WeekSquares days={medDays(med, logs, today)} color={med.color} today={today} /> : null}
+        <View style={s.tags}>
+          {paused ? <Text style={[s.tag, { backgroundColor: c.sunken, color: c.muted }]}>Paused</Text> : null}
+          {streak > 0 ? <Text style={[s.tag, { backgroundColor: c.warnSoft, color: c.flame }]}>{streak} in a row</Text> : null}
+          {med.stock != null ? (
+            <Text style={[s.tag, low ? { backgroundColor: c.badSoft, color: c.bad } : { backgroundColor: c.goodSoft, color: c.good }]}>
+              {units(med.form, med.stock)} left{days != null ? ` · ~${days}d` : ''}
+            </Text>
+          ) : null}
         </View>
       </Card>
-    </Pressable>
+    </PressableScale>
   );
 }
 
-const st = StyleSheet.create({
-  empty: { color: colors.muted, textAlign: 'center', marginTop: 24 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  icon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  name: { fontSize: 17, fontWeight: '700', color: colors.text },
-  dose: { fontSize: 14, fontWeight: '400', color: colors.muted },
-  sub: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  tags: { flexDirection: 'row', gap: 6, marginTop: 6 },
-  tag: { fontSize: 12, backgroundColor: colors.bg, color: colors.text, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, overflow: 'hidden' },
-  chev: { fontSize: 26, color: colors.neutral },
-});
+const useStyles = makeStyles((c) => ({
+  emptyTitle: { fontSize: 20, fontWeight: '900', color: c.text, marginTop: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  icon: { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  name: { fontSize: 19, fontWeight: '900', color: c.text },
+  dose: { fontSize: 15, fontWeight: '700', color: c.muted, marginTop: 1 },
+  meta: { marginTop: 12, gap: 2 },
+  sub: { fontSize: 13, color: c.muted, fontWeight: '600' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  tag: { fontSize: 12, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, overflow: 'hidden' },
+  check: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 24, marginBottom: 14 },
+  checkIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  checkTitle: { fontSize: 16, fontWeight: '900' },
+}));

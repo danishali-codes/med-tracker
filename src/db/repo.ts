@@ -1,5 +1,6 @@
 import { getDb } from './database';
 import { addDays, diffDays, eachDay, toDateKey, type DateKey } from '../domain/dates';
+import { isLowStock, normalizeMed } from '../domain/dose';
 import { summarizeDay, trackedFrom, type DaySummary } from '../domain/progress';
 import { indexLogs } from '../domain/schedule';
 import { DEFAULT_SETTINGS, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
@@ -28,12 +29,12 @@ function changed() {
 
 export function getMeds(): Medication[] {
   const rows = getDb().getAllSync<{ data: string }>('SELECT data FROM meds ORDER BY created_at');
-  return rows.map((r) => JSON.parse(r.data) as Medication);
+  return rows.map((r) => normalizeMed(JSON.parse(r.data)));
 }
 
 export function getMed(id: string): Medication | null {
   const row = getDb().getFirstSync<{ data: string }>('SELECT data FROM meds WHERE id = ?', id);
-  return row ? (JSON.parse(row.data) as Medication) : null;
+  return row ? normalizeMed(JSON.parse(row.data)) : null;
 }
 
 export function saveMed(med: Medication) {
@@ -101,8 +102,9 @@ export function getLog(slot: string): DoseLog | null {
 }
 
 /**
- * Record (or clear, with status null) a dose. Keeps pill stock in step and
- * returns meds whose stock just reached their refill level.
+ * Record (or clear, with status null) a dose. Each "taken" uses the med's `amount`
+ * units (e.g. 3 tablets) from stock, and returns meds whose stock just reached
+ * their refill level.
  */
 export function setDose(
   dose: { slot: string; medId: string; date: DateKey; time: string },
@@ -121,8 +123,8 @@ export function setDose(
     if (prev?.status === 'taken' && tracked) stock += prev.stock_used;
     let used = 0;
     if (status === 'taken' && tracked) {
-      used = Math.min(med!.perDose, stock);
-      stock -= used;
+      used = Math.min(med!.amount, stock);
+      stock = Math.round((stock - used) * 1000) / 1000;
     }
     if (status === null) {
       db.runSync('DELETE FROM dose_log WHERE slot = ?', dose.slot);
@@ -141,7 +143,7 @@ export function setDose(
     if (tracked && stock !== med!.stock) {
       const next = { ...med!, stock };
       db.runSync('UPDATE meds SET data = ? WHERE id = ?', JSON.stringify(next), med!.id);
-      const crossed = status === 'taken' && med!.refillAt != null && med!.stock! > med!.refillAt && stock <= med!.refillAt;
+      const crossed = status === 'taken' && !isLowStock(med!) && isLowStock(next);
       if (crossed) lowStock.push(next);
     }
     db.runSync('DELETE FROM day_summary WHERE date = ?', dose.date);
@@ -201,8 +203,11 @@ export function saveSettings(s: Settings) {
 export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySummary[] {
   const db = getDb();
   const meds = getMeds();
-  if (meds.length === 0) return [];
-  const first = meds.reduce((min, m) => (trackedFrom(m) < min ? trackedFrom(m) : min), today);
+  // Saved summaries count too, so history survives deleting a med (even the last one).
+  const firstCached = db.getFirstSync<{ d: string | null }>('SELECT MIN(date) AS d FROM day_summary')?.d ?? null;
+  if (meds.length === 0 && !firstCached) return [];
+  const fromMeds = meds.reduce((min, m) => (trackedFrom(m) < min ? trackedFrom(m) : min), today);
+  const first = firstCached && firstCached < fromMeds ? firstCached : fromMeds;
   const start = diffDays(first, today) > 730 ? addDays(today, -730) : first;
   if (diffDays(start, today) < 0) return [];
 
@@ -231,38 +236,11 @@ export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySumm
   return out;
 }
 
-// ---- decorating ----
-
-export function getPurchases(): { itemId: string; price: number }[] {
-  return getDb()
-    .getAllSync<{ item_id: string; price: number }>('SELECT item_id, price FROM purchase')
-    .map((r) => ({ itemId: r.item_id, price: r.price }));
-}
-
-export function buy(itemId: string, price: number) {
-  getDb().runSync('INSERT OR IGNORE INTO purchase (item_id, price, at) VALUES (?, ?, ?)', itemId, price, new Date().toISOString());
-  changed();
-}
-
-export function getPlacements(): Map<string, string> {
-  const rows = getDb().getAllSync<{ slot_id: string; item_id: string }>('SELECT slot_id, item_id FROM placement');
-  return new Map(rows.map((r) => [r.slot_id, r.item_id]));
-}
-
-export function place(slotId: string, itemId: string | null) {
-  const db = getDb();
-  db.withTransactionSync(() => {
-    if (itemId) db.runSync('DELETE FROM placement WHERE item_id = ?', itemId);
-    db.runSync('DELETE FROM placement WHERE slot_id = ?', slotId);
-    if (itemId) db.runSync('INSERT INTO placement (slot_id, item_id) VALUES (?, ?)', slotId, itemId);
-  });
-  changed();
-}
-
 // ---- backup ----
 
 // day_summary is included: it holds finished days as they were, which can't be rebuilt
-// once a med has been archived or its schedule changed.
+// once a med has been archived or its schedule changed. purchase and placement belong to
+// the room decorating, which is switched off for now; they stay so nothing is lost.
 const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv'] as const;
 
 export function exportAll(): string {

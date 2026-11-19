@@ -2,6 +2,7 @@
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
+import { refreshWidgetNow } from '../widget/update';
 import { handleReminderAction, rescheduleAll } from './reminders';
 
 export const NOTIFICATION_TASK = 'med-reminder-response';
@@ -12,6 +13,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_TASK,
   if (error || !data) return;
   if ('actionIdentifier' in data) {
     await handleReminderAction(data.actionIdentifier, data.notification.request.content.data);
+    await refreshWidgetNow();
   }
 });
 
@@ -19,6 +21,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_TASK,
 TaskManager.defineTask(REFRESH_TASK, async () => {
   try {
     await rescheduleAll();
+    await refreshWidgetNow();
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;

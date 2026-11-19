@@ -40,8 +40,21 @@ jobs:
       - run: npm ci
       - name: Generate the Android project
         run: npx expo prebuild --platform android --no-install
+      # With the signing secrets set, every build is signed with the same private key so
+      # new versions install over old ones. Without them it falls back to the shared debug key.
+      - name: Use the app's signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          node scripts/use-release-key.js
       - name: Build the APK
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
       - name: Name the APK
         run: |
@@ -111,4 +124,35 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest dist/*.apk --target "$GITHUB_SHA" --title "Latest build" --notes "Built from ${GITHUB_SHA::7}. Download the .apk on your Android phone and open it to install." --latest
+          gh release create latest dist/*.apk --target "$GITHUB_SHA" --title "Latest build" --notes "Built from ${GITHUB_SHA::7}. Download the .apk on your Android phone and open it to install."
+      - uses: actions/checkout@v4
+        with:
+          path: repo
+      # One release per version in CHANGELOG.md (v0.1.0, v0.2.0...), with its notes and
+      # screenshots. A version that already has a release is left alone. The APK is
+      # attached to the version that matches app.json.
+      - name: Publish version releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          current=$(node -p "require('./repo/app.json').expo.version.split('.').slice(0,2).join('.')")
+          node repo/scripts/release-notes.js repo/CHANGELOG.md | while read -r line; do
+            version=$(echo "$line" | jq -r .version)
+            tag=$(echo "$line" | jq -r .tag)
+            commit=$(echo "$line" | jq -r '.commit // empty')
+            if gh release view "$tag" >/dev/null 2>&1; then echo "$tag exists"; continue; fi
+            echo "$line" | jq -r .notes > notes.md
+            files=()
+            if [ -d "repo/docs/screenshots/$version" ]; then
+              (cd "repo/docs/screenshots/$version" && zip -q "$GITHUB_WORKSPACE/screenshots-$version.zip" *.png)
+              files+=("screenshots-$version.zip")
+            fi
+            if [ "$version" = "$current" ]; then
+              cp dist/*.apk "med-tracker-$version.apk"
+              files+=("med-tracker-$version.apk")
+            fi
+            latest=--latest=false
+            [ "$version" = "$current" ] && latest=--latest
+            gh release create "$tag" "${files[@]}" --target "${commit:-$GITHUB_SHA}" --title "Med Tracker $version" --notes-file notes.md $latest
+          done

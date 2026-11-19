@@ -1,0 +1,6 @@
+today 
+history calendar
+meds meds
+room room
+medication med/demo-metformin
+settings settings

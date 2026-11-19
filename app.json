@@ -3,17 +3,17 @@
     "name": "Med Tracker",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.danishalicodes.medtracker"
     },
     "android": {
       "package": "com.danishalicodes.medtracker",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -40,7 +40,7 @@
       [
         "expo-notifications",
         {
-          "color": "#3B6FE0"
+          "color": "#6A4DF4"
         }
       ],
       [
@@ -50,6 +50,28 @@
             "enableMinifyInReleaseBuilds": false,
             "enableShrinkResourcesInReleaseBuilds": false
           }
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/nunito/800ExtraBold/Nunito_800ExtraBold.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Med Tracker: Today",
+              "description": "Today's doses, your streak and the next dose",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
         }
       ]
     ],

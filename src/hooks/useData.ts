@@ -36,24 +36,19 @@ export function useSettings() {
   return useMemo(() => repo.getSettings(), [v]);
 }
 
-/** Streaks, coins, badges and per-day summaries. */
+/** Streaks, badges and per-day summaries. */
 export function useProgress() {
   const v = useDbVersion();
   const today = useToday();
   return useMemo(() => {
     const summaries = repo.getDaySummaries(today);
     const progress = computeProgress(summaries);
-    const purchases = repo.getPurchases();
-    const spent = purchases.reduce((n, p) => n + p.price, 0);
-    const stats = { ...progress, purchases: purchases.length };
-    const badges = BADGES.map((b) => ({ ...b, has: b.earned(stats) }));
+    const badges = BADGES.map((b) => ({ ...b, has: b.earned(progress) }));
     return {
       today,
       summaries,
       byDate: new Map(summaries.map((s) => [s.date, s])),
       progress,
-      coins: progress.coinsEarned - spent,
-      purchases,
       badges,
     };
   }, [v, today]);

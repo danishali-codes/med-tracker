@@ -1,23 +1,33 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { logAsNeeded } from '../../actions';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View } from 'react-native';
+import { logAsNeeded, logDose } from '../../actions';
+import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
-import { Button, Card, Ring, SectionTitle } from '../../components/ui';
-import { atTime, formatDateLong, formatTime, timeFromDate } from '../../domain/dates';
-import { dosesOn, groupByTime, indexLogs } from '../../domain/schedule';
+import { Screen } from '../../components/Screen';
+import { Button, Card, FadeIn, PressableScale, Ring, Rings, SectionTitle, Text } from '../../components/ui';
+import { addDays, atTime, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
+import { describeDose } from '../../domain/dose';
+import { adherence } from '../../domain/progress';
+import { dosesOn, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
 import { getPermissionState, requestExactAlarms, requestNotificationPermission, type PermissionState } from '../../notifications/permissions';
 import { rescheduleAll } from '../../notifications/reminders';
-import { colors, FORM_EMOJI } from '../../theme';
+import { MedIcon } from '../../components/MedIcon';
+import { makeStyles, useTheme } from '../../theme';
 
 export default function TodayScreen() {
+  const c = useTheme();
+  const s = useStyles();
   const meds = useMeds();
   const settings = useSettings();
   const version = useDbVersion();
-  const { today, progress, coins, byDate } = useProgress();
+  const { today, progress, byDate } = useProgress();
   const [perm, setPerm] = useState<PermissionState | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   const refreshPerm = useCallback(() => {
     getPermissionState().then(setPerm).catch(() => {});
@@ -26,12 +36,27 @@ export default function TodayScreen() {
 
   const medById = useMemo(() => new Map(meds.map((m) => [m.id, m])), [meds]);
   const doses = useMemo(() => dosesOn(meds, today), [meds, today]);
-  const logs = useMemo(() => indexLogs(repo.getLogs(today, today)), [today, version]);
+  const todayLogs = useMemo(() => repo.getLogs(today, today), [today, version]);
+  const logs = useMemo(() => indexLogs(todayLogs), [todayLogs]);
   const groups = groupByTime(doses);
   const asNeeded = meds.filter((m) => !m.archived && m.schedule.pattern.kind === 'asNeeded');
   const answered = doses.filter((d) => logs.has(d.slot)).length;
-  const summary = byDate.get(today);
+  const taken = doses.filter((d) => logs.get(d.slot)?.status === 'taken');
+  const onTime = taken.filter((d) => punctuality(d, new Date(logs.get(d.slot)!.at), settings.onTimeWindowMinutes) === 'onTime').length;
   const now = new Date();
+  const allDone = doses.length > 0 && answered === doses.length;
+
+  // This week, Monday first.
+  const monday = addDays(today, -((weekdayOf(today) + 6) % 7));
+  const week = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const weekPct = adherence(week.filter((d) => diffDays(d, today) >= 0).map((d) => byDate.get(d)).filter((x) => !!x));
+
+  // Confetti when the last dose of the day is answered while the app is open.
+  const wasDone = useRef(allDone);
+  useEffect(() => {
+    if (allDone && !wasDone.current && settings.celebrate) setCelebrate(true);
+    wasDone.current = allDone;
+  }, [allDone, settings.celebrate]);
 
   const enableReminders = async () => {
     await requestNotificationPermission();
@@ -40,117 +65,200 @@ export default function TodayScreen() {
     rescheduleAll().catch(() => {});
   };
 
+  const activeCount = meds.filter((m) => !m.archived).length;
+
   return (
-    <ScrollView contentContainerStyle={st.container}>
-      <Text style={st.date}>{formatDateLong(today)}</Text>
-
-      {perm && (!perm.notifications || !perm.exactAlarms) ? (
-        <Card style={{ backgroundColor: colors.warnSoft, borderColor: colors.warn }}>
-          <Text style={st.bannerTitle}>{!perm.notifications ? 'Reminders are off' : 'Reminders may arrive late'}</Text>
-          <Text style={st.bannerText}>
-            {!perm.notifications
-              ? 'Allow notifications so the app can remind you when a dose is due.'
-              : 'Allow "Alarms & reminders" so doses ring on time, even when battery saving is on.'}
-          </Text>
-          <Button title="Turn on" onPress={enableReminders} style={{ marginTop: 10, alignSelf: 'flex-start' }} small />
-        </Card>
-      ) : null}
-
-      <Card style={st.hero}>
-        <Ring value={answered} total={doses.length} size={116}>
-          <Text style={st.ringBig}>
-            {answered}/{doses.length}
-          </Text>
-          <Text style={st.ringSmall}>{doses.length === 0 ? 'nothing due' : 'doses done'}</Text>
-        </Ring>
-        <View style={st.stats}>
-          <Stat emoji="🔥" value={`${progress.currentStreak}`} label="day streak" />
-          <Stat emoji="🪙" value={`${coins}`} label="coins" />
-          <Stat emoji="❄️" value={`${progress.freezes}`} label={progress.freezes === 1 ? 'streak freeze' : 'streak freezes'} />
-        </View>
-      </Card>
-      {summary?.status === 'complete' && doses.length > 0 ? (
-        <Text style={st.cheer}>All done for today. Nice work! 🎉</Text>
-      ) : null}
-
-      {meds.filter((m) => !m.archived).length === 0 ? (
-        <Card>
-          <Text style={st.emptyTitle}>Add your first medication</Text>
-          <Text style={st.bannerText}>Set its schedule once and the app reminds you every time it's due.</Text>
-          <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 12 }} />
-        </Card>
-      ) : null}
-
-      {groups.map((g) => {
-        const pending = g.doses.some((d) => !logs.has(d.slot));
-        const overdue = pending && atTime(today, g.time) < now;
-        return (
-          <View key={g.time}>
-            <SectionTitle right={overdue ? <Text style={st.overdue}>Due</Text> : null}>{formatTime(g.time)}</SectionTitle>
-            <Card style={{ paddingVertical: 4 }}>
-              {g.doses.map((d) => {
-                const med = medById.get(d.medId);
-                return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} /> : null;
-              })}
+    <View style={{ flex: 1 }}>
+      <Screen title="Today" subtitle={formatDateLong(today)}>
+        {perm && (!perm.notifications || !perm.exactAlarms) ? (
+          <FadeIn>
+            <Card style={{ backgroundColor: c.warnSoft }}>
+              <Text style={s.bannerTitle}>{!perm.notifications ? 'Reminders are off' : 'Reminders may arrive late'}</Text>
+              <Text style={s.bannerText}>
+                {!perm.notifications
+                  ? 'Allow notifications so the app can remind you when a dose is due.'
+                  : 'Allow "Alarms & reminders" so doses ring on time, even when battery saving is on.'}
+              </Text>
+              <Button title="Turn on" onPress={enableReminders} style={{ marginTop: 12, alignSelf: 'flex-start' }} small />
             </Card>
-          </View>
-        );
-      })}
+          </FadeIn>
+        ) : null}
 
-      {asNeeded.length > 0 ? (
-        <>
-          <SectionTitle>As needed</SectionTitle>
-          <Card style={{ paddingVertical: 4 }}>
-            {asNeeded.map((m) => {
-              const last = repo
-                .getLogs(today, today)
-                .filter((l) => l.medId === m.id)
-                .sort((a, b) => b.at.localeCompare(a.at))[0];
+        <FadeIn>
+          <LinearGradient colors={c.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.hero}>
+            <View style={s.heroTop}>
+              <Rings
+                size={148}
+                stroke={14}
+                track="rgba(255,255,255,0.18)"
+                rings={[
+                  { value: answered, total: doses.length, color: c.rings[0] },
+                  { value: onTime, total: taken.length, color: c.rings[1] },
+                  { value: weekPct ?? 0, total: weekPct == null ? 0 : 1, color: c.rings[2] },
+                ]}
+              >
+                <Text style={s.ringBig}>
+                  {answered}
+                  <Text style={s.ringOf}>/{doses.length}</Text>
+                </Text>
+              </Rings>
+              <View style={{ flex: 1, gap: 12 }}>
+                <Legend color={c.rings[0]} label="Doses today" value={doses.length ? `${answered} of ${doses.length}` : 'None due'} />
+                <Legend color={c.rings[1]} label="On time" value={taken.length ? `${onTime} of ${taken.length}` : '–'} />
+                <Legend color={c.rings[2]} label="This week" value={weekPct == null ? '–' : `${Math.round(weekPct * 100)}%`} />
+              </View>
+            </View>
+            <View style={s.heroPills}>
+              <View style={s.pill}>
+                <Ionicons name="flame" size={14} color="#fff" />
+                <Text style={s.pillText}>{progress.currentStreak} day streak</Text>
+              </View>
+              <View style={s.pill}>
+                <Ionicons name="snow-outline" size={14} color="#fff" />
+                <Text style={s.pillText}>{progress.freezes} {progress.freezes === 1 ? 'freeze' : 'freezes'}</Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </FadeIn>
+
+        <FadeIn delay={80}>
+          <Card style={s.week}>
+            {week.map((d) => {
+              const sum = byDate.get(d);
+              const future = diffDays(today, d) > 0;
+              const isToday = d === today;
+              const done = sum ? sum.taken + sum.skipped : 0;
               return (
-                <View key={m.id} style={st.prnRow}>
-                  <Text style={{ fontSize: 20 }}>{FORM_EMOJI[m.form]}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={st.prnName}>{m.name}</Text>
-                    <Text style={st.prnSub}>{last ? `Last today at ${formatTime(timeFromDate(new Date(last.at)))}` : m.dose || 'Not taken today'}</Text>
-                  </View>
-                  <Button title="Log dose" small kind="secondary" onPress={() => logAsNeeded(m)} />
-                </View>
+                <PressableScale key={d} onPress={() => router.push('/calendar')} style={s.weekDay}>
+                  <Text style={[s.weekLetter, isToday && { color: c.primary }]}>{'MTWTFSS'[(weekdayOf(d) + 6) % 7]}</Text>
+                  <Ring
+                    value={future ? 0 : done}
+                    total={future ? 0 : (sum?.scheduled ?? 0)}
+                    size={34}
+                    stroke={5}
+                    color={sum?.status === 'complete' ? c.good : sum?.status === 'missed' ? c.bad : c.primary}
+                  >
+                    {sum?.status === 'complete' ? <Ionicons name="checkmark" size={14} color={c.good} /> : null}
+                  </Ring>
+                  <Text style={[s.weekNum, isToday && { color: c.primary, fontWeight: '900' }]}>{parseDateKey(d).d}</Text>
+                </PressableScale>
               );
             })}
           </Card>
-        </>
-      ) : null}
-    </ScrollView>
-  );
-}
+        </FadeIn>
 
-function Stat({ emoji, value, label }: { emoji: string; value: string; label: string }) {
-  return (
-    <View style={st.stat}>
-      <Text style={st.statEmoji}>{emoji}</Text>
-      <Text style={st.statValue}>{value}</Text>
-      <Text style={st.statLabel}>{label}</Text>
+        {allDone ? (
+          <FadeIn>
+            <Card style={[s.done, { backgroundColor: c.goodSoft }]}>
+              <Ionicons name="checkmark-circle" size={30} color={c.good} />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.bannerTitle, { color: c.good }]}>All done for today</Text>
+                <Text style={s.bannerText}>Every dose is logged.</Text>
+              </View>
+            </Card>
+          </FadeIn>
+        ) : null}
+
+        {activeCount === 0 ? (
+          <FadeIn delay={120}>
+            <Card style={{ alignItems: 'center', paddingVertical: 28 }}>
+              <Ionicons name="medkit-outline" size={40} color={c.muted} />
+              <Text style={s.emptyTitle}>Add your first medication</Text>
+              <Text style={[s.bannerText, { textAlign: 'center' }]}>Set its schedule once and the app reminds you every time it's due.</Text>
+              <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 16 }} />
+            </Card>
+          </FadeIn>
+        ) : null}
+
+        {groups.map((g, i) => {
+          const pending = g.doses.filter((d) => !logs.has(d.slot));
+          const overdue = pending.length > 0 && atTime(today, g.time) < now;
+          return (
+            <FadeIn key={g.time} delay={120 + i * 50}>
+              <SectionTitle
+                right={
+                  pending.length === 0 ? (
+                    <Text style={[s.tag, { color: c.good, backgroundColor: c.goodSoft }]}>Done</Text>
+                  ) : overdue ? (
+                    <Text style={[s.tag, { color: c.bad, backgroundColor: c.badSoft }]}>Due now</Text>
+                  ) : null
+                }
+              >
+                {formatTime(g.time)}
+              </SectionTitle>
+              <Card style={{ paddingVertical: 6 }}>
+                {g.doses.map((d) => {
+                  const med = medById.get(d.medId);
+                  return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} /> : null;
+                })}
+                {pending.length > 1 ? (
+                  <Button title={`Take all ${pending.length}`} kind="secondary" small onPress={() => pending.forEach((d) => logDose(d, 'taken'))} style={{ marginTop: 6, marginBottom: 6 }} />
+                ) : null}
+              </Card>
+            </FadeIn>
+          );
+        })}
+
+        {asNeeded.length > 0 ? (
+          <>
+            <SectionTitle>As needed</SectionTitle>
+            <Card style={{ paddingVertical: 6 }}>
+              {asNeeded.map((m) => {
+                const last = todayLogs.filter((l) => l.medId === m.id).sort((a, b) => b.at.localeCompare(a.at))[0];
+                return (
+                  <View key={m.id} style={s.prnRow}>
+                    <MedIcon form={m.form} color={m.color} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.prnName}>{m.name}</Text>
+                      <Text style={s.prnSub}>{last ? `Last today at ${formatTime(timeFromDate(new Date(last.at)))}` : describeDose(m)}</Text>
+                    </View>
+                    <Button title="Log" small kind="secondary" onPress={() => logAsNeeded(m)} />
+                  </View>
+                );
+              })}
+            </Card>
+          </>
+        ) : null}
+      </Screen>
+      {celebrate ? <Confetti onDone={() => setCelebrate(false)} /> : null}
     </View>
   );
 }
 
-const st = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 40 },
-  date: { fontSize: 15, color: colors.muted, marginBottom: 12 },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  ringBig: { fontSize: 24, fontWeight: '800', color: colors.text },
-  ringSmall: { fontSize: 11, color: colors.muted },
-  stats: { flex: 1, gap: 8 },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statEmoji: { fontSize: 18, width: 24, textAlign: 'center' },
-  statValue: { fontSize: 18, fontWeight: '700', color: colors.text },
-  statLabel: { fontSize: 13, color: colors.muted },
-  cheer: { textAlign: 'center', color: colors.good, fontWeight: '600', marginBottom: 8 },
-  bannerTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  bannerText: { fontSize: 14, color: colors.muted, marginTop: 4 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
-  overdue: { fontSize: 12, fontWeight: '700', color: colors.bad },
-  prnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  prnName: { fontSize: 16, fontWeight: '600', color: colors.text },
-  prnSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
-});
+function Legend({ color, label, value }: { color: string; label: string; value: string }) {
+  const s = useStyles();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+      <View>
+        <Text style={s.legendLabel}>{label}</Text>
+        <Text style={s.legendValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+const useStyles = makeStyles((c) => ({
+  hero: { borderRadius: 32, padding: 20, marginBottom: 14, shadowColor: c.hero[1], shadowOpacity: 0.35, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  ringBig: { fontSize: 30, fontWeight: '900', color: '#fff' },
+  ringOf: { fontSize: 18, fontWeight: '700', color: 'rgba(255,255,255,0.75)' },
+  legendLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)' },
+  legendValue: { fontSize: 17, fontWeight: '900', color: '#fff' },
+  heroPills: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  pillText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  week: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 12 },
+  weekDay: { alignItems: 'center', gap: 6 },
+  weekLetter: { fontSize: 12, fontWeight: '800', color: c.muted },
+  weekNum: { fontSize: 12, fontWeight: '700', color: c.muted },
+  done: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  tag: { fontSize: 12, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
+  bannerTitle: { fontSize: 17, fontWeight: '800', color: c.text },
+  bannerText: { fontSize: 14, color: c.muted, marginTop: 4 },
+  emptyTitle: { fontSize: 20, fontWeight: '900', color: c.text, marginTop: 8 },
+  prnRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
+  prnIcon: { width: 50, height: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  prnName: { fontSize: 17, fontWeight: '800', color: c.text },
+  prnSub: { fontSize: 14, color: c.muted, marginTop: 1, fontWeight: '600' },
+}));

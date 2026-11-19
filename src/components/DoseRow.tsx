@@ -1,11 +1,15 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Alert, Animated, Pressable, View } from 'react-native';
 import { logDose } from '../actions';
 import { formatTime, timeFromDate } from '../domain/dates';
+import { describeDose } from '../domain/dose';
 import { punctuality } from '../domain/schedule';
 import type { DoseLog, Medication, ScheduledDose } from '../domain/types';
-import { colors, FORM_EMOJI } from '../theme';
-import { Button } from './ui';
+import { makeStyles, useTheme } from '../theme';
+import { MedIcon } from './MedIcon';
+import { Text } from './ui';
 
 export function DoseRow({
   dose,
@@ -20,65 +24,75 @@ export function DoseRow({
   windowMinutes: number;
   showTime?: boolean;
 }) {
-  const take = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    logDose(dose, 'taken');
-  };
-  const more = () =>
-    Alert.alert(med.name, `${formatTime(dose.time)} dose`, [
-      { text: 'Skip this dose', onPress: () => logDose(dose, 'skipped') },
+  const c = useTheme();
+  const s = useStyles();
+  const pop = useRef(new Animated.Value(1)).current;
+  const taken = log?.status === 'taken';
+  const skipped = log?.status === 'skipped';
+
+  const prev = useRef(taken);
+  useEffect(() => {
+    if (taken && !prev.current) {
+      pop.setValue(0.6);
+      Animated.spring(pop, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 18 }).start();
+    }
+    prev.current = taken;
+  }, [taken, pop]);
+
+  const options = () =>
+    Alert.alert(med.name, `${formatTime(dose.time)} · ${describeDose(med)}`, [
+      ...(!skipped ? [{ text: 'Skip this dose', onPress: () => logDose(dose, 'skipped') }] : []),
       ...(log ? [{ text: 'Undo', onPress: () => logDose(dose, null) }] : []),
       { text: 'Cancel', style: 'cancel' as const },
     ]);
 
-  let status: { text: string; color: string; bg: string } | null = null;
-  if (log?.status === 'taken') {
-    const late = punctuality(dose, new Date(log.at), windowMinutes) === 'late';
-    status = {
-      text: `${late ? 'Late' : 'Taken'} · ${formatTime(timeFromDate(new Date(log.at)))}`,
-      color: late ? colors.warn : colors.good,
-      bg: late ? colors.warnSoft : colors.goodSoft,
-    };
-  } else if (log?.status === 'skipped') {
-    status = { text: 'Skipped', color: colors.muted, bg: colors.border };
+  const toggle = () => {
+    if (log) return options();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    logDose(dose, 'taken');
+  };
+
+  let status: { text: string; color: string } | null = null;
+  if (taken) {
+    const late = punctuality(dose, new Date(log!.at), windowMinutes) === 'late';
+    status = { text: `${late ? 'Late' : 'Taken'} at ${formatTime(timeFromDate(new Date(log!.at)))}`, color: late ? c.warn : c.good };
+  } else if (skipped) {
+    status = { text: 'Skipped', color: c.muted };
   }
 
   return (
-    <View style={s.row}>
-      <View style={[s.icon, { backgroundColor: med.color + '22' }]}>
-        <Text style={s.emoji}>{FORM_EMOJI[med.form] ?? '💊'}</Text>
-      </View>
+    <Pressable onLongPress={options} style={[s.row, log && { opacity: skipped ? 0.55 : 0.92 }]} delayLongPress={300}>
+      <MedIcon form={med.form} color={med.color} />
       <View style={{ flex: 1 }}>
-        <Text style={s.name}>{med.name}</Text>
-        <Text style={s.sub}>
-          {[showTime ? formatTime(dose.time) : null, med.dose].filter(Boolean).join(' · ')}
+        <Text style={[s.name, taken && s.nameDone]} numberOfLines={1}>
+          {med.name}
         </Text>
+        <Text style={s.sub} numberOfLines={1}>
+          {[showTime ? formatTime(dose.time) : null, describeDose(med)].filter(Boolean).join(' · ')}
+        </Text>
+        {status ? <Text style={[s.status, { color: status.color }]}>{status.text}</Text> : null}
       </View>
-      {status ? (
-        <Pressable onPress={more} style={[s.status, { backgroundColor: status.bg }]} accessibilityLabel={`${status.text}. Tap to change`}>
-          <Text style={[s.statusText, { color: status.color }]}>{status.text}</Text>
-        </Pressable>
-      ) : (
-        <View style={s.actions}>
-          <Pressable onPress={more} hitSlop={8} style={s.more} accessibilityLabel="More options">
-            <Text style={s.moreText}>⋯</Text>
-          </Pressable>
-          <Button title="Take" small onPress={take} />
-        </View>
-      )}
-    </View>
+      <Pressable onPress={toggle} hitSlop={10} accessibilityRole="button" accessibilityLabel={log ? `${status?.text}. Change` : `Take ${med.name}`}>
+        <Animated.View
+          style={[
+            s.check,
+            taken ? { backgroundColor: c.good, borderColor: c.good } : skipped ? { backgroundColor: c.sunken, borderColor: c.sunken } : { borderColor: med.color },
+            { transform: [{ scale: pop }] },
+          ]}
+        >
+          {taken ? <Ionicons name="checkmark" size={24} color="#fff" /> : skipped ? <Ionicons name="remove" size={22} color={c.muted} /> : null}
+        </Animated.View>
+      </Pressable>
+    </Pressable>
   );
 }
 
-const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
-  icon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 20 },
-  name: { fontSize: 16, fontWeight: '600', color: colors.text },
-  sub: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  status: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  statusText: { fontSize: 13, fontWeight: '600' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  more: { paddingHorizontal: 6 },
-  moreText: { fontSize: 22, color: colors.muted },
-});
+const useStyles = makeStyles((c) => ({
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 14 },
+  icon: { width: 50, height: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  name: { fontSize: 17, fontWeight: '800', color: c.text },
+  nameDone: { color: c.muted },
+  sub: { fontSize: 14, color: c.muted, marginTop: 1, fontWeight: '600' },
+  status: { fontSize: 13, fontWeight: '700', marginTop: 3 },
+  check: { width: 42, height: 42, borderRadius: 21, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
+}));

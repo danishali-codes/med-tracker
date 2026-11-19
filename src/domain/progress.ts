@@ -1,5 +1,5 @@
 import { addDays, diffDays, parseDateKey, daysInMonth, toDateKey, type DateKey } from './dates';
-import { dosesOn, isDueOn, punctuality, slotKey } from './schedule';
+import { dosesOn, isMedDueOn, punctuality, slotKey } from './schedule';
 import type { DoseLog, Medication } from './types';
 
 /**
@@ -173,7 +173,7 @@ export function medStreak(med: Medication, logs: Map<string, DoseLog>, today: Da
   for (let i = 0; i < 800; i++) {
     const date = addDays(today, -i);
     if (diffDays(trackedFrom(med), date) < 0) break;
-    if (!isDueOn(med.schedule, date)) continue;
+    if (!isMedDueOn(med, date)) continue;
     const answered = med.schedule.times.every((t) => logs.has(slotKey(med.id, date, t)));
     if (answered) n++;
     else if (i === 0) continue; // today still in progress
@@ -185,26 +185,56 @@ export function medStreak(med: Medication, logs: Map<string, DoseLog>, today: Da
 export interface BadgeDef {
   id: string;
   name: string;
-  emoji: string;
+  /** Ionicons glyph name */
+  icon: string;
   description: string;
   earned: (s: BadgeStats) => boolean;
 }
 
-export interface BadgeStats extends Progress {
-  purchases: number;
-}
+export type BadgeStats = Progress;
 
 export const BADGES: BadgeDef[] = [
-  { id: 'first_dose', name: 'First step', emoji: '🌱', description: 'Log your first dose', earned: (s) => s.totalTaken >= 1 },
-  { id: 'perfect_day', name: 'Perfect day', emoji: '⭐', description: 'Take every dose in a day', earned: (s) => s.perfectDays >= 1 },
-  { id: 'streak_7', name: 'One week strong', emoji: '🔥', description: 'Reach a 7-day streak', earned: (s) => s.bestStreak >= 7 },
-  { id: 'streak_30', name: 'Monthly master', emoji: '🏅', description: 'Reach a 30-day streak', earned: (s) => s.bestStreak >= 30 },
-  { id: 'streak_100', name: 'Centurion', emoji: '💯', description: 'Reach a 100-day streak', earned: (s) => s.bestStreak >= 100 },
-  { id: 'streak_365', name: 'Year of care', emoji: '🏆', description: 'Reach a 365-day streak', earned: (s) => s.bestStreak >= 365 },
-  { id: 'doses_100', name: 'Hundred club', emoji: '💊', description: 'Take 100 doses', earned: (s) => s.totalTaken >= 100 },
-  { id: 'doses_500', name: 'Dedicated', emoji: '💎', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
-  { id: 'on_time_50', name: 'Like clockwork', emoji: '⏰', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
-  { id: 'perfect_month', name: 'Flawless month', emoji: '🌕', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
-  { id: 'decorator', name: 'Home maker', emoji: '🛋️', description: 'Buy your first decoration', earned: (s) => s.purchases >= 1 },
-  { id: 'collector', name: 'Collector', emoji: '🎁', description: 'Own 10 decorations', earned: (s) => s.purchases >= 10 },
+  { id: 'first_dose', name: 'First step', icon: 'footsteps-outline', description: 'Log your first dose', earned: (s) => s.totalTaken >= 1 },
+  { id: 'perfect_day', name: 'Perfect day', icon: 'star-outline', description: 'Take every dose in a day', earned: (s) => s.perfectDays >= 1 },
+  { id: 'streak_7', name: 'One week strong', icon: 'flame-outline', description: 'Reach a 7-day streak', earned: (s) => s.bestStreak >= 7 },
+  { id: 'streak_30', name: 'Monthly master', icon: 'medal-outline', description: 'Reach a 30-day streak', earned: (s) => s.bestStreak >= 30 },
+  { id: 'streak_100', name: 'Centurion', icon: 'trending-up-outline', description: 'Reach a 100-day streak', earned: (s) => s.bestStreak >= 100 },
+  { id: 'streak_365', name: 'Year of care', icon: 'trophy-outline', description: 'Reach a 365-day streak', earned: (s) => s.bestStreak >= 365 },
+  { id: 'doses_100', name: 'Hundred club', icon: 'medical-outline', description: 'Take 100 doses', earned: (s) => s.totalTaken >= 100 },
+  { id: 'doses_500', name: 'Dedicated', icon: 'diamond-outline', description: 'Take 500 doses', earned: (s) => s.totalTaken >= 500 },
+  { id: 'on_time_50', name: 'Like clockwork', icon: 'alarm-outline', description: 'Take 50 doses on time', earned: (s) => s.totalOnTime >= 50 },
+  { id: 'perfect_month', name: 'Flawless month', icon: 'calendar-outline', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
 ];
+
+/** Share of scheduled doses answered (taken or skipped) across these days, or null when none were due. */
+export function adherence(days: DaySummary[]): number | null {
+  let due = 0,
+    done = 0;
+  for (const s of days) {
+    due += s.scheduled;
+    done += s.taken + s.skipped;
+  }
+  return due ? done / due : null;
+}
+
+export type DayMark = 'taken' | 'partial' | 'missed' | 'pending' | 'off';
+
+/**
+ * One mark per day for a single med over the last `days` days, oldest first:
+ * taken (every dose answered), partial, missed, pending (today, not done yet) or off (not due).
+ */
+export function medDays(med: Medication, logs: Map<string, DoseLog>, today: DateKey, days = 7): { date: DateKey; mark: DayMark }[] {
+  const out: { date: DateKey; mark: DayMark }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(today, -i);
+    if (diffDays(trackedFrom(med), date) < 0 || !isMedDueOn(med, date) || med.schedule.times.length === 0) {
+      out.push({ date, mark: 'off' });
+      continue;
+    }
+    const answered = med.schedule.times.filter((t) => logs.has(slotKey(med.id, date, t))).length;
+    const total = med.schedule.times.length;
+    const mark: DayMark = answered === total ? 'taken' : date === today ? 'pending' : answered > 0 ? 'partial' : 'missed';
+    out.push({ date, mark });
+  }
+  return out;
+}
