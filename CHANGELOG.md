@@ -6,7 +6,16 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.5.1
+
+The first signed build, under the app's final ID.
+
+### Changed
+- The app ID is now `com.danishalicodes.sabrmedicinetracker`, and builds are signed with the app's own key, so every later update installs over this one. Because the ID changed, this installs as a new app next to any earlier test build: export a backup in the old app (Settings, Your data), then restore it in this one and uninstall the old one.
+- Screenshots of 0.2 and 0.2.1 retaken without the "Pixel Launcher isn't responding" dialog.
+
 ## 0.5
+commit: d4771dbf3cb14d81966a597760dc6007b7e10917
 
 Optional backup and caregiver sharing, through a server you run yourself. Off unless you turn it on.
 
@@ -24,6 +33,7 @@ Optional backup and caregiver sharing, through a server you run yourself. Off un
 - A setup guide and ready-made collection for the server in `server/`.
 
 ## 0.4
+commit: 9712bf1a2296b7ce304b70960edbac19d4e946eb
 
 Share your history with your doctor, and add medicines by scanning the box.
 
@@ -42,6 +52,7 @@ Share your history with your doctor, and add medicines by scanning the box.
 - The small widget uses one calm colour instead of a purple-pink gradient.
 
 ## 0.3
+commit: ed11d243c745938f7795f6ed0f33f84ca501704e
 
 Reminders that fit real life: different times on different days, Ramadan, travel and busy weeks.
 
