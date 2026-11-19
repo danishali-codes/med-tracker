@@ -71,25 +71,39 @@
           ],
           "widgets": [
             {
+              "name": "NextDose",
+              "label": "Sabr: Next dose",
+              "description": "Just your next dose, with Taken and Snooze",
+              "minWidth": "110dp",
+              "minHeight": "50dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "widgetCategory": "home_screen",
+              "updatePeriodMillis": 1800000
+            },
+            {
               "name": "Today",
               "label": "Sabr: Today",
-              "description": "Today's doses, your streak and the next dose",
-              "minWidth": "250dp",
-              "minHeight": "110dp",
+              "description": "Today's rings and your next dose, with Taken and Snooze",
+              "minWidth": "110dp",
+              "minHeight": "50dp",
               "targetCellWidth": 4,
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
+              "widgetCategory": "home_screen",
               "updatePeriodMillis": 1800000
             },
             {
               "name": "TodayList",
               "label": "Sabr: Today's list",
-              "description": "Every dose today, with Take on the ones that are due",
-              "minWidth": "250dp",
-              "minHeight": "180dp",
+              "description": "Today's rings and every dose, with Take on the ones that are due",
+              "minWidth": "110dp",
+              "minHeight": "50dp",
               "targetCellWidth": 4,
               "targetCellHeight": 3,
               "resizeMode": "horizontal|vertical",
+              "widgetCategory": "home_screen",
               "updatePeriodMillis": 1800000
             }
           ]

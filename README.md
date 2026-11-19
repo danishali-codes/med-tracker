@@ -74,7 +74,7 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Scan the box** to fill in a new medicine: the name, strength and pack size are read on the phone.
 
-**Home screen widgets**: a small one with today's progress and a Take button for the next dose, and a bigger one listing every dose today.
+**Home screen widgets**: Next dose (small, with Taken and Snooze), Today (your rings and the next dose) and Today's list (every dose). Each one adapts when resized, turns green when the day is done and gold when every dose was on time. Medicine names stay off the widget unless you turn them on.
 
 **Light, dark and true-black modes.**
 
