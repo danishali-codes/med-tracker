@@ -92,41 +92,63 @@ export function buildReport(opts: {
     }
   }
 
+  // Scheduled-dose logs by day and med, so logs can be matched even if the schedule changed since.
+  const logsByDay = new Map<string, DoseLog[]>();
+  for (const l of opts.logs) {
+    if (l.slot.includes('|prn-')) continue;
+    const k = `${l.date}|${l.medId}`;
+    logsByDay.set(k, [...(logsByDay.get(k) ?? []), l]);
+  }
+
   const daily: DayReport[] = [];
   for (const date of eachDay(from, to)) {
     const day: DayReport = { date, due: 0, taken: 0, late: 0, skipped: 0, missed: 0, note: notes.get(date) ?? null };
-    for (const d of dosesOn(
+    const scheduled = dosesOn(
       meds.filter((m) => trackedFrom(m) <= date),
       date,
-    )) {
-      const r = per.get(d.medId)!;
-      const log = logs.get(d.slot);
-      if (!log && dueAt(date, d.time) > now) continue; // not due yet
+    );
+    const count = (medId: string, log: DoseLog | undefined, time: string) => {
+      const r = per.get(medId);
+      if (!r) return;
       r.due++;
       day.due++;
       if (!log) {
-        // Today's doses that are overdue still count as missed only once the day is over.
-        if (diffDays(date, toKey(now)) > 0) {
-          r.missed++;
-          day.missed++;
-          r.missedDoses.push({ date, time: d.time });
-        } else {
-          r.due--;
-          day.due--;
-        }
-        continue;
+        r.missed++;
+        day.missed++;
+        r.missedDoses.push({ date, time });
+        return;
       }
       if (log.status === 'skipped') {
         r.skipped++;
         day.skipped++;
-        continue;
+        return;
       }
       r.taken++;
       day.taken++;
-      if (punctuality(d, new Date(log.at), windowMinutes) === 'onTime') r.onTime++;
+      if (punctuality({ date, time: log.time }, new Date(log.at), windowMinutes) === 'onTime') r.onTime++;
       else {
         r.late++;
         day.late++;
+      }
+    };
+    const medIds = new Set([...scheduled.map((d) => d.medId), ...meds.map((m) => m.id).filter((id) => logsByDay.has(`${date}|${id}`))]);
+    for (const medId of medIds) {
+      const doses = scheduled.filter((d) => d.medId === medId);
+      // Logs record what was actually due that day: match them by slot, then pair any
+      // left over (the schedule's times changed since) with unmatched doses in order.
+      const dayLogs = [...(logsByDay.get(`${date}|${medId}`) ?? [])].sort((x, y) => x.time.localeCompare(y.time));
+      const bySlot = new Map(dayLogs.map((l) => [l.slot, l]));
+      const unmatchedDoses = doses.filter((d) => !bySlot.has(d.slot));
+      const leftLogs = dayLogs.filter((l) => !doses.some((d) => d.slot === l.slot));
+      for (const d of doses) if (bySlot.has(d.slot)) count(medId, bySlot.get(d.slot), d.time);
+      for (const l of leftLogs) {
+        const d = unmatchedDoses.shift();
+        count(medId, l, d?.time ?? l.time);
+      }
+      for (const d of unmatchedDoses) {
+        // Not due yet, or due earlier today: neither taken nor missed until the day is over.
+        if (dueAt(date, d.time) > now || diffDays(date, toKey(now)) <= 0) continue;
+        count(medId, undefined, d.time);
       }
     }
     daily.push(day);

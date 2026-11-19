@@ -55,4 +55,10 @@ describe('buildReport', () => {
     expect(html).toContain('&lt;script&gt;');
     expect(html).not.toContain('<script>');
   });
+  it('keeps past doses when the usual time changed later', () => {
+    const moved = { ...med, schedule: { ...med.schedule, times: ['09:00', '20:00'] } };
+    const r2 = buildReport({ meds: [moved], logs, notes: [], from: '2026-11-10', to: '2026-11-10', now: new Date('2026-11-12T12:00:00'), windowMinutes: 60 });
+    const m = r2.meds[0];
+    expect([m.due, m.taken, m.onTime, m.late, m.missed]).toEqual([2, 2, 1, 1, 0]);
+  });
 });

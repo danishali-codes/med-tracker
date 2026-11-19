@@ -146,11 +146,12 @@ export default function MedEditor() {
     }
     if (res.barcode) setBarcode(res.barcode);
     const found: string[] = [];
-    if (res.form) setForm(res.form);
     if (res.name) {
       found.push(res.name);
       await pick({ name: res.name, generic: res.generic, source: 'builtin' });
     }
+    // After the lookup, so the form printed on the box wins over the lookup's most common form.
+    if (res.form) setForm(res.form);
     if (res.strength) {
       setStrength(res.strength);
       found.push(res.strength);
