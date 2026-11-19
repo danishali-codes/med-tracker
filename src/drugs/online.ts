@@ -71,7 +71,11 @@ async function readCache<T>(name: string, maxAgeMs: number): Promise<T | null> {
   }
 }
 
-function writeCache(name: string, data: unknown) {
+/** Bumped by clearDownloads, so a download that was already running can't save itself afterwards. */
+let generation = 0;
+
+function writeCache(name: string, data: unknown, gen: number) {
+  if (gen !== generation || !onlineAllowed()) return;
   try {
     const f = cacheFile(name);
     if (f.exists) f.delete();
@@ -84,6 +88,7 @@ function writeCache(name: string, data: unknown) {
 
 /** Deletes the drug names and labels downloaded earlier. Your own data isn't touched. */
 export function clearDownloads(): number {
+  generation++;
   names = null;
   loading = null;
   let n = 0;
@@ -108,13 +113,15 @@ let loading: Promise<string[]> | null = null;
 /** The RxNorm display-name list, from the phone's cache or downloaded. Empty when offline. */
 export function loadNames(): Promise<string[]> {
   if (names) return Promise.resolve(names);
+  const gen = generation;
   loading ??= (async () => {
     const cached = await readCache<string[]>('rxnorm-names.json', MONTH);
     if (cached?.length) return (names = cached);
     try {
       const res = await getJson<{ displayTermsList?: { term?: string[] } }>(`${RXNAV}/displaynames.json`, 30000);
       const list = res.displayTermsList?.term ?? [];
-      if (list.length) writeCache('rxnorm-names.json', list);
+      if (gen !== generation) return [];
+      if (list.length) writeCache('rxnorm-names.json', list, gen);
       return (names = list);
     } catch {
       loading = null; // try again next time
@@ -170,6 +177,7 @@ type FdaResult = Label & { openfda?: { generic_name?: string[] } };
 
 /** The most useful US label for one ingredient, or null if none is found or the phone is offline. */
 export async function fetchLabel(ingredient: string): Promise<Label | null> {
+  const gen = generation;
   const key = `label-${ingredient.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
   const cached = await readCache<Label | 'none'>(key, MONTH);
   if (cached) return cached === 'none' ? null : cached;
@@ -181,11 +189,11 @@ export async function fetchLabel(ingredient: string): Promise<Label | null> {
     const size = (r: FdaResult) => (r.drug_interactions ? 1e6 : 0) + LABEL_FIELDS.reduce((n, f) => n + (r[f]?.join('').length ?? 0), 0);
     const best = results.sort((a, b) => size(b) - size(a))[0];
     const label: Label | null = best ? Object.fromEntries(LABEL_FIELDS.filter((f) => best[f]).map((f) => [f, best[f]])) : null;
-    writeCache(key, label ?? 'none');
+    writeCache(key, label ?? 'none', gen);
     return label;
   } catch (e) {
     // 404 means openFDA has no label for it; anything else is a network problem worth retrying later.
-    if (String(e).includes('HTTP 404')) writeCache(key, 'none');
+    if (String(e).includes('HTTP 404')) writeCache(key, 'none', gen);
     return null;
   }
 }
