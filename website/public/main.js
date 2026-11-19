@@ -43,9 +43,10 @@
     });
   }).catch(function () {});
   // danishali.dev shows this page in a window. GitHub and other sites refuse to load
-  // inside it, so outside links open in a new tab there.
+  // inside it, so outside links (and downloads, which can fall back to GitHub) open
+  // in a new tab there.
   if (window.top !== window.self) {
-    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+    document.querySelectorAll('a[href^="http"], a[data-download]').forEach(function (a) {
       a.target = '_blank';
       a.rel = 'noopener';
     });
