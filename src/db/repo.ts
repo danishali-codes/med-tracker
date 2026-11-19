@@ -66,24 +66,30 @@ export function deleteMed(id: string) {
 }
 
 /**
- * After a usual dose time moves (say 08:00 to 08:40), doses already logged from `fromDate` on
- * (taken today, or skipped ahead of time) follow it, so they don't show as due again.
- * Earlier days keep their history as it was.
+ * After usual dose times move (say 08:00 to 08:40), doses already logged from `fromDate` on
+ * (taken today, or skipped ahead of time) follow them, so they don't show as due again.
+ * Earlier days keep their history as it was. All moves apply at once, so swapping two
+ * times swaps their logs, and a log never lands on a slot that already has one.
  */
-function rebaseLogs(medId: string, from: string, to: string, fromDate: DateKey) {
-  if (from === to) return;
+function rebaseLogs(medId: string, moves: { from: string; to: string }[], fromDate: DateKey) {
+  const map = new Map(moves.filter((m) => m.from !== m.to).map((m) => [m.from, m.to]));
+  if (map.size === 0) return;
   const db = getDb();
-  const rows = db.getAllSync<{ slot: string; date: string; time: string }>(
-    'SELECT slot, date, time FROM dose_log WHERE med_id = ? AND date >= ?',
-    medId,
-    fromDate,
-  );
+  const rows = db
+    .getAllSync<{ slot: string; date: string; time: string }>('SELECT slot, date, time FROM dose_log WHERE med_id = ? AND date >= ?', medId, fromDate)
+    .filter((r) => [...map.keys()].some((from) => r.slot === `${medId}|${r.date}|${from}`));
+  if (rows.length === 0) return;
   db.withTransactionSync(() => {
+    // Out of the way first, so the moves can't trip over each other.
+    for (const r of rows) db.runSync('UPDATE dose_log SET slot = ? WHERE slot = ?', `moving:${r.slot}`, r.slot);
     for (const r of rows) {
-      if (r.slot !== `${medId}|${r.date}|${from}`) continue;
-      const slot = `${medId}|${r.date}|${to}`;
-      if (db.getFirstSync('SELECT 1 FROM dose_log WHERE slot = ?', slot)) continue;
-      db.runSync('UPDATE dose_log SET slot = ?, time = ? WHERE slot = ?', slot, r.time === from ? to : r.time, r.slot);
+      const from = r.slot.slice(r.slot.lastIndexOf('|') + 1);
+      const to = map.get(from)!;
+      const target = `${medId}|${r.date}|${to}`;
+      const free = !db.getFirstSync('SELECT 1 FROM dose_log WHERE slot = ?', target);
+      // A slot that already has its own log keeps it; this one stays where it was.
+      if (free) db.runSync('UPDATE dose_log SET slot = ?, time = ? WHERE slot = ?', target, r.time === from ? to : r.time, `moving:${r.slot}`);
+      else db.runSync('UPDATE dose_log SET slot = ? WHERE slot = ?', r.slot, `moving:${r.slot}`);
     }
   });
   changed();
@@ -92,7 +98,7 @@ function rebaseLogs(medId: string, from: string, to: string, fromDate: DateKey) 
 /** Saves a medicine whose usual times moved, carrying doses logged from today on along with them. */
 export function saveMedMoved(med: Medication, moves: { from: string; to: string }[], today: DateKey) {
   saveMed(med);
-  for (const m of moves) rebaseLogs(med.id, m.from, m.to, today);
+  rebaseLogs(med.id, moves, today);
 }
 
 /** Like saveMedMoved, for an edit that replaced exactly one usual time with another (a move). */

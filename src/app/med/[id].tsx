@@ -234,9 +234,9 @@ export default function MedEditor() {
     if (kind === 'weekdays' && days.length === 0) return Alert.alert('Pick a day', 'Choose at least one day of the week.');
     await saveMedication(
       build(),
-      Object.entries(moves)
-        .filter(([from, to]) => from !== to)
-        .map(([from, to]) => ({ from, to })),
+      Object.entries(origins)
+        .filter(([now, saved]) => now !== saved)
+        .map(([now, saved]) => ({ from: saved, to: now })),
     );
     if (existing?.photo && existing.photo !== photo) deletePillPhoto(existing.photo);
     router.back();
@@ -271,14 +271,15 @@ export default function MedEditor() {
       },
     ]);
 
-  // Saved times that were moved (not removed and re-added): logged doses follow these on save.
-  const [moves, setMoves] = useState<Record<TimeOfDay, TimeOfDay>>({});
+  // Which saved dose each time on screen is (current time -> saved time). Only a saved dose that
+  // was moved, not removed and re-added, takes today's logged dose along when saving.
+  const [origins, setOrigins] = useState<Record<TimeOfDay, TimeOfDay>>(() => Object.fromEntries((existing?.schedule.times ?? []).map((t) => [t, t])));
 
   // Keep weekday rules one-to-one with the usual times when doses are added or removed.
   const changeTimes = (next: TimeOfDay[], edit: { removed?: number; added?: TimeOfDay }) => {
     if (edit.removed != null) {
       const gone = times[edit.removed];
-      setMoves((m) => Object.fromEntries(Object.entries(m).filter(([, to]) => to !== gone)));
+      setOrigins(({ [gone]: _, ...rest }) => rest);
     }
     setTimes(next);
     setDayTimes((rules) =>
@@ -296,10 +297,7 @@ export default function MedEditor() {
     if (!next) return Alert.alert('Already set', `This medicine already has a dose at ${formatTime(to)}.`);
     setTimes(next.times);
     setDayTimes(next.dayTimes ?? []);
-    setMoves((m) => {
-      const original = Object.keys(m).find((k) => m[k] === from) ?? (existing?.schedule.times.includes(from) ? from : null);
-      return original ? { ...m, [original]: to } : m;
-    });
+    setOrigins(({ [from]: original, ...rest }) => (original ? { ...rest, [to]: original } : rest));
   };
   const addTime = () => {
     const free = (t: TimeOfDay) => !times.includes(t);
