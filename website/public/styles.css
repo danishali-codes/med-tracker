@@ -72,7 +72,7 @@ code { font: 600 .9em ui-monospace, SFMono-Regular, Menlo, monospace; background
 
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 640px) { .wrap { padding: 0 28px; } }
-.narrow { max-width: 760px; }
+.narrow > * { max-width: 760px; }
 section { padding: 72px 0; }
 @media (min-width: 900px) { section { padding: 104px 0; } }
 
@@ -131,14 +131,14 @@ nav a:hover { color: var(--text); background: var(--sunken); }
 .phone img { border-radius: 28px; width: 100%; aspect-ratio: 1080 / 2400; object-fit: cover; background: var(--sunken); }
 
 /* Hero */
-.hero { display: grid; gap: 48px; align-items: center; padding-top: 48px; }
+.hero { display: grid; gap: 48px; align-items: center; padding-top: 48px; padding-bottom: 72px; }
 .hero-phone { justify-self: center; max-width: 300px; transform: rotate(2deg); }
 .kicker { display: inline-block; font-weight: 800; font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: var(--primary-ink); background: var(--primary-soft); padding: 4px 10px; border-radius: 8px; }
 .lead { font-size: 1.15rem; color: var(--muted); }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 12px; }
 .fine { font-size: .92rem; color: var(--muted); }
 @media (min-width: 900px) {
-  .hero { grid-template-columns: 1.25fr 1fr; padding-top: 72px; }
+  .hero { grid-template-columns: 1.25fr 1fr; padding-top: 72px; padding-bottom: 104px; }
   .hero-phone { max-width: 320px; }
 }
 
@@ -149,6 +149,8 @@ nav a:hover { color: var(--text); background: var(--sunken); }
 .why [lang="ar"] { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-right: .4em; }
 
 /* Features */
+.features { padding-top: 72px; padding-bottom: 72px; }
+@media (min-width: 900px) { .features { padding-top: 104px; padding-bottom: 104px; } }
 .features > h2 { margin-bottom: 40px; }
 .feature { display: grid; gap: 28px; align-items: center; padding: 28px 0; }
 .feature .phone { justify-self: center; max-width: 250px; }
@@ -184,7 +186,7 @@ nav a:hover { color: var(--text); background: var(--sunken); }
 
 /* Open source, contact */
 .open p, .contact p { color: var(--muted); font-size: 1.08rem; }
-.links { display: flex; flex-wrap: wrap; gap: 10px 22px; font-weight: 800; }
+.links { margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; font-weight: 800; }
 
 /* Install */
 .install { background: var(--card); border-block: 1px solid var(--border); }
@@ -219,3 +221,5 @@ nav a:hover { color: var(--text); background: var(--sunken); }
 .notif-actions span { flex: 1; text-align: center; font-weight: 800; font-size: .9rem; color: var(--primary-ink); padding: 6px 0; border-radius: 10px; }
 .notif-actions span:first-child { background: var(--primary-soft); }
 .notif-demo figcaption { font-size: .9rem; color: var(--muted); margin-top: 18px; text-align: center; }
+
+.contact { border-top: 1px solid var(--border); }
