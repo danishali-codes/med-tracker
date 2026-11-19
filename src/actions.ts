@@ -34,8 +34,9 @@ export async function logAsNeeded(med: Medication) {
   await notifyLowStock(low).catch(() => {});
 }
 
-export async function saveMedication(med: Medication) {
-  repo.saveMed(med);
+/** Saves a medicine. Usual times that were moved carry today's logged doses along. */
+export async function saveMedication(med: Medication, moves: { from: string; to: string }[] = []) {
+  repo.saveMedMoved(med, moves, toDateKey(new Date()));
   await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
 }
 

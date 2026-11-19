@@ -40,7 +40,7 @@ export function RoundButton({ icon, onPress, label }: { icon: keyof typeof Ionic
   );
 }
 
-export function SettingsButton() {
+function SettingsButton() {
   return <RoundButton icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />;
 }
 

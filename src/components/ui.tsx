@@ -335,10 +335,6 @@ export function Rings({
   );
 }
 
-export function Dot({ color, size = 12 }: { color: string; size?: number }) {
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }} />;
-}
-
 /** Fades and slides its children in when first shown. */
 export function FadeIn({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: StyleProp<ViewStyle> }) {
   const v = useRef(new Animated.Value(0)).current;
@@ -352,7 +348,7 @@ export function FadeIn({ children, delay = 0, style }: { children: ReactNode; de
   );
 }
 
-export const useStyles = makeStyles((c) => ({
+const useStyles = makeStyles((c) => ({
   card: {
     backgroundColor: c.card,
     borderRadius: radius.card,

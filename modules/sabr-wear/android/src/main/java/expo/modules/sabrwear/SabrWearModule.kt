@@ -1,13 +1,13 @@
 package expo.modules.sabrwear
 
 import android.net.Uri
-import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
+import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.util.concurrent.TimeUnit
 
 const val PATH_TODAY = "/sabr/today"
 
@@ -20,23 +20,29 @@ class SabrWearModule : Module() {
 
     // Replaces the one data item the watch tile reads. Data items stay in sync between the
     // paired phone and watch, so the tile updates even if the watch was away for a while.
-    AsyncFunction("sendToday") { json: String ->
+    // These answer through the Play services callbacks instead of waiting on the thread, so a
+    // slow data layer never holds up other native calls (database, notifications).
+    AsyncFunction("sendToday") { json: String, promise: Promise ->
       val request = PutDataMapRequest.create(PATH_TODAY).apply {
         dataMap.putString("json", json)
         dataMap.putLong("sent", System.currentTimeMillis())
       }.asPutDataRequest().setUrgent()
-      Tasks.await(Wearable.getDataClient(context).putDataItem(request), 15, TimeUnit.SECONDS)
-      Unit
+      settle(Wearable.getDataClient(context).putDataItem(request), promise) { null }
     }
 
-    AsyncFunction("clear") {
+    AsyncFunction("clear") { promise: Promise ->
       val uri = Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(PATH_TODAY).build()
-      Tasks.await(Wearable.getDataClient(context).deleteDataItems(uri), 15, TimeUnit.SECONDS)
-      Unit
+      settle(Wearable.getDataClient(context).deleteDataItems(uri), promise) { null }
     }
 
-    AsyncFunction("connectedWatches") {
-      Tasks.await(Wearable.getNodeClient(context).connectedNodes, 10, TimeUnit.SECONDS).map { it.displayName }
+    AsyncFunction("connectedWatches") { promise: Promise ->
+      settle(Wearable.getNodeClient(context).connectedNodes, promise) { nodes -> nodes.map { it.displayName } }
     }
+  }
+
+  private fun <T> settle(task: Task<T>, promise: Promise, value: (T) -> Any?) {
+    task
+      .addOnSuccessListener { promise.resolve(value(it)) }
+      .addOnFailureListener { promise.reject("ERR_SABR_WEAR", it.message, it) }
   }
 }

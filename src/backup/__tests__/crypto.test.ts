@@ -25,4 +25,10 @@ describe('backup encryption', () => {
     expect(unlockBackup(locked, 'pw1')).toBe(plain);
     expect(() => unlockBackup(locked, 'pw2')).toThrow(/Wrong password/);
   });
+
+  it('refuses a file that asks for an absurd amount of work', () => {
+    const file = JSON.parse(lockBackup('{}', 'pw', 10));
+    file.kdf.iterations = 1e12;
+    expect(() => unlockBackup(JSON.stringify(file), 'pw')).toThrow('damaged');
+  });
 });

@@ -22,7 +22,7 @@ const RXNAV = 'https://rxnav.nlm.nih.gov/REST';
 const OPENFDA = 'https://api.fda.gov/drug/label.json';
 const MONTH = 30 * 24 * 3600 * 1000;
 
-export class OfflineModeError extends Error {
+class OfflineModeError extends Error {
   constructor() {
     super('Online search is off');
   }
@@ -112,7 +112,7 @@ let names: string[] | null = null;
 let loading: Promise<string[]> | null = null;
 
 /** The RxNorm display-name list, from the phone's cache or downloaded. Empty when offline. */
-export function loadNames(): Promise<string[]> {
+function loadNames(): Promise<string[]> {
   if (names) return Promise.resolve(names);
   const gen = generation;
   loading ??= (async () => {

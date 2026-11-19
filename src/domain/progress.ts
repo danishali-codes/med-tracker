@@ -40,9 +40,9 @@ export const COINS = {
 export const MAX_FREEZES = 2;
 export const FREEZE_EVERY = 7;
 /** Days in a row it takes to win back a broken streak. */
-export const EARN_BACK_DAYS = 3;
+const EARN_BACK_DAYS = 3;
 /** Streaks shorter than this aren't worth winning back. */
-export const EARN_BACK_MIN = 3;
+const EARN_BACK_MIN = 3;
 /** Streak lengths that get a milestone moment. */
 export const MILESTONES = [7, 14, 30, 60, 100, 180, 365, 500, 730, 1000];
 
@@ -91,7 +91,7 @@ export function trackedFrom(med: Medication): DateKey {
   return added > med.schedule.startDate ? added : med.schedule.startDate;
 }
 
-export function dayCoins(s: DaySummary): number {
+function dayCoins(s: DaySummary): number {
   return s.onTime * COINS.onTime + s.late * COINS.late + (s.status === 'complete' && s.taken > 0 ? COINS.perfectDay : 0);
 }
 
@@ -316,7 +316,7 @@ export function nextMilestone(streak: number): number | null {
  * day after a good month only dents it, and it climbs back as soon as you're on track again.
  * Skipped doses and days with nothing due leave it alone. Returns 0..1, one value per day given.
  */
-export const CONSISTENCY_HALF_LIFE = 13;
+const CONSISTENCY_HALF_LIFE = 13;
 export function consistencySeries(days: DaySummary[]): { date: DateKey; score: number }[] {
   const keep = Math.pow(0.5, 1 / CONSISTENCY_HALF_LIFE);
   let score = 0;

@@ -44,6 +44,18 @@ describe('weekday times', () => {
     expect(timesOn(m, '2026-11-21', null).map((t) => t.time)).toEqual(['10:00', '22:00']);
     expect(timesOn(m, '2026-11-18', null).map((t) => t.time)).toEqual(['08:00', '20:00']);
   });
+  it('keeps each dose its own identity when a day rule moves it past another dose', () => {
+    // On Saturdays the morning dose moves to 21:00, after the evening one.
+    const late = med('b', ['08:00', '20:00'], { dayTimes: [{ days: [6], times: ['21:00', '20:00'] }] });
+    expect(timesOn(late, '2026-11-21', null)).toEqual([
+      { base: '08:00', time: '21:00' },
+      { base: '20:00', time: '20:00' },
+    ]);
+    expect(dosesOn([late], '2026-11-21').map((d) => [d.slot, d.time])).toEqual([
+      [slotKey('b', '2026-11-21', '20:00'), '20:00'],
+      [slotKey('b', '2026-11-21', '08:00'), '21:00'],
+    ]);
+  });
   it('dosesOn keeps the usual slot so logs still match', () => {
     const [first] = dosesOn([m], '2026-11-16');
     expect(first).toEqual({ slot: slotKey('a', '2026-11-16', '08:00'), medId: 'a', date: '2026-11-16', time: '06:45', usualTime: '08:00' });

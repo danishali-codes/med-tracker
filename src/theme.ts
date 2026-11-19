@@ -22,8 +22,8 @@ export interface Palette {
   badSoft: string;
   flame: string;
   ice: string;
-  /** Hero gradient. */
-  hero: [string, string, string];
+  /** The Today card behind the rings. */
+  hero: string;
   /** Today's three rings: doses, on time, this week. */
   rings: [string, string, string];
   shadow: string;
@@ -50,7 +50,7 @@ export const light: Palette = {
   badSoft: '#FFE3E9',
   flame: '#FF7A3D',
   ice: '#3AB7F0',
-  hero: ['#5B3FE6', '#6A4DF4', '#7457F5'],
+  hero: '#6A4DF4',
   rings: ['#FFFFFF', '#B8F5D9', '#FFD98A'],
   shadow: '#4A3AA8',
   tabBar: '#FFFFFF',
@@ -76,7 +76,7 @@ export const dark: Palette = {
   badSoft: '#361721',
   flame: '#FF8A50',
   ice: '#5CC8FF',
-  hero: ['#2E2378', '#342887', '#3A2D93'],
+  hero: '#342887',
   rings: ['#FFFFFF', '#9DF0CB', '#FFD27A'],
   shadow: '#000000',
   tabBar: '#16161B',

@@ -8,8 +8,8 @@ import { refreshWidgetNow } from '../widget/update';
 import { pushToWatchNow } from '../wear/sync';
 import { handleReminderAction, rescheduleAll } from './reminders';
 
-export const NOTIFICATION_TASK = 'med-reminder-response';
-export const REFRESH_TASK = 'med-reminder-refresh';
+const NOTIFICATION_TASK = 'med-reminder-response';
+const REFRESH_TASK = 'med-reminder-refresh';
 
 // Android runs this when Taken / Snooze / Skip is pressed while the app is in the background or closed.
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_TASK, async ({ data, error }) => {

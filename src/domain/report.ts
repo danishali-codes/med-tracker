@@ -1,6 +1,6 @@
 // The doctor report: what was due, taken, late, skipped or missed over a period,
 // per medication and per day, plus mood and symptom notes. Pure, so it's tested.
-import { diffDays, eachDay, formatDateLong, formatTime, type DateKey } from './dates';
+import { diffDays, eachDay, formatDateLong, formatTime, toDateKey, type DateKey } from './dates';
 import { describeDose } from './dose';
 import { trackedFrom } from './progress';
 import { describeSchedule, dosesOn, dueAt, punctuality } from './schedule';
@@ -64,7 +64,6 @@ export function buildReport(opts: {
   windowMinutes: number;
 }): Report {
   const { meds, from, to, now, windowMinutes } = opts;
-  const logs = new Map(opts.logs.map((l) => [l.slot, l]));
   const notes = new Map(opts.notes.map((n) => [n.date, n]));
   const per = new Map<string, MedReport>();
   for (const m of meds) {
@@ -147,7 +146,7 @@ export function buildReport(opts: {
       }
       for (const d of unmatchedDoses) {
         // Not due yet, or due earlier today: neither taken nor missed until the day is over.
-        if (dueAt(date, d.time) > now || diffDays(date, toKey(now)) <= 0) continue;
+        if (dueAt(date, d.time) > now || diffDays(date, toDateKey(now)) <= 0) continue;
         count(medId, undefined, d.time);
       }
     }
@@ -176,10 +175,6 @@ export function buildReport(opts: {
     symptoms: [...counts.entries()].map(([name, days]) => ({ name, days })).sort((a, b) => b.days - a.days || a.name.localeCompare(b.name)),
     averageMood: moods.length ? moods.reduce((a, b) => a + b, 0) / moods.length : null,
   };
-}
-
-function toKey(d: Date): DateKey {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 const pct = (v: number | null) => (v == null ? '–' : `${Math.round(v * 100)}%`);
@@ -256,6 +251,6 @@ export function reportHtml(r: Report, opts: { patient?: string; generatedAt: Dat
   <table style="margin-top:6pt"><tr><th>Date</th><th class="n">Mood (1–5)</th><th>Symptoms</th><th>Note</th></tr>${noteRows}</table>`
       : ''
   }
-  <footer>Made with Sabr on ${formatDateLong(toKey(opts.generatedAt))}. "Late" means taken the same day but outside the on-time window (more than ${opts.windowMinutes} minutes from the scheduled time). This report is based on what was logged in the app.</footer>
+  <footer>Made with Sabr on ${formatDateLong(toDateKey(opts.generatedAt))}. "Late" means taken the same day but outside the on-time window (more than ${opts.windowMinutes} minutes from the scheduled time). This report is based on what was logged in the app.</footer>
   </body></html>`;
 }

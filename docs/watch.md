@@ -48,7 +48,7 @@ pick `sabr-watch-….apk` from your Downloads and install it.
 ```sh
 adb pair 192.168.1.23:41234        # the address and port on the pairing screen, then the code
 adb connect 192.168.1.23:39555     # the address and port on the Wireless debugging screen
-adb install -r sabr-watch-0.7.apk
+adb install -r sabr-watch-0.8.apk
 ```
 
 Then turn **ADB debugging** off again on the watch.

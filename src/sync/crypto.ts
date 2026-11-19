@@ -61,11 +61,6 @@ export function newKey(): string {
   return toB64(nacl.randomBytes(nacl.secretbox.keyLength));
 }
 
-/** Random id that is hard to guess, for share records. */
-export function newToken(bytes = 18): string {
-  return toB64(nacl.randomBytes(bytes));
-}
-
 export function seal(plain: string, key: string): string {
   const k = fromB64(key);
   if (k.length !== nacl.secretbox.keyLength) throw new Error('Bad key');

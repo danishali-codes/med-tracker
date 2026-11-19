@@ -40,7 +40,12 @@ public class SabrWearTaskWorker extends ListenableWorker implements HeadlessJsTa
             WritableMap args = Arguments.createMap();
             args.putString("action", data.getString("action"));
             args.putString("body", data.getString("body"));
-            startTask(new HeadlessJsTaskConfig("SabrWearAction", args, 30 * 1000, true));
+            try {
+                startTask(new HeadlessJsTaskConfig("SabrWearAction", args, 30 * 1000, true));
+            } catch (Exception e) {
+                // React could not start: let WorkManager try again rather than wait forever.
+                c.set(again());
+            }
             return "SabrWearAction";
         });
     }
@@ -65,7 +70,14 @@ public class SabrWearTaskWorker extends ListenableWorker implements HeadlessJsTa
     private void invokeStartTask(ReactContext context, final HeadlessJsTaskConfig config) {
         final HeadlessJsTaskContext tasks = HeadlessJsTaskContext.getInstance(context);
         tasks.addTaskEventListener(this);
-        UiThreadUtil.runOnUiThread(() -> taskId = tasks.startTask(config));
+        UiThreadUtil.runOnUiThread(() -> {
+            try {
+                taskId = tasks.startTask(config);
+            } catch (Exception e) {
+                cleanUp();
+                if (completer != null) completer.set(again());
+            }
+        });
     }
 
     private void cleanUp() {
@@ -88,6 +100,11 @@ public class SabrWearTaskWorker extends ListenableWorker implements HeadlessJsTa
             completer.set(Result.success());
             cleanUp();
         }
+    }
+
+    /** A couple more tries if React couldn't start, then give up. */
+    private Result again() {
+        return getRunAttemptCount() < 3 ? Result.retry() : Result.failure();
     }
 
     private ReactHost getReactHost() {

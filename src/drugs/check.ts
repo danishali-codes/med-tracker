@@ -8,7 +8,7 @@ export interface CheckResult {
   missing: string[];
 }
 
-export function toChecked(m: Pick<Medication, 'id' | 'name' | 'generic'>): CheckedMed {
+function toChecked(m: Pick<Medication, 'id' | 'name' | 'generic'>): CheckedMed {
   return { id: m.id, name: m.name, ingredients: ingredientsOf(m.name, m.generic) };
 }
 

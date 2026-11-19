@@ -8,6 +8,7 @@ import { DateButton, TimeButton } from '../../components/Pickers';
 import { Button, Card, Chip, Field, Input, PressableScale, Select, Text } from '../../components/ui';
 import { formatDateLong, formatTime, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
+import { editTimes } from '../../domain/routines';
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
 import { FOOD_RULES, type DayTimes, type FoodRule, type MedForm, type Medication, type PillShape, type SchedulePattern } from '../../domain/types';
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
@@ -206,7 +207,7 @@ export default function MedEditor() {
     schedule: {
       pattern: pattern(),
       times: kind === 'asNeeded' ? [] : [...new Set(times)].sort(),
-      dayTimes: kind === 'asNeeded' ? [] : dayTimes.filter((d) => d.days.length > 0 && d.times.length > 0).map((d) => ({ days: [...d.days].sort(), times: [...d.times].sort() })),
+      dayTimes: kind === 'asNeeded' ? [] : dayTimes.filter((d) => d.days.length > 0 && d.times.length > 0).map((d) => ({ days: [...d.days].sort(), times: d.times })),
       startDate,
       endDate,
     },
@@ -231,7 +232,12 @@ export default function MedEditor() {
     if (!name.trim()) return Alert.alert('Add a name', 'What is this medication called?');
     if (kind !== 'asNeeded' && times.length === 0) return Alert.alert('Add a time', 'When should you take it?');
     if (kind === 'weekdays' && days.length === 0) return Alert.alert('Pick a day', 'Choose at least one day of the week.');
-    await saveMedication(build());
+    await saveMedication(
+      build(),
+      Object.entries(origins)
+        .filter(([now, saved]) => now !== saved)
+        .map(([now, saved]) => ({ from: saved, to: now })),
+    );
     if (existing?.photo && existing.photo !== photo) deletePillPhoto(existing.photo);
     router.back();
   };
@@ -265,8 +271,16 @@ export default function MedEditor() {
       },
     ]);
 
+  // Which saved dose each time on screen is (current time -> saved time). Only a saved dose that
+  // was moved, not removed and re-added, takes today's logged dose along when saving.
+  const [origins, setOrigins] = useState<Record<TimeOfDay, TimeOfDay>>(() => Object.fromEntries((existing?.schedule.times ?? []).map((t) => [t, t])));
+
   // Keep weekday rules one-to-one with the usual times when doses are added or removed.
   const changeTimes = (next: TimeOfDay[], edit: { removed?: number; added?: TimeOfDay }) => {
+    if (edit.removed != null) {
+      const gone = times[edit.removed];
+      setOrigins(({ [gone]: _, ...rest }) => rest);
+    }
     setTimes(next);
     setDayTimes((rules) =>
       rules.map((r) => {
@@ -277,8 +291,20 @@ export default function MedEditor() {
       }),
     );
   };
+  // Moving a time carries its weekday overrides with it, and never merges two doses into one.
+  const moveTime = (from: TimeOfDay, to: TimeOfDay) => {
+    const next = editTimes({ ...draft.schedule, times, dayTimes }, [{ move: from, to }]);
+    if (!next) return Alert.alert('Already set', `This medicine already has a dose at ${formatTime(to)}.`);
+    setTimes(next.times);
+    setDayTimes(next.dayTimes ?? []);
+    setOrigins(({ [from]: original, ...rest }) => (original ? { ...rest, [to]: original } : rest));
+  };
   const addTime = () => {
-    const added = SUGGESTED_TIMES.find((t) => !times.includes(t)) ?? '12:00';
+    const free = (t: TimeOfDay) => !times.includes(t);
+    const added =
+      SUGGESTED_TIMES.find(free) ??
+      Array.from({ length: 96 }, (_, k) => `${String(Math.floor(k / 4)).padStart(2, '0')}:${String((k % 4) * 15).padStart(2, '0')}`).find(free) ??
+      '12:00';
     changeTimes([...times, added].sort(), { added });
   };
 
@@ -449,7 +475,7 @@ export default function MedEditor() {
             <Field label="Times">
               {times.map((t, i) => (
                 <View key={`${t}-${i}`} style={st.timeRow}>
-                  <TimeButton value={t} onChange={(v) => setTimes(times.map((x, j) => (j === i ? v : x)).sort())} />
+                  <TimeButton value={t} onChange={(v) => moveTime(t, v)} />
                   {times.length > 1 ? (
                     <Pressable onPress={() => changeTimes(times.filter((_, j) => j !== i), { removed: i })} hitSlop={10}>
                       <Ionicons name="close-circle" size={24} color={c.faint} />

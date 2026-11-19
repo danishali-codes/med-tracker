@@ -98,7 +98,10 @@ export function AppLockGate({ children }: { children: ReactNode }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {children}
+      {/* Hidden from screen readers too while locked, not just covered. */}
+      <View style={{ flex: 1 }} importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={locked}>
+        {children}
+      </View>
       {locked ? (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', padding: 32 }]}>
           <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' }}>

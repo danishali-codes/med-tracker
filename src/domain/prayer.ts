@@ -48,7 +48,7 @@ export const CITIES: City[] = [
 ];
 
 /** Sun angle below the horizon at Fajr for each calculation method. */
-export const FAJR_ANGLE: Record<PrayerMethod, number> = {
+const FAJR_ANGLE: Record<PrayerMethod, number> = {
   uae: 18.2,
   ummalqura: 18.5,
   mwl: 18,

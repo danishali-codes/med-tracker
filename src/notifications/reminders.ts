@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { formatTime, toDateKey } from '../domain/dates';
+import { toDateKey } from '../domain/dates';
 import { daysOfSupply, units } from '../domain/dose';
 import { groupFromReminderId, groupKey, planReminders, refillText, REMINDER_PREFIX, reminderText, type PlannedReminder } from '../domain/reminders';
 import { dosesOn, slotKey } from '../domain/schedule';
@@ -13,11 +13,11 @@ import { setupTimerChannel, startFoodTimer } from './food';
 // channel got a new id when it became private. The old one is deleted in setupNotifications.
 export const CHANNEL_ID = 'dose-reminders-private';
 const OLD_CHANNEL_IDS = ['dose-reminders', 'refills'];
-export const REFILL_CHANNEL_ID = 'refills-private';
-export const CATEGORY_ID = 'dose';
+const REFILL_CHANNEL_ID = 'refills-private';
+const CATEGORY_ID = 'dose';
 export const ACTION_TAKEN = 'taken';
 export const ACTION_SNOOZE = 'snooze';
-export const ACTION_SKIP = 'skip';
+const ACTION_SKIP = 'skip';
 
 // Android allows ~500 alarms per app; iOS keeps only 64 pending notifications.
 const MAX_SCHEDULED = Platform.OS === 'ios' ? 60 : 300;

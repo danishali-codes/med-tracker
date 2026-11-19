@@ -1,4 +1,4 @@
-import { addDays, diffDays, formatTime, toDateKey, weekdayOf, type DateKey } from '../domain/dates';
+import { addDays, diffDays, formatTime, timeFromDate, toDateKey, weekdayOf, type DateKey } from '../domain/dates';
 import { describeDose } from '../domain/dose';
 import { adherence, computeProgress, type DaySummary } from '../domain/progress';
 import { groupKey } from '../domain/reminders';
@@ -65,10 +65,6 @@ export interface WidgetInput {
 
 const count = (n: number) => (n === 1 ? '1 medicine' : `${n} medicines`);
 
-function clock(d: Date): string {
-  return formatTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-}
-
 /** Everything the widgets show, worked out from plain data so it can be tested. */
 export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, settings }: WidgetInput): WidgetData {
   const today = toDateKey(now);
@@ -104,7 +100,7 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
       label: formatTime(open.time),
       names: showNames ? (open.doses.length > 1 ? `${first} +${open.doses.length - 1}` : first) : count(open.doses.length),
       due: dueAt(today, open.time) <= now,
-      snoozedUntil: untilDate && untilDate > now ? clock(untilDate) : null,
+      snoozedUntil: untilDate && untilDate > now ? formatTime(timeFromDate(untilDate)) : null,
       pills: open.doses.slice(0, 3).map((d) => look(byId.get(d.medId))),
       doses: open.doses,
     };
