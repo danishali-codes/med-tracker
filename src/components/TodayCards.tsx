@@ -147,7 +147,8 @@ export function TimingCard({ meds, settings, today, version }: { meds: Medicatio
   const accept = async () => {
     for (const id of suggestion.medIds) {
       const m = repo.getMed(id);
-      if (m) repo.saveMed(moveTime(m, time, suggested));
+      const moved = m ? moveTime(m, time, suggested) : null;
+      if (m && moved) repo.saveMedRetimed(m, moved, today);
     }
     if (routine) repo.saveSettings({ ...repo.getSettings(), routines: settings.routines.map((r) => (r.id === routine.id ? { ...r, time: suggested } : r)) });
     await rescheduleAll().catch(() => {});

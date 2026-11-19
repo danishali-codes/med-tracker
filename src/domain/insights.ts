@@ -1,6 +1,7 @@
 import { addDays, daysInMonth, diffDays, eachDay, monthName, parseTime, type DateKey, type TimeOfDay } from './dates';
 import { consistencySeries, isFullDay, isGoldDay, trackedFrom, type DaySummary } from './progress';
 import { isMedDueOn, slotKey } from './schedule';
+import { editTimes } from './routines';
 import type { DayNote, DoseLog, Medication } from './types';
 
 // Everything here runs on the phone, from data already on the phone.
@@ -389,22 +390,17 @@ export function suggestTimings(meds: Medication[], logs: DoseLog[], today: DateK
     if (total < 0 || total >= 24 * 60) continue; // would cross midnight; leave it alone
     const suggested = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
     if (suggested === time) continue;
+    // Never suggest a time one of these medicines already has: the two doses would merge.
+    if (active.some((m) => e.medIds.has(m.id) && m.schedule.times.includes(suggested))) continue;
     out.push({ time, suggested, typicalOffset: median, samples: offs.length, medIds: [...e.medIds] });
   }
   return out.sort((a, b) => (a.time < b.time ? -1 : 1));
 }
 
-/** Moves a reminder time on every listed med (including weekday-specific times). */
-export function moveTime(med: Medication, from: TimeOfDay, to: TimeOfDay): Medication {
-  const swap = (ts: TimeOfDay[]) => [...new Set(ts.map((t) => (t === from ? to : t)))].sort();
-  return {
-    ...med,
-    schedule: {
-      ...med.schedule,
-      times: swap(med.schedule.times),
-      dayTimes: med.schedule.dayTimes?.map((r) => ({ ...r, times: swap(r.times) })),
-    },
-  };
+/** Moves one usual time, keeping weekday times lined up. Null when the medicine already has a dose then. */
+export function moveTime(med: Medication, from: TimeOfDay, to: TimeOfDay): Medication | null {
+  const schedule = editTimes(med.schedule, [{ move: from, to }]);
+  return schedule ? { ...med, schedule } : null;
 }
 
 /** Days covered, for screens that need to load data for a review. */

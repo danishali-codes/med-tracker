@@ -156,12 +156,20 @@ describe('smart timing', () => {
     expect(suggestTimings([m], takenAt(40).slice(-5), today)).toHaveLength(0);
   });
 
-  it('moveTime moves weekday times too', () => {
-    const w = med('w', ['08:00', '20:00'], {});
-    w.schedule.dayTimes = [{ days: [1], times: ['08:00'] }];
-    const moved = moveTime(w, '08:00', '08:40');
-    expect(moved.schedule.times).toEqual(['08:40', '20:00']);
-    expect(moved.schedule.dayTimes![0].times).toEqual(['08:40']);
+  it('moveTime keeps weekday times lined up with their doses', () => {
+    const w = med('w', ['08:00', '20:00']);
+    w.schedule.dayTimes = [{ days: [1], times: ['09:00', '21:00'] }];
+    // 08:00 moves past 20:00, so the order flips; Monday's overrides must follow their doses.
+    const moved = moveTime(w, '08:00', '22:00')!;
+    expect(moved.schedule.times).toEqual(['20:00', '22:00']);
+    expect(moved.schedule.dayTimes![0].times).toEqual(['21:00', '09:00']);
+  });
+
+  it("never merges two doses into one", () => {
+    expect(moveTime(med('x', ['08:00', '09:00']), '08:00', '09:00')).toBeNull();
+    const both = med('a', ['08:00', '09:00']);
+    const logs = eachDay(addDays(today, -14), addDays(today, -1)).map((d) => log('a', d, '08:00', 'taken', local(d, 9, 0)));
+    expect(suggestTimings([both], logs, today)).toHaveLength(0);
   });
 });
 
@@ -181,6 +189,22 @@ describe('routines', () => {
       ['a', ['07:30', '20:00']],
       ['c', ['07:30']],
     ]);
+  });
+
+  it('taking a medicine out of a routine keeps its weekday times on the right dose', () => {
+    const w = med('w', ['08:00', '20:00']);
+    w.schedule.dayTimes = [{ days: [1], times: ['09:00', '21:00'] }];
+    const [out] = applyRoutine([w], { id: 'r', name: 'Breakfast', time: '08:00' }, { id: 'r', name: 'Breakfast', time: '08:00' }, new Set());
+    expect(out.schedule.times).toEqual(['20:00']);
+    expect(out.schedule.dayTimes![0].times).toEqual(['21:00']);
+  });
+
+  it('adding a medicine to a routine keeps its existing weekday times', () => {
+    const w = med('w', ['20:00']);
+    w.schedule.dayTimes = [{ days: [1], times: ['21:00'] }];
+    const [out] = applyRoutine([w], { id: 'r', name: 'Breakfast', time: '08:00' }, null, new Set(['w']));
+    expect(out.schedule.times).toEqual(['08:00', '20:00']);
+    expect(out.schedule.dayTimes![0].times).toEqual(['08:00', '21:00']);
   });
 
   it('names the routine in the reminder', () => {

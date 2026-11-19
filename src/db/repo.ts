@@ -65,6 +65,38 @@ export function deleteMed(id: string) {
   changed();
 }
 
+/**
+ * After a usual dose time moves (say 08:00 to 08:40), doses already logged from `fromDate` on
+ * (taken today, or skipped ahead of time) follow it, so they don't show as due again.
+ * Earlier days keep their history as it was.
+ */
+export function rebaseLogs(medId: string, from: string, to: string, fromDate: DateKey) {
+  if (from === to) return;
+  const db = getDb();
+  const rows = db.getAllSync<{ slot: string; date: string; time: string }>(
+    'SELECT slot, date, time FROM dose_log WHERE med_id = ? AND date >= ?',
+    medId,
+    fromDate,
+  );
+  db.withTransactionSync(() => {
+    for (const r of rows) {
+      if (r.slot !== `${medId}|${r.date}|${from}`) continue;
+      const slot = `${medId}|${r.date}|${to}`;
+      if (db.getFirstSync('SELECT 1 FROM dose_log WHERE slot = ?', slot)) continue;
+      db.runSync('UPDATE dose_log SET slot = ?, time = ? WHERE slot = ?', slot, r.time === from ? to : r.time, r.slot);
+    }
+  });
+  changed();
+}
+
+/** Saves a medicine whose usual times changed, carrying logged doses of a moved time along. */
+export function saveMedRetimed(before: Medication, after: Medication, today: DateKey) {
+  saveMed(after);
+  const gone = before.schedule.times.filter((t) => !after.schedule.times.includes(t));
+  const added = after.schedule.times.filter((t) => !before.schedule.times.includes(t));
+  if (gone.length === 1 && added.length === 1) rebaseLogs(after.id, gone[0], added[0], today);
+}
+
 export function newId(): string {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }

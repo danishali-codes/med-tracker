@@ -29,10 +29,9 @@ export async function unlockWithDevice(prompt = 'Unlock Sabr'): Promise<boolean>
   } catch {
     return false;
   } finally {
-    // The PIN screen briefly sends the app to the background; don't count that as leaving.
-    setTimeout(() => {
-      authenticating = false;
-    }, 800);
+    // Only the prompt itself (the PIN screen sends the app to the background) is ignored;
+    // leaving the app any time after it closes counts.
+    authenticating = false;
   }
 }
 

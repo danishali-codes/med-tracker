@@ -5,7 +5,7 @@ import { MedIcon } from '../components/MedIcon';
 import { TimeButton } from '../components/Pickers';
 import { useRowStyles } from '../components/ToggleRow';
 import { Button, Card, Field, Input, PressableScale, SectionTitle, Text } from '../components/ui';
-import { formatTime } from '../domain/dates';
+import { formatTime, toDateKey } from '../domain/dates';
 import { describeDose } from '../domain/dose';
 import { applyRoutine, routineMembers } from '../domain/routines';
 import type { Routine } from '../domain/types';
@@ -45,7 +45,11 @@ export default function RoutinesScreen() {
       );
     }
     const routine: Routine = { id: editing.original?.id ?? repo.newId(), name, time: editing.time };
-    for (const m of applyRoutine(meds, routine, editing.original, editing.members)) repo.saveMed(m);
+    const today = toDateKey(new Date());
+    for (const m of applyRoutine(meds, routine, editing.original, editing.members)) {
+      const before = meds.find((x) => x.id === m.id);
+      if (before) repo.saveMedRetimed(before, m, today);
+    }
     const routines = [...settings.routines.filter((r) => r.id !== routine.id), routine].sort((a, b) => (a.time < b.time ? -1 : 1));
     repo.saveSettings({ ...repo.getSettings(), routines });
     await rescheduleAll().catch(() => {});
