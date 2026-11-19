@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sabr: Medicine Tracker</title>
+  <meta name="description" content="A free, open-source Android app that reminds you to take your medicines, asks if you took them, and remembers the answer. No account, no ads, no tracking.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F3F2FA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0C0C10" media="(prefers-color-scheme: dark)">
+  <meta name="referrer" content="no-referrer">
+  <meta property="og:title" content="Sabr: Medicine Tracker">
+  <meta property="og:description" content="Reminders that ask if you took it, and remember the answer. Free, open source, and private.">
+  <meta property="og:image" content="/shots/today.png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/nunito-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/theme.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="#" aria-label="Sabr, back to top">
+        <img src="/favicon.svg" width="30" height="30" alt="">
+        <span>Sabr</span>
+      </a>
+      <nav aria-label="Sections">
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#install">Install</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="theme" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap">
+      <div class="hero-text">
+        <p class="kicker">Medicine reminders for Android</p>
+        <h1>Take your medicines on time, and know that you did.</h1>
+        <p class="lead">Do you struggle to take your meds on time? Do you forget how many tablets you're meant to take, and when? Have you ever stood in the kitchen wondering whether you actually took this morning's dose, or just thought about taking it?</p>
+        <p>Sabr knows your schedule, asks "did you take it?", and remembers the answer. It's free, open source, and keeps everything on your phone.</p>
+        <div class="cta">
+          <a class="btn primary" href="/download" data-download>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
+            Download for Android
+          </a>
+          <a class="btn" href="https://github.com/danishali-codes/sabr-med-tracker">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="gh"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.7.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5 4-1.4 6.8-5.2 6.8-9.7C22 6.6 17.5 2 12 2z"/></svg>
+            Source on GitHub
+          </a>
+        </div>
+        <p class="fine" data-release>Latest version, free, no account needed.</p>
+      </div>
+      <figure class="phone hero-phone">
+        <img data-shot="today" src="/shots/today.png" width="1080" height="2400" alt="Sabr's Today screen, listing the doses due and the ones already taken">
+      </figure>
+    </section>
+
+    <section class="why">
+      <div class="wrap narrow">
+        <p>If you take one pill a day, a phone alarm is probably enough. Once it's five medicines, some twice a day, one only on Fridays and one every other week, alarms stop being enough. You need something that knows the schedule and keeps track of what you've actually taken.</p>
+        <p class="name"><span lang="ar" dir="rtl">صبر</span> Sabr means patience. It started in the UAE as a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country.</p>
+      </div>
+    </section>
+
+    <section id="features" class="features wrap">
+      <h2>What it does</h2>
+
+      <article class="feature">
+        <figure class="phone"><img data-shot="medication" src="/shots/medication.png" width="1080" height="2400" loading="lazy" alt="Editing a medicine's schedule"></figure>
+        <div>
+          <h3>Schedules that fit real life</h3>
+          <p>Every day, chosen weekdays, every few days or weeks, on and off cycles like 21 on and 7 off, monthly, or only when needed. A medicine can be due several times a day, with start and end dates, and you can pause one when your doctor says to stop for a week.</p>
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <figure class="notif-demo" aria-label="Example reminder with Taken, Snooze and Skip buttons">
+          <div class="notif">
+            <div class="notif-head"><img src="/favicon.svg" width="18" height="18" alt=""> Sabr <span>now</span></div>
+            <p class="notif-title">Time for your 8:00 dose</p>
+            <p class="notif-body">2 medicines due</p>
+            <div class="notif-actions"><span>Taken</span><span>Snooze</span><span>Skip</span></div>
+          </div>
+          <figcaption>Medicine names stay off the lock screen unless you turn them on.</figcaption>
+        </figure>
+        <div>
+          <h3>Answer the reminder without opening the app</h3>
+          <p>Every reminder has Taken, Snooze and Skip buttons. Reminders are delivered like an alarm clock, so battery saver can't hold them back, and they can repeat until you answer.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <figure class="phone"><img data-shot="times" src="/shots/times.png" width="1080" height="2400" loading="lazy" alt="Setting different reminder times for different days"></figure>
+        <div>
+          <h3>Times that follow your week</h3>
+          <p>Different times on office days and at the weekend, a busy week moved later, home time kept while you travel. Ramadan mode moves doses to suhoor and iftar, using times you set or your city's prayer times, worked out on the phone.</p>
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <figure class="phone"><img data-shot="history" src="/shots/history.png" width="1080" height="2400" loading="lazy" alt="History calendar with each day coloured by how it went"></figure>
+        <div>
+          <h3>A clear answer to "did I take it?"</h3>
+          <p>Today lists what's due and what's done. The History calendar colours every day, and you can tap any day to see or fix what was logged. Skip a future dose on purpose, for a blood test or a doctor's instruction, and it won't count against you.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <figure class="phone"><img data-shot="progress" src="/shots/progress.png" width="1080" height="2400" loading="lazy" alt="Progress screen with streak, rings and consistency score"></figure>
+        <div>
+          <h3>Streaks that are fair</h3>
+          <p>A dose taken late still counts. Only a dose never taken that day breaks the streak, freezes cover the odd bad day, and if you lose one anyway, three good days bring it back. A consistency score, gold days, milestones and badges show how it's going, without nagging.</p>
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <figure class="phone"><img data-shot="meds" src="/shots/meds.png" width="1080" height="2400" loading="lazy" alt="Medicine list with doses and stock left"></figure>
+        <div>
+          <h3>Doses that match the box</h3>
+          <p>Strength and amount are kept apart, so 500 mg, 3 tablets reads the way the pharmacist wrote it. Half tablets and ml work too. Stock is counted as you take it, and you get a refill alert with roughly how many days are left.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <figure class="phone"><img data-shot="review" src="/shots/review.png" width="1080" height="2400" loading="lazy" alt="Month in review with doses taken, full days and gold days"></figure>
+        <div>
+          <h3>A look back at how it's going</h3>
+          <p>A page for each month and year: doses taken, days on time, the longest run, the hardest time of day. Patterns lines up your mood and symptom notes with missed doses. All of it is worked out on the phone.</p>
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <figure class="phone"><img data-shot="report" src="/shots/report.png" width="1080" height="2400" loading="lazy" alt="Doctor report for a chosen period"></figure>
+        <div>
+          <h3>A report for your doctor</h3>
+          <p>A PDF for any period with what was taken, late or missed, day by day, with your mood and symptom notes alongside. Print it or send it before an appointment.</p>
+        </div>
+      </article>
+
+      <div class="more">
+        <h3>And the smaller things</h3>
+        <ul>
+          <li><strong>Medicine search.</strong> Common UAE brands like Panadol, Adol and Concor are built in. Online search is there if you turn it on.</li>
+          <li><strong>Interaction check.</strong> Your medicines against each other, alcohol and food, with an honest note that no list is complete.</li>
+          <li><strong>Scan the box.</strong> The name, strength and pack size are read on the phone.</li>
+          <li><strong>Notes on how you feel.</strong> Mood, symptoms and a few words for any day, plus a photo of each pill.</li>
+          <li><strong>Home screen widgets.</strong> Today's progress with a Take button, or the whole day's list.</li>
+          <li><strong>Routines.</strong> Medicines you take together, like Breakfast at 8:00, share one reminder with Take all.</li>
+          <li><strong>Food timers.</strong> After an empty-stomach medicine, a countdown tells you when you can eat.</li>
+          <li><strong>Learns your timing.</strong> If you always take a dose 40 minutes late, Sabr offers to move the reminder.</li>
+          <li><strong>Backups you own.</strong> A password-locked file, saved to Google Drive or anywhere, by hand or every week.</li>
+          <li><strong>Light, dark and true black.</strong> For OLED screens and late-night doses.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="privacy" class="privacy">
+      <div class="wrap split">
+        <div>
+          <h2>Your medicines are your business</h2>
+          <p>Sabr has no account, no ads, no analytics and no crash reports. Your medicines, times and history live in a database on your phone, and nowhere else.</p>
+          <p>Anything that could share or show what you take is off until you turn it on yourself.</p>
+          <p><a href="https://github.com/danishali-codes/sabr-med-tracker/blob/main/PRIVACY.md">Read exactly what is sent, and to whom</a></p>
+        </div>
+        <ul class="checks">
+          <li><b>Nothing leaves the phone out of the box.</b> Online medicine search is off by default, and when on it sends only a medicine name.</li>
+          <li><b>Reminders don't name your medicines</b> unless you choose to. By default they say "Time for your 8:00 dose".</li>
+          <li><b>Google's cloud backup is turned off</b> for the app. Make your own password-locked backup and keep it wherever you like.</li>
+          <li><b>App lock</b> with your fingerprint, face or phone PIN, if you want one.</li>
+          <li><b>Caregiver sharing is optional</b> and runs on a server you host yourself, encrypted on the phone first so the server can't read it.</li>
+          <li><b>This website doesn't track you either.</b> No cookies, no analytics, no third-party scripts or fonts.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="open-source" class="wrap narrow open">
+      <h2>Free and open source</h2>
+      <p>Sabr is released under the GPL-3.0 licence. Every line of it is on GitHub, so anyone can read how it works, build it themselves, check that it does what this page says, or make it better. It will stay free.</p>
+      <p class="links">
+        <a href="https://github.com/danishali-codes/sabr-med-tracker">Browse the code</a>
+        <a href="https://github.com/danishali-codes/sabr-med-tracker/releases">Every version and its notes</a>
+        <a href="https://github.com/danishali-codes/sabr-med-tracker/blob/main/LICENSE">GPL-3.0 licence</a>
+      </p>
+    </section>
+
+    <section id="install" class="install">
+      <div class="wrap">
+        <h2>Install on Android</h2>
+        <ol class="steps">
+          <li>
+            <h3>Download</h3>
+            <p>On your phone, tap <a href="/download" data-download>Download for Android</a> to get the latest <code>.apk</code> from GitHub.</p>
+          </li>
+          <li>
+            <h3>Open it</h3>
+            <p>Android asks once to allow installs from your browser or files app. Allow it, then install.</p>
+          </li>
+          <li>
+            <h3>Let reminders through</h3>
+            <p>In Sabr's Settings, allow Notifications and Alarms, set Battery to Unrestricted, and send a test reminder. On Samsung, make sure Sabr isn't in "Sleeping apps".</p>
+          </li>
+        </ol>
+        <p class="fine">Sabr isn't on the Play Store yet. Updates install over the old version and keep your data. An iPhone version is planned.</p>
+      </div>
+    </section>
+
+    <section id="contact" class="wrap narrow contact">
+      <h2>Contact</h2>
+      <p>Found a bug, missing a schedule your doctor gave you, or have an idea? Open an issue on GitHub. It's the quickest way to reach me, and it helps everyone who has the same question.</p>
+      <p class="links">
+        <a href="https://github.com/danishali-codes/sabr-med-tracker/issues/new">Report a problem or suggest something</a>
+        <a href="https://github.com/danishali-codes">More from danishali-codes</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>Sabr is a reminder tool, not medical advice. Always follow your doctor's or pharmacist's instructions.</p>
+      <p>Made by Danish in the UAE. Free software under the GPL-3.0. This site sets no cookies and runs no analytics.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

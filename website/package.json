@@ -1,0 +1,9 @@
+{
+  "name": "sabr-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "npx serve dist"
+  }
+}
