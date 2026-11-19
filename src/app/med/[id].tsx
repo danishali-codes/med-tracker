@@ -4,11 +4,12 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
 import { removeMedication, saveMedication } from '../../actions';
-import { Button, Card, Chip, Field, Input, PressableScale, Text } from '../../components/ui';
+import { defaultShape, hasShape, lookOf, PILL_COLORS, PILL_SHAPES, PillArt } from '../../components/PillArt';
+import { Button, Card, Chip, Field, Input, PressableScale, Select, Text } from '../../components/ui';
 import { atTime, dateFromKey, formatDateLong, formatTime, timeFromDate, toDateKey, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
-import type { MedForm, Medication, SchedulePattern } from '../../domain/types';
+import type { MedForm, Medication, PillShape, SchedulePattern } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { medicineDetails, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
@@ -51,6 +52,10 @@ export default function MedEditor() {
   const [amount, setAmount] = useState(existing?.amount ?? 1);
   const [form, setForm] = useState<MedForm>(existing?.form ?? 'pill');
   const [color, setColor] = useState(existing?.color ?? MED_COLORS[repo.getMeds().length % MED_COLORS.length]);
+  const [shape, setShape] = useState<PillShape | undefined>(existing?.shape);
+  const [pillColor, setPillColor] = useState<string | undefined>(existing?.pillColor);
+  const [pillColor2, setPillColor2] = useState<string | null>(existing?.pillColor2 ?? null);
+  const look = lookOf({ form, shape, pillColor, pillColor2, color });
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const p = existing?.schedule.pattern;
   const [kind, setKind] = useState<Kind>(p?.kind ?? 'daily');
@@ -136,6 +141,9 @@ export default function MedEditor() {
     generic: generic.trim() || null,
     rxcui,
     color,
+    shape: hasShape(form) ? look.shape : undefined,
+    pillColor: look.color,
+    pillColor2: hasShape(form) && look.shape === 'capsule' ? pillColor2 : null,
     notes: notes.trim() || undefined,
     schedule: {
       pattern: pattern(),
@@ -254,16 +262,25 @@ export default function MedEditor() {
         <Card>
           <Text style={st.cardTitle}>Dose</Text>
           <Field label="Type">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {FORMS.map((f) => (
-                <Chip key={f} label={FORM_UNITS[f].label} selected={form === f} onPress={() => setForm(f)} />
-              ))}
-            </ScrollView>
+            <Select
+              title="Type"
+              value={form}
+              onChange={(f) => {
+                setForm(f);
+                if (!hasShape(f)) setShape(undefined);
+                else if (!shape || (f === 'capsule') !== (shape === 'capsule')) setShape(defaultShape(f));
+              }}
+              options={FORMS.map((f) => ({
+                value: f,
+                label: FORM_UNITS[f].label,
+                icon: <PillArt form={f} shape={defaultShape(f)} color={hasShape(f) ? '#FFFFFF' : color} size={28} />,
+              }))}
+            />
           </Field>
           <Field label={`Strength of one ${u.one}`} hint="Optional, e.g. 500 mg or 5 mg/ml">
             <Input value={strength} onChangeText={setStrength} placeholder="500 mg" autoCorrect={false} />
             {strengths.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+              <View style={[st.wrap, { marginTop: 10 }]}>
                 {strengths.map((o) => (
                   <Chip
                     key={`${o.strength}-${o.form}`}
@@ -275,7 +292,7 @@ export default function MedEditor() {
                     }}
                   />
                 ))}
-              </ScrollView>
+              </View>
             ) : null}
           </Field>
           <Field label="How much each time" style={{ marginBottom: 6 }}>
@@ -412,7 +429,37 @@ export default function MedEditor() {
         ) : null}
 
         <Card>
-          <Field label="Colour">
+          <Text style={st.cardTitle}>Look</Text>
+          <View style={st.lookPreview}>
+            <PillArt {...look} size={96} />
+          </View>
+          {hasShape(form) ? (
+            <Field label="Shape">
+              <View style={st.wrap}>
+                {PILL_SHAPES.map((sh) => {
+                  const on = look.shape === sh.id;
+                  return (
+                    <PressableScale key={sh.id} onPress={() => setShape(sh.id)} haptic style={[st.shapeTile, on && { borderColor: c.primary, backgroundColor: c.primarySoft }]} accessibilityLabel={sh.label}>
+                      <PillArt form={form} shape={sh.id} color={look.color} color2={look.color2} size={40} />
+                      <Text style={[st.shapeText, on && { color: c.primary }]}>{sh.label}</Text>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </Field>
+          ) : null}
+          <Field label={hasShape(form) && look.shape === 'capsule' ? 'First colour' : 'Colour'}>
+            <Swatches colors={PILL_COLORS} value={look.color} onChange={setPillColor} />
+          </Field>
+          {hasShape(form) && look.shape === 'capsule' ? (
+            <Field label="Second colour">
+              <Swatches colors={PILL_COLORS} value={look.color2 ?? look.color} onChange={setPillColor2} />
+            </Field>
+          ) : null}
+        </Card>
+
+        <Card>
+          <Field label="Accent colour" hint="Used for this medicine's rings and tags in the app.">
             <View style={st.wrap}>
               {MED_COLORS.map((col) => (
                 <PressableScale key={col} onPress={() => setColor(col)} haptic style={[st.swatch, { backgroundColor: col }, color === col && st.swatchOn]}>
@@ -511,6 +558,9 @@ const useStyles = makeStyles((c) => ({
   container: { padding: 16, paddingBottom: 60 },
   cardTitle: { fontSize: 18, fontWeight: '900', color: c.text, marginBottom: 14 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  lookPreview: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.sunken, borderRadius: 22, paddingVertical: 18, marginBottom: 16 },
+  shapeTile: { width: 76, alignItems: 'center', paddingVertical: 8, borderRadius: 16, borderWidth: 1.5, borderColor: c.border, marginRight: 8, marginBottom: 8 },
+  shapeText: { fontSize: 12, fontWeight: '700', color: c.muted, marginTop: 2 },
   inline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 },
   inlineText: { fontSize: 15, color: c.text, fontWeight: '600' },
   small: { width: 76, textAlign: 'center', marginBottom: 8 },
@@ -545,3 +595,20 @@ const useStyles = makeStyles((c) => ({
   pauseHint: { fontSize: 12, color: c.muted, fontWeight: '600', textAlign: 'center', marginTop: 6, marginHorizontal: 12 },
   interactions: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 24, marginBottom: 14 },
 }));
+
+function Swatches({ colors, value, onChange }: { colors: string[]; value: string; onChange: (c: string) => void }) {
+  const c = useTheme();
+  const st = useStyles();
+  return (
+    <View style={st.wrap}>
+      {colors.map((col) => {
+        const on = value.toUpperCase() === col.toUpperCase();
+        return (
+          <PressableScale key={col} onPress={() => onChange(col)} haptic style={[st.swatch, { backgroundColor: col, borderWidth: 1, borderColor: c.border }, on && st.swatchOn]} accessibilityLabel={`Colour ${col}`}>
+            {on ? <Ionicons name="checkmark" size={18} color={col === '#FFFFFF' || col === '#F3E9D2' || col === '#FBE37A' ? '#333' : '#fff'} /> : null}
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}

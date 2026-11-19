@@ -4,7 +4,7 @@ Do you struggle to take your meds on time? Do you forget how many tablets you're
 
 If you take one pill a day, a phone alarm is probably enough. Once it's five meds, some twice a day, one only on Fridays and one every other week, alarms stop being enough. You need something that knows the schedule, asks "did you take it?", and remembers the answer.
 
-Med Tracker is a free Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
+Med Tracker is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
 
 <p align="center">
   <img src="docs/screenshots/0.2/today.png" width="200" alt="Today screen" />
@@ -32,6 +32,8 @@ Med Tracker is a free Android app that does that. It's a simple, private replace
 **A home screen widget** with today's progress and a Take button for the next dose.
 
 **Light, dark and true-black modes.**
+
+**Free and open source.** The full source is here, under the GPL-3.0 licence (see below). Anyone can read how it works, build it themselves, or improve it.
 
 **Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. You can export everything to a file and restore it on a new phone.
 
@@ -103,3 +105,9 @@ Release APKs are signed with the app's own key when these repository secrets exi
 
 - [RxNav / RxNorm](https://lhncbc.nlm.nih.gov/RxNav/) from the US National Library of Medicine: drug names, ingredients and strengths. Free, no key.
 - [openFDA drug labels](https://open.fda.gov/apis/drug/label/): official US label text, read for interaction warnings. Free, no key (rate limited per phone).
+
+## Licence
+
+Med Tracker is free and open-source software, released under the [GNU General Public License v3.0 or later](LICENSE). You can use, study, share and change it. If you share a changed version, it has to stay open source under the same licence.
+
+Contributions are welcome: open an issue or a pull request.

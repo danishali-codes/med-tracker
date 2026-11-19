@@ -6,7 +6,20 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.2.1
+
+Pick what each medicine looks like, and an easier medicine form.
+
+### Added
+- Choose the shape (round, oval, oblong, capsule, square, diamond, triangle) and colour of each pill, with two colours for capsules. Bottles, pens, inhalers and other forms are drawn in the colour you pick. The drawing shows on Today and Medications.
+- A Smartwatch section in Settings explaining how to turn on reminders for a Galaxy Watch.
+
+### Changed
+- The medicine type is a dropdown instead of a sideways-scrolling row, and suggested strengths wrap onto several lines so none are hidden.
+- The colour that was on the medicine form is now called the accent colour.
+
 ## 0.2
+commit: b93ed248d30b6928f5613d150c4256930a4966a0
 
 The new look, dose amounts that match the box, medicine search and interaction checks.
 

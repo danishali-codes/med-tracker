@@ -17,9 +17,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - version: '0.1'
+          # Released versions are pinned to their commit; "current" is this push.
+          - key: '0.1'
             ref: c22ec81cf21bd9634260f4d9885a3cba65dd3019
-          - version: '0.2'
+          - key: '0.2'
+            ref: b93ed248d30b6928f5613d150c4256930a4966a0
+          - key: current
             ref: ''
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +40,8 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
+      - name: Read the version
+        run: echo "VERSION=$(node -p "require('./app/app.json').expo.version.replace(/\\.0$/, '')")" >> "$GITHUB_ENV"
       - name: Add demo data
         working-directory: app
         run: |
@@ -62,10 +67,10 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
-          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ matrix.version }} tools/scripts/screenshots/screens-${{ matrix.version }}.txt
+          script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: screenshots-${{ matrix.version }}
+          name: screenshots-${{ matrix.key }}
           path: shots/
           if-no-files-found: warn
