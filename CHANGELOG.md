@@ -6,12 +6,18 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
-## Next
+## 0.7
 
-Not released yet.
+New home screen widgets and a Galaxy Watch tile.
 
 ### Added
-- Galaxy Watch / Wear OS tile: a ring with one segment per dose that turns green when the day is done, the dose that's due with Taken and Snooze, or the next time and your streak. Off by default (Settings > Smartwatch > Watch tile); names only if you turned them on. The watch app is a separate APK in each release; setup in [docs/watch.md](docs/watch.md).
+- Next dose widget: the dose that's due with Taken and Snooze, shrinking to a single strip when made small.
+- Today widget with the three rings, and Today's list with a ring header and pill drawings.
+- Widgets turn green when the day is done and gold when every dose was on time, and adapt to any size you resize them to.
+- Galaxy Watch / Wear OS tile: a ring with one segment per dose that turns green when the day is done, the dose that's due with Taken and Snooze, or the next time and your streak. Off by default (Settings > Smartwatch > Watch tile). The watch app is a separate APK in each release (sabr-watch-0.7.apk); setup in [docs/watch.md](docs/watch.md).
+
+### Privacy
+- Medicine names stay off the widgets and the watch tile unless you turn them on in Settings.
 
 ## 0.6
 
