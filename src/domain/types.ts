@@ -188,6 +188,8 @@ export interface Settings {
   onlineLookups: boolean;
   /** Show medicine names in reminders and refill alerts (off by default, so they say "your medicine"). */
   showMedNames: boolean;
+  /** Show medicine names on the home screen widget (off by default: it shows the dose and pill instead). */
+  widgetShowNames: boolean;
   /**
    * Optional sync with a PocketBase server you run. Off by default: with it off, nothing
    * ever leaves the phone. Everything sent is end-to-end encrypted first.
@@ -269,6 +271,7 @@ export const DEFAULT_SETTINGS: Settings = {
   nagEscalate: false,
   onlineLookups: false,
   showMedNames: false,
+  widgetShowNames: false,
   sync: { enabled: false, backup: false, share: false, shareNames: false, shareAs: '' },
   care: { alerts: true, graceMinutes: 30 },
   appLock: false,
