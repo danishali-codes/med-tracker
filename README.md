@@ -51,6 +51,10 @@ Screenshots of every version are kept in [docs/screenshots](docs/screenshots), t
 - **0.1** (Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
 - **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
 
+## Privacy
+
+No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
+
 ## What's next
 
 - **0.3:** different times on different weekdays, temporary time changes, travel and Ramadan modes, better snooze, mood and symptom notes, pill photos.

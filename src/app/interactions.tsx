@@ -7,6 +7,7 @@ import type { InteractionKind, InteractionNote } from '../domain/interactions';
 import type { Medication } from '../domain/types';
 import * as repo from '../db/repo';
 import { checkInteractions, type CheckResult } from '../drugs/check';
+import { onlineAllowed } from '../drugs/online';
 import { makeStyles, useTheme } from '../theme';
 
 const SECTIONS: { kind: InteractionKind; title: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -43,6 +44,7 @@ export default function InteractionsScreen() {
   }, [meds, params.id]);
 
   const focusName = params.id ? params.name : null;
+  const online = useMemo(() => onlineAllowed(), []);
 
   return (
     <ScrollView contentContainerStyle={s.container}>
@@ -56,13 +58,17 @@ export default function InteractionsScreen() {
           These notes come from a short list of well-known interactions and from official US drug labels. Many interactions aren't listed here, and
           brands sold in the UAE may differ. Always ask your doctor or pharmacist before you start, stop or combine medicines.
         </Text>
-        <Text style={[s.noticeText, { marginTop: 8 }]}>Only the medicine names are sent to the US National Library of Medicine and FDA to look this up.</Text>
+        <Text style={[s.noticeText, { marginTop: 8 }]}>
+          {online
+            ? 'Only the active ingredient names are sent to the US FDA to look this up. Nothing about you is sent. You can turn online search off in Settings > Privacy.'
+            : 'Online search is off, so only the built-in list and labels already saved on this phone were checked. Nothing was sent. You can turn it on in Settings > Privacy to also read official US drug labels.'}
+        </Text>
       </Card>
 
       {!result && !error ? (
         <View style={s.loading}>
           <ActivityIndicator color={c.primary} size="large" />
-          <Text style={s.muted}>Reading drug labels…</Text>
+          <Text style={s.muted}>{online ? 'Reading drug labels…' : 'Checking the built-in list…'}</Text>
         </View>
       ) : null}
       {error ? <Text style={s.muted}>Something went wrong: {error}</Text> : null}
@@ -88,8 +94,9 @@ export default function InteractionsScreen() {
 
       {result?.missing.length ? (
         <Text style={[s.muted, { marginTop: 8 }]}>
-          No US label found for {result.missing.join(', ')}. The phone may be offline, or the name isn't in the US database. Picking the medicine from the
-          search list (so its active ingredient is filled in) helps.
+          {online
+            ? `No US label found for ${result.missing.join(', ')}. The phone may be offline, or the name isn't in the US database. Picking the medicine from the search list (so its active ingredient is filled in) helps.`
+            : `No saved label for ${result.missing.join(', ')}, so only the built-in list was checked for it.`}
         </Text>
       ) : null}
     </ScrollView>
