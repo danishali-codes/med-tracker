@@ -6,6 +6,13 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## Next
+
+Not released yet.
+
+### Added
+- Galaxy Watch / Wear OS tile: a ring with one segment per dose that turns green when the day is done, the dose that's due with Taken and Snooze, or the next time and your streak. Off by default (Settings > Smartwatch > Watch tile); names only if you turned them on. The watch app is a separate APK in each release; setup in [docs/watch.md](docs/watch.md).
+
 ## 0.6
 
 Ideas borrowed from habit trackers: keeping your data safe, fairer streaks, routines and a look back at how it's going.

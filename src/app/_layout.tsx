@@ -15,6 +15,7 @@ import { phoneTimeZone } from '../domain/schedule';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSettings } from '../hooks/useData';
 import { registerBackgroundTasks } from '../notifications/background';
+import { pushToWatchNow } from '../wear/sync';
 import { handleReminderAction, rescheduleAll, setupNotifications } from '../notifications/reminders';
 import { black, dark, FONT, light, ThemeContext } from '../theme';
 import { refreshWidget } from '../widget/update';
@@ -56,6 +57,7 @@ export default function RootLayout() {
       .catch((e) => console.warn('notification setup failed', e));
     registerBackgroundTasks();
     refreshWidget();
+    pushToWatchNow().catch(() => {});
     // Optional sync: does nothing unless turned on in Settings.
     startSync();
     syncNow().catch(() => {});

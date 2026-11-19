@@ -1,0 +1,54 @@
+// The Sabr watch app: a Wear OS tile with today's ring, the next dose and Taken / Snooze.
+// It has the same application id as the phone app and must be signed with the same key,
+// which is how the phone and watch apps find each other over the Wear OS data layer.
+// Build it after `expo prebuild` with: ../android/gradlew -p wear assembleRelease
+plugins {
+  id 'com.android.application' version '9.2.1'
+}
+
+android {
+  namespace 'com.danishalicodes.sabr.wear'
+  compileSdk 36
+
+  defaultConfig {
+    applicationId 'com.danishalicodes.sabrmedicinetracker'
+    minSdk 30
+    targetSdk 34
+    versionCode 1
+    versionName '1.0'
+  }
+
+  signingConfigs {
+    release {
+      // The app key in CI (same secrets as the phone build), else the phone project's debug key.
+      storeFile file(System.getenv('SABR_KEYSTORE') ?: '../android/app/debug.keystore')
+      storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: 'android'
+      keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'androiddebugkey'
+      keyPassword System.getenv('ANDROID_KEY_PASSWORD') ?: 'android'
+    }
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      signingConfig signingConfigs.release
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  lint {
+    checkReleaseBuilds false
+    abortOnError false
+  }
+}
+
+dependencies {
+  implementation 'androidx.wear.tiles:tiles:1.6.2'
+  implementation 'androidx.wear.protolayout:protolayout:1.4.2'
+  implementation 'androidx.concurrent:concurrent-futures:1.1.0'
+  implementation 'com.google.android.gms:play-services-wearable:19.0.0'
+}

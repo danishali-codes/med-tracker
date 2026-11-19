@@ -209,6 +209,11 @@ export interface Settings {
   foodTimers: boolean;
   /** Save an encrypted backup to a folder you chose, once a week. */
   autoBackup: AutoBackupSettings;
+  /**
+   * Today's progress on a Wear OS watch tile (off by default). Sent to the paired watch over
+   * the Wear OS data layer; names are only included when showMedNames is on.
+   */
+  watchTile: boolean;
 }
 
 export interface AutoBackupSettings {
@@ -278,6 +283,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smartTiming: true,
   foodTimers: true,
   autoBackup: { enabled: false, folderUri: null, folderName: null, everyDays: 7 },
+  watchTile: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */

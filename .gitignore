@@ -40,3 +40,7 @@ yarn-error.*
 /ios
 /android
 *.keystore
+
+# Watch app build output
+/wear/build
+/wear/.gradle

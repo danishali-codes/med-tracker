@@ -70,6 +70,25 @@ jobs:
           name: med-tracker-apk
           path: dist/*.apk
           retention-days: 30
+      # The Galaxy Watch / Wear OS app with the Sabr tile. Same app id and signing key as the
+      # phone app, which is what lets the two talk to each other.
+      - name: Build the watch app
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -f android/app/release.keystore ]; then export SABR_KEYSTORE="$PWD/android/app/release.keystore"; fi
+          android/gradlew -p wear assembleRelease --no-daemon \
+            -Dorg.gradle.internal.repository.max.retries=8 \
+            -Dorg.gradle.internal.repository.initial.backoff=2000
+          mkdir -p watch
+          cp wear/build/outputs/apk/release/*.apk "watch/sabr-watch-${GITHUB_SHA::7}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sabr-watch-apk
+          path: watch/*.apk
+          retention-days: 30
 
   # Installs the APK on an Android emulator, opens it and fails if the app crashes,
   # printing the crash log. Catches release-only problems (like code shrinking) before a phone does.
@@ -129,13 +148,17 @@ jobs:
         with:
           name: med-tracker-apk
           path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: sabr-watch-apk
+          path: watch
       - name: Publish latest release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest dist/*.apk --target "$GITHUB_SHA" --title "Latest build" --notes "Built from ${GITHUB_SHA::7}. Download the .apk on your Android phone and open it to install."
+          gh release create latest dist/*.apk watch/*.apk --target "$GITHUB_SHA" --title "Latest build" --notes "Built from ${GITHUB_SHA::7}. Download the sabr .apk on your Android phone and open it to install. The sabr-watch .apk is the optional Wear OS watch app with the Sabr tile."
       - uses: actions/checkout@v4
         with:
           path: repo
@@ -162,6 +185,8 @@ jobs:
             if [ "$version" = "$current" ]; then
               cp dist/*.apk "sabr-$version.apk"
               files+=("sabr-$version.apk")
+              cp watch/*.apk "sabr-watch-$version.apk"
+              files+=("sabr-watch-$version.apk")
             fi
             if gh release view "$tag" >/dev/null 2>&1; then
               echo "$tag exists, refreshing its files"

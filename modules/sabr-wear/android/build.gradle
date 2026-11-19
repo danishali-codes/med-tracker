@@ -1,0 +1,23 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.danishalicodes.sabr'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.sabrwear"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  // The Wear OS data layer: phone and watch talk directly (Bluetooth or the same Wi-Fi).
+  implementation 'com.google.android.gms:play-services-wearable:19.0.0'
+  implementation 'androidx.work:work-runtime:2.12.0'
+  implementation 'androidx.concurrent:concurrent-futures:1.1.0'
+}
