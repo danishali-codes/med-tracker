@@ -209,7 +209,7 @@ export default function SyncScreen() {
                             const c2 = code ?? (await sync.shareCode());
                             if (!c2) throw new Error(repo.getKv('sync_error') ?? 'Could not reach your server.');
                             setCode(c2);
-                            if (code) await Share.share({ message: `Follow my medicines in Med Tracker. In the app, go to Settings, then People I look after, and paste this code:\n\n${c2}` });
+                            if (code) await Share.share({ message: `Follow my medicines in Sabr. In the app, go to Settings, then People I look after, and paste this code:\n\n${c2}` });
                           })
                         }
                       />

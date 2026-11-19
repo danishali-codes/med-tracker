@@ -295,7 +295,7 @@ export function exportAll(): string {
 
 export function importAll(json: string) {
   const parsed = JSON.parse(json) as { app?: string; data?: Record<string, Record<string, unknown>[]> };
-  if (parsed.app !== 'med-tracker' || !parsed.data) throw new Error('This is not a Med Tracker backup file.');
+  if (parsed.app !== 'med-tracker' || !parsed.data) throw new Error('This is not a Sabr backup file.');
   const db = getDb();
   db.withTransactionSync(() => {
     for (const t of TABLES) {

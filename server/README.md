@@ -1,6 +1,6 @@
 # Sync server (optional)
 
-Med Tracker works fully offline and never sends anything anywhere by default. This
+Sabr works fully offline and never sends anything anywhere by default. This
 folder is only for people who want one or both of these:
 
 - **An encrypted backup** of their medicines, history and notes, to restore on a new phone.

@@ -256,6 +256,6 @@ export function reportHtml(r: Report, opts: { patient?: string; generatedAt: Dat
   <table style="margin-top:6pt"><tr><th>Date</th><th class="n">Mood (1–5)</th><th>Symptoms</th><th>Note</th></tr>${noteRows}</table>`
       : ''
   }
-  <footer>Made with Med Tracker on ${formatDateLong(toKey(opts.generatedAt))}. "Late" means taken the same day but outside the on-time window (more than ${opts.windowMinutes} minutes from the scheduled time). This report is based on what was logged in the app.</footer>
+  <footer>Made with Sabr on ${formatDateLong(toKey(opts.generatedAt))}. "Late" means taken the same day but outside the on-time window (more than ${opts.windowMinutes} minutes from the scheduled time). This report is based on what was logged in the app.</footer>
   </body></html>`;
 }

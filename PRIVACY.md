@@ -1,6 +1,6 @@
 # Privacy
 
-Med Tracker has no accounts, ads, analytics, crash reporting or tracking. Your medicines,
+Sabr has no accounts, ads, analytics, crash reporting or tracking. Your medicines,
 times, doses and history are stored only in the app's database on your phone.
 
 Anything that could share or show what you take is **off until you turn it on** in

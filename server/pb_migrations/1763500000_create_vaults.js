@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// One collection for Med Tracker. Everything in `data` is encrypted on the phone,
+// One collection for Sabr. Everything in `data` is encrypted on the phone,
 // so the server (and anyone with admin access to it) only sees scrambled text.
 migrate(
   (app) => {

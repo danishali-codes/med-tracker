@@ -54,7 +54,7 @@ export default function CareScreen() {
         <Card>
           <Text style={st.label}>Look after someone's medicines</Text>
           <Text style={st.hint}>
-            If a family member uses Med Tracker with their own server, they can send you a share code from Settings, Sync and sharing. Paste it below to see
+            If a family member uses Sabr with their own server, they can send you a share code from Settings, Sync and sharing. Paste it below to see
             whether they've taken today's doses. You don't need an account.
           </Text>
         </Card>

@@ -1,10 +1,10 @@
-# Med Tracker
+# Sabr: Medicine Tracker
 
 Do you struggle to take your meds on time? Do you forget how many tablets you're meant to take, and when? Have you ever stood in the kitchen wondering whether you actually took this morning's dose, or just thought about taking it?
 
 If you take one pill a day, a phone alarm is probably enough. Once it's five meds, some twice a day, one only on Fridays and one every other week, alarms stop being enough. You need something that knows the schedule, asks "did you take it?", and remembers the answer.
 
-Med Tracker is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
+Sabr (صبر, "patience") is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
 
 <p align="center">
   <img src="docs/screenshots/0.3/today.png" width="200" alt="Today screen" />
@@ -78,12 +78,12 @@ No accounts, ads, analytics or crash reports, and your data stays on your phone.
 2. Open it. Android will ask you to allow installs from your browser or files app; allow it once.
 3. In the app, open **Settings** and:
    - allow **Notifications** and **Alarms & reminders**;
-   - tap **Battery → Open** and choose *Unrestricted*. On Samsung phones, also check *Settings → Battery → Background usage limits* and make sure Med Tracker isn't in "Sleeping apps";
+   - tap **Battery → Open** and choose *Unrestricted*. On Samsung phones, also check *Settings → Battery → Background usage limits* and make sure Sabr isn't in "Sleeping apps";
    - tap **Send a test reminder** to check it works.
 
 Builds from pull requests are under the **Actions** tab, as the `med-tracker-apk` artifact.
 
-> Med Tracker is a reminder tool, not medical advice. Always follow your doctor's or pharmacist's instructions.
+> Sabr is a reminder tool, not medical advice. Always follow your doctor's or pharmacist's instructions.
 
 ## Development
 
@@ -123,6 +123,6 @@ Release APKs are signed with the app's own key when these repository secrets exi
 
 ## Licence
 
-Med Tracker is free and open-source software, released under the [GNU General Public License v3.0 or later](LICENSE). You can use, study, share and change it. If you share a changed version, it has to stay open source under the same licence.
+Sabr is free and open-source software, released under the [GNU General Public License v3.0 or later](LICENSE). You can use, study, share and change it. If you share a changed version, it has to stay open source under the same licence.
 
 Contributions are welcome: open an issue or a pull request.
