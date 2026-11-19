@@ -1,6 +1,6 @@
-import { atTime, formatTime, toDateKey } from '../domain/dates';
+import { formatTime, toDateKey } from '../domain/dates';
 import { computeProgress } from '../domain/progress';
-import { dosesOn, groupByTime, indexLogs } from '../domain/schedule';
+import { dosesOn, dueAt, groupByTime, indexLogs } from '../domain/schedule';
 import type { ScheduledDose } from '../domain/types';
 import * as repo from '../db/repo';
 
@@ -37,7 +37,7 @@ export function widgetData(now = new Date()): WidgetData {
           time: open.time,
           label: formatTime(open.time),
           names: open.doses.length > 1 ? `${first} +${open.doses.length - 1}` : first,
-          due: atTime(today, open.time) <= now,
+          due: dueAt(today, open.time) <= now,
           doses: open.doses,
         }
       : null,

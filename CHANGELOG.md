@@ -6,7 +6,33 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.3
+
+Reminders that fit real life: different times on different days, Ramadan, travel and busy weeks.
+
+<p>
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.3/today.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.3/medication.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.3/times.png" width="200" />
+  <img src="https://raw.githubusercontent.com/danishali-codes/med-tracker/main/docs/screenshots/0.3/history.png" width="200" />
+</p>
+
+### Added
+- Different times on some weekdays, for example 6:45 on office days and 10:00 at the weekend. A dose moved this way still counts as the same dose.
+- Temporary changes: "from 24 to 30 Nov, remind me at 9:00 instead of 8:00", or shift every dose by up to two hours, for one medication or all. They end by themselves.
+- Ramadan mode with start and end dates and a choice of medications. Doses move to suhoor and iftar, using times you set or times worked out from your city's prayer times on the phone, with no internet needed.
+- Travel mode: keep reminders on home time while abroad. When the phone's time zone changes, the app tells you what will happen.
+- Snooze for 10 minutes, 30 minutes or an hour from a dose's menu in the app.
+- Quiet hours with no repeat reminders at night, repeat reminders that come sooner each time, and an evening check listing anything not logged yet.
+- Mood (1 to 5), symptoms and a note for each day, on Today and in History.
+- A photo of each pill, kept on the phone only and shown on Today.
+
+### Changed
+- Long-pressing a dose opens a menu with Taken, snooze times, Skip and Undo.
+- Doses moved from their usual time say so on Today.
+
 ## 0.2.1
+commit: 9279d64ed0b0155e51846447c595529cb11f8415
 
 Pick what each medicine looks like, and an easier medicine form.
 

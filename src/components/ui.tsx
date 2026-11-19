@@ -181,6 +181,60 @@ export function Select<T extends string>({
   );
 }
 
+export interface SheetAction {
+  label: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  destructive?: boolean;
+}
+
+/** A bottom sheet with a title and a list of actions. Closes after an action. */
+export function ActionSheet({
+  visible,
+  title,
+  subtitle,
+  header,
+  actions,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  subtitle?: string;
+  header?: ReactNode;
+  actions: SheetAction[];
+  onClose: () => void;
+}) {
+  const c = useTheme();
+  const s = useStyles();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={s.backdrop} onPress={onClose}>
+        <Pressable style={s.sheet}>
+          {header}
+          <Text style={s.sheetTitle}>{title}</Text>
+          {subtitle ? <Text style={[s.optionText, { color: c.muted, marginLeft: 8, marginTop: -6, marginBottom: 8, flex: 0 }]}>{subtitle}</Text> : null}
+          {actions.map((a) => (
+            <Pressable
+              key={a.label}
+              onPress={() => {
+                onClose();
+                a.onPress();
+              }}
+              style={s.option}
+            >
+              {a.icon ? <Ionicons name={a.icon} size={22} color={a.destructive ? c.bad : c.primary} /> : null}
+              <Text style={[s.optionText, a.destructive && { color: c.bad }]}>{a.label}</Text>
+            </Pressable>
+          ))}
+          <Pressable onPress={onClose} style={[s.option, { justifyContent: 'center' }]}>
+            <Text style={[s.optionText, { flex: 0, color: c.muted }]}>Cancel</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 export function Field({ label, children, hint, style }: { label: string; children: ReactNode; hint?: string; style?: StyleProp<ViewStyle> }) {
   const s = useStyles();
   return (

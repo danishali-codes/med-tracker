@@ -19,7 +19,7 @@ const med = (id: string, times: string[]): Medication => ({
 
 const base = {
   snoozes: new Map<string, string>(),
-  settings: { ...DEFAULT_SETTINGS, nagEnabled: false },
+  settings: { ...DEFAULT_SETTINGS, nagEnabled: false, missedNotice: false },
   horizonDays: 1,
   maxCount: 100,
 };
@@ -40,7 +40,7 @@ describe('planReminders', () => {
   });
 
   it('nags every N minutes until answered, including after the due time has passed', () => {
-    const settings = { ...DEFAULT_SETTINGS, nagEnabled: true, nagEveryMinutes: 15, nagCount: 3 };
+    const settings = { ...DEFAULT_SETTINGS, missedNotice: false, nagEnabled: true, nagEveryMinutes: 15, nagCount: 3 };
     const plan = planReminders({ ...base, settings, horizonDays: 0, meds: [med('a', ['08:00'])], logs: new Map(), now: new Date(2026, 10, 17, 8, 20) });
     expect(plan.map((p) => p.at.getMinutes())).toEqual([30, 45]);
     expect(plan.every((p) => p.kind === 'nag')).toBe(true);

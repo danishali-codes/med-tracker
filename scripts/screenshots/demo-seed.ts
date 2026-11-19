@@ -18,7 +18,7 @@ function seed() {
   const base = { archived: false, archivedAt: null, createdAt, notes: '' };
   const meds = [
     { id: 'demo-metformin', name: 'Metformin', generic: 'metformin', dose: '500 mg', strength: '500 mg', amount: 1, perDose: 1, form: 'pill', shape: 'oblong', pillColor: '#FFFFFF', color: '#6A4DF4', stock: 48, refillAt: 14,
-      schedule: { pattern: { kind: 'daily' }, times: ['08:00', '20:00'], startDate: start } },
+      schedule: { pattern: { kind: 'daily' }, times: ['08:00', '20:00'], startDate: start, dayTimes: [{ days: [1, 2], times: ['06:45', '20:00'] }, { days: [5, 6], times: ['10:00', '22:00'] }] } },
     { id: 'demo-omeprazole', name: 'Omeprazole', generic: 'omeprazole', dose: '20 mg', strength: '20 mg', amount: 1, perDose: 1, form: 'capsule', shape: 'capsule', pillColor: '#A98BE8', pillColor2: '#F49AB6', color: '#16B582', stock: 9, refillAt: 10,
       schedule: { pattern: { kind: 'daily' }, times: ['07:30'], startDate: start } },
     { id: 'demo-atorvastatin', name: 'Atorvastatin', generic: 'atorvastatin', dose: '20 mg', strength: '20 mg', amount: 1, perDose: 1, form: 'pill', shape: 'oval', pillColor: '#FBE37A', color: '#F29D0C', stock: 26, refillAt: 7,
@@ -47,6 +47,14 @@ function seed() {
       const lateMin = roll > 0.85 ? 40 + Math.floor(rand() * 90) : Math.floor(rand() * 20) - 5;
       setDose(d, 'taken', new Date(Math.min(due.getTime() + lateMin * 60000, now.getTime())));
     }
+  }
+  // A note for today, where the version has notes (0.3 onwards).
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const repo = require('./db/repo');
+    if (typeof repo.saveNote === 'function') repo.saveNote({ date: today, mood: 4, symptoms: ['Tired'], text: 'Slept badly, felt fine after lunch.' });
+  } catch {
+    // older versions have no notes
   }
   setKv('demo_seeded', '1');
 }

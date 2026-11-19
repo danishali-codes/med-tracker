@@ -10,13 +10,15 @@ import * as Notifications from 'expo-notifications';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
-import { Appearance, AppState, useColorScheme } from 'react-native';
+import { Alert, Appearance, AppState, useColorScheme } from 'react-native';
+import { phoneTimeZone } from '../domain/schedule';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSettings } from '../hooks/useData';
 import { registerBackgroundTasks } from '../notifications/background';
 import { handleReminderAction, rescheduleAll, setupNotifications } from '../notifications/reminders';
 import { black, dark, FONT, light, ThemeContext } from '../theme';
 import { refreshWidget } from '../widget/update';
+import * as repo from '../db/repo';
 
 // Show reminders even while the app is open.
 Notifications.setNotificationHandler({
@@ -56,8 +58,12 @@ export default function RootLayout() {
     const responses = Notifications.addNotificationResponseReceivedListener((r) => {
       handleReminderAction(r.actionIdentifier, r.notification.request.content.data).catch((e) => console.warn(e));
     });
+    checkTimeZone();
     const appState = AppState.addEventListener('change', (s) => {
-      if (s === 'active') rescheduleAll().catch(() => {});
+      if (s === 'active') {
+        checkTimeZone();
+        rescheduleAll().catch(() => {});
+      }
     });
     return () => {
       responses.remove();
@@ -86,9 +92,28 @@ export default function RootLayout() {
             <Stack.Screen name="med/[id]" options={{ title: 'Medication', presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="interactions" options={{ title: 'Interactions' }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+            <Stack.Screen name="times" options={{ title: 'Ramadan, travel and changes' }} />
           </Stack>
         </ThemeProvider>
       </ThemeContext.Provider>
     </SafeAreaProvider>
   );
+}
+
+/**
+ * Tells you once when the phone's time zone changes (e.g. after a flight), and how
+ * reminders will behave. Reminders are rescheduled for the new zone either way.
+ */
+function checkTimeZone() {
+  const now = phoneTimeZone();
+  if (!now) return;
+  const last = repo.getKv('last_time_zone');
+  if (last === now) return;
+  repo.setKv('last_time_zone', now);
+  if (!last) return;
+  const s = repo.getSettings();
+  const msg = s.travelMode
+    ? `Reminders stay on your home time (${s.homeTimeZone}). You can change this under Settings, Ramadan, travel and time changes.`
+    : 'Reminders now follow the local time here, so an 8:00 AM dose rings at 8:00 AM local time. To keep your home time instead, turn on "Keep home time" in Settings.';
+  Alert.alert(`Time zone changed to ${now}`, msg);
 }

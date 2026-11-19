@@ -27,6 +27,8 @@ jobs:
             ref: c22ec81cf21bd9634260f4d9885a3cba65dd3019
           - key: '0.2'
             ref: b93ed248d30b6928f5613d150c4256930a4966a0
+          - key: '0.2.1'
+            ref: 9279d64ed0b0155e51846447c595529cb11f8415
           - key: current
             ref: ''
     steps:
@@ -46,25 +48,37 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Read the version
-        run: echo "VERSION=$(node -p "require('./app/app.json').expo.version.replace(/\\.0$/, '')")" >> "$GITHUB_ENV"
+        run: |
+          v=$(node -p "require('./app/app.json').expo.version.replace(/\\.0$/, '')")
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          # Released versions only need shooting once: skip them if their screenshots are saved already.
+          if [ "${{ matrix.key }}" != current ] && [ -f "tools/docs/screenshots/$v/today.png" ] && [ "${{ github.event_name }}" != workflow_dispatch ]; then
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
       - name: Add demo data
+        if: env.SKIP != '1'
         working-directory: app
         run: |
           cp ../tools/scripts/screenshots/demo-seed.ts src/demo-seed.ts
           printf "import './src/demo-seed';\n%s\n" "$(cat index.ts)" > index.ts
           head -3 index.ts
       - run: npm ci
+        if: env.SKIP != '1'
         working-directory: app
       - run: npx expo prebuild --platform android --no-install
+        if: env.SKIP != '1'
         working-directory: app
-      - run: ./gradlew assembleRelease --no-daemon
+      - run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.internal.repository.max.retries=8 -Dorg.gradle.internal.repository.initial.backoff=2000
+        if: env.SKIP != '1'
         working-directory: app/android
       - name: Enable KVM
+        if: env.SKIP != '1'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Take screenshots
+        if: env.SKIP != '1'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -74,7 +88,7 @@ jobs:
           disable-animations: true
           script: bash tools/scripts/screenshots/capture.sh app/android/app/build/outputs/apk/release/app-release.apk shots/${{ env.VERSION }} tools/scripts/screenshots/screens-${{ matrix.key }}.txt
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && env.SKIP != '1'
         with:
           name: screenshots-${{ matrix.key }}
           path: shots/

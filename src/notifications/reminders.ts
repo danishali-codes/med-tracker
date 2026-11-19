@@ -1,9 +1,9 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { toDateKey } from '../domain/dates';
+import { formatTime, toDateKey } from '../domain/dates';
 import { daysOfSupply, units } from '../domain/dose';
 import { groupFromReminderId, groupKey, planReminders, refillText, REMINDER_PREFIX, reminderText, type PlannedReminder } from '../domain/reminders';
-import { slotKey } from '../domain/schedule';
+import { dosesOn, slotKey } from '../domain/schedule';
 import type { Medication } from '../domain/types';
 import * as repo from '../db/repo';
 
@@ -61,10 +61,21 @@ export function resetNotificationSetup() {
 function contentFor(r: PlannedReminder, meds: Map<string, Medication>, showNames: boolean): Notifications.NotificationContentInput {
   const due = r.medIds.map((id) => meds.get(id)).filter((m): m is Medication => !!m);
   const { title, body } = reminderText(r, due, showNames);
+  if (r.kind === 'missed') {
+    return {
+      title,
+      body,
+      data: { date: r.date, time: r.time, medIds: r.medIds, slots: r.slots, group: groupKey(r.date, 'missed') },
+      categoryIdentifier: CATEGORY_ID,
+      sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+      autoDismiss: true,
+    };
+  }
   return {
     title,
     body,
-    data: { date: r.date, time: r.time, medIds: r.medIds },
+    data: { date: r.date, time: r.time, medIds: r.medIds, slots: r.slots },
     categoryIdentifier: CATEGORY_ID,
     sound: 'default',
     priority: Notifications.AndroidNotificationPriority.MAX,
@@ -150,12 +161,17 @@ interface ReminderData {
   date: string;
   time: string;
   medIds: string[];
+  /** Slot keys of the doses, in the same order as medIds. Older reminders don't have them. */
+  slots: string[] | null;
+  /** Which notification group to clear; defaults to the date and time. */
+  group: string | null;
 }
 
 function readData(data: unknown): ReminderData | null {
   const d = data as Partial<ReminderData> | null;
   if (!d || typeof d.date !== 'string' || typeof d.time !== 'string' || !Array.isArray(d.medIds)) return null;
-  return { date: d.date, time: d.time, medIds: d.medIds as string[] };
+  const slots = Array.isArray(d.slots) && d.slots.length === d.medIds.length ? (d.slots as string[]) : null;
+  return { date: d.date, time: d.time, medIds: d.medIds as string[], slots, group: typeof d.group === 'string' ? d.group : null };
 }
 
 /**
@@ -165,17 +181,20 @@ function readData(data: unknown): ReminderData | null {
 export async function handleReminderAction(actionId: string, rawData: unknown) {
   const data = readData(rawData);
   if (!data) return;
-  const group = groupKey(data.date, data.time);
+  const group = data.group ?? groupKey(data.date, data.time);
   const now = new Date();
 
   if (actionId === ACTION_TAKEN || actionId === ACTION_SKIP) {
     const status = actionId === ACTION_TAKEN ? 'taken' : 'skipped';
     const low: Medication[] = [];
-    for (const medId of data.medIds) {
-      const slot = slotKey(medId, data.date, data.time);
-      if (repo.getLog(slot)) continue; // already answered in the app
-      low.push(...repo.setDose({ slot, medId, date: data.date, time: data.time }, status, now));
-    }
+    // The doses as scheduled today, so each is logged with its own time.
+    const today = new Map(dosesOn(repo.getMeds(), data.date).map((d) => [d.slot, d]));
+    data.medIds.forEach((medId, i) => {
+      const slot = data.slots?.[i] ?? slotKey(medId, data.date, data.time);
+      if (repo.getLog(slot)) return; // already answered in the app
+      const dose = today.get(slot) ?? { slot, medId, date: data.date, time: data.time };
+      low.push(...repo.setDose(dose, status, now));
+    });
     repo.clearSnooze(group);
     await notifyLowStock(low);
   } else if (actionId === ACTION_SNOOZE) {

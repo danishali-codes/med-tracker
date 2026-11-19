@@ -8,15 +8,16 @@ import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
 import { Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, Ring, Rings, SectionTitle, Text } from '../../components/ui';
-import { addDays, atTime, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
+import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
 import { describeDose } from '../../domain/dose';
 import { adherence } from '../../domain/progress';
-import { dosesOn, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
+import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useProgress, useSettings } from '../../hooks/useData';
 import { getPermissionState, requestExactAlarms, requestNotificationPermission, type PermissionState } from '../../notifications/permissions';
 import { rescheduleAll } from '../../notifications/reminders';
 import { MedIcon } from '../../components/MedIcon';
+import { NoteCard } from '../../components/NoteCard';
 import { makeStyles, useTheme } from '../../theme';
 
 export default function TodayScreen() {
@@ -172,7 +173,7 @@ export default function TodayScreen() {
 
         {groups.map((g, i) => {
           const pending = g.doses.filter((d) => !logs.has(d.slot));
-          const overdue = pending.length > 0 && atTime(today, g.time) < now;
+          const overdue = pending.length > 0 && dueAt(today, g.time) < now;
           return (
             <FadeIn key={g.time} delay={120 + i * 50}>
               <SectionTitle
@@ -218,6 +219,12 @@ export default function TodayScreen() {
               })}
             </Card>
           </>
+        ) : null}
+
+        {activeCount > 0 ? (
+          <View style={{ marginTop: 14 }}>
+            <NoteCard date={today} />
+          </View>
         ) : null}
       </Screen>
       {celebrate ? <Confetti onDone={() => setCelebrate(false)} /> : null}
