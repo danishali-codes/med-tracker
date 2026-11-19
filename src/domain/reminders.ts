@@ -104,8 +104,11 @@ export function planReminders(opts: {
     }
     // One last notice in the evening for anything due earlier that day and still unanswered.
     if (settings.missedNotice && unanswered.length > 0) {
-      const at = dueAt(date, settings.missedNoticeAt);
-      const earlier = unanswered.filter((u) => dueAt(date, u.time).getTime() < at.getTime());
+      const base = dueAt(date, settings.missedNoticeAt);
+      const earlier = unanswered.filter((u) => dueAt(date, u.time).getTime() < base.getTime());
+      // Snooze on this notice brings it back later, like any other reminder.
+      const snoozedUntil = snoozes.get(groupKey(date, 'missed'));
+      const at = snoozedUntil != null && new Date(snoozedUntil).getTime() > base.getTime() ? new Date(snoozedUntil) : base;
       if (earlier.length > 0 && at.getTime() > now.getTime()) {
         out.push({
           id: reminderId(groupKey(date, 'missed'), 0),

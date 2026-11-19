@@ -90,7 +90,10 @@ const fromMin = (n: number): TimeOfDay => {
 export function scheduleTimesOn(s: Schedule, date: DateKey): TimeOfDay[] {
   const wd = weekdayOf(date);
   const rule = (s.dayTimes ?? []).find((r) => r.days.includes(wd) && r.times.length > 0);
-  return rule ? [...rule.times].sort() : s.times;
+  if (!rule) return s.times;
+  // A rule lines up with the usual times dose by dose. If the usual times gained a
+  // dose since the rule was made, that dose keeps its usual time; extras are dropped.
+  return s.times.map((t, i) => rule.times[i] ?? t).sort();
 }
 
 export function isRamadanOn(r: RamadanSettings | undefined | null, date: DateKey): boolean {

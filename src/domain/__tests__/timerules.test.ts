@@ -129,3 +129,31 @@ describe('nags', () => {
     expect(missed.at.getHours()).toBe(22);
   });
 });
+
+describe('review fixes', () => {
+  it('a weekday rule follows a dose added or removed later', () => {
+    // Rule made when the med was once a day; a second usual time was added since.
+    const added = med('a', ['08:00', '20:00'], { dayTimes: [{ days: [1], times: ['06:45'] }] });
+    expect(timesOn(added, '2026-11-16', null).map((t) => t.time)).toEqual(['06:45', '20:00']);
+    // Rule made when it was twice a day; the evening dose was removed since.
+    const removed = med('a', ['08:00'], { dayTimes: [{ days: [1], times: ['06:45', '21:00'] }] });
+    expect(timesOn(removed, '2026-11-16', null).map((t) => t.time)).toEqual(['06:45']);
+  });
+
+  it('snoozing the evening check brings it back later', () => {
+    const now = new Date(2026, 10, 16, 21, 5);
+    const base = {
+      meds: [med('a', ['08:00'])],
+      logs: new Map(),
+      now,
+      settings: { ...DEFAULT_SETTINGS, nagEnabled: false, missedNotice: true, missedNoticeAt: '21:00' },
+      horizonDays: 0,
+      maxCount: 50,
+    };
+    const none = planReminders({ ...base, snoozes: new Map() }).filter((r) => r.kind === 'missed' && r.date === '2026-11-16');
+    expect(none).toHaveLength(0);
+    const until = new Date(2026, 10, 16, 21, 30).toISOString();
+    const back = planReminders({ ...base, snoozes: new Map([['2026-11-16|missed', until]]) }).filter((r) => r.kind === 'missed');
+    expect(back.map((r) => r.at.toISOString())).toEqual([until]);
+  });
+});
