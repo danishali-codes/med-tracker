@@ -19,6 +19,7 @@ import { handleReminderAction, rescheduleAll, setupNotifications } from '../noti
 import { black, dark, FONT, light, ThemeContext } from '../theme';
 import { refreshWidget } from '../widget/update';
 import * as repo from '../db/repo';
+import { startSync, syncNow } from '../sync/engine';
 
 // Show reminders even while the app is open.
 Notifications.setNotificationHandler({
@@ -53,6 +54,9 @@ export default function RootLayout() {
       .catch((e) => console.warn('notification setup failed', e));
     registerBackgroundTasks();
     refreshWidget();
+    // Optional sync: does nothing unless turned on in Settings.
+    startSync();
+    syncNow().catch(() => {});
 
     // Buttons pressed while the app is open (Android also runs the background task; handling is idempotent).
     const responses = Notifications.addNotificationResponseReceivedListener((r) => {
@@ -63,6 +67,7 @@ export default function RootLayout() {
       if (s === 'active') {
         checkTimeZone();
         rescheduleAll().catch(() => {});
+        syncNow().catch(() => {});
       }
     });
     return () => {
@@ -94,6 +99,8 @@ export default function RootLayout() {
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
             <Stack.Screen name="times" options={{ title: 'Ramadan, travel and changes' }} />
             <Stack.Screen name="report" options={{ title: 'Doctor report' }} />
+            <Stack.Screen name="sync" options={{ title: 'Sync and sharing' }} />
+            <Stack.Screen name="care" options={{ title: 'People I look after' }} />
           </Stack>
         </ThemeProvider>
       </ThemeContext.Provider>

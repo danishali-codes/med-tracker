@@ -45,6 +45,8 @@ Med Tracker is a free, open-source Android app that does that. It's a simple, pr
 
 **Private by default.** No account and no server. Doses and history stay on the phone. Only medicine names leave it, when you search or check interactions. You can export everything to a file and restore it on a new phone.
 
+**Optional backup and caregiver sharing, on your own server.** If you run a [PocketBase](https://pocketbase.io) server, the app can keep an encrypted backup there, and let a family member see whether today's doses were taken. Everything is encrypted on the phone first, so the server can't read it, and medicine names are only shared if you choose. Both are off until you turn them on. Setup: [server/README.md](server/README.md).
+
 ## How it has changed
 
 Screenshots of every version are kept in [docs/screenshots](docs/screenshots), taken on the same emulator with the same demo data, so you can compare them side by side.
@@ -68,7 +70,7 @@ No accounts, ads, analytics or crash reports, and your data stays on your phone.
 
 ## What's next
 
-- **0.5:** bug fixes, and optional sync and caregiver mode through a PocketBase server you host yourself. Both stay off unless you turn them on, so the app can always be fully private.
+- **0.5:** bug fixes from testing 0.4. Optional encrypted backup and caregiver sharing through a PocketBase server you host yourself are built and waiting on those fixes.
 
 ## Install on Android
 

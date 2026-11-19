@@ -27,6 +27,29 @@ built-in list and anything already saved on the phone. Every request goes throug
 check of this setting, which also counts as off if settings can't be read. Settings >
 Privacy can also delete the downloaded names and labels.
 
+## Sync and sharing (off by default)
+
+Settings > Sync and sharing connects the app to a [PocketBase](https://pocketbase.io)
+server **that you run yourself** (setup: [server/README.md](server/README.md)). While
+**Use my own server** is off, none of this code talks to any network. No server address is
+built in, so it can't send anything anywhere you didn't type in.
+
+Everything below is encrypted on the phone before it leaves (XSalsa20-Poly1305), so the
+server stores data it can't read.
+
+| When | Sent to | What is sent |
+| --- | --- | --- |
+| You sign in or create an account | Your server | Your email and password (the server stores a hash). |
+| **Keep an encrypted backup** is on, a couple of minutes after changes | Your server | Your medicines, history and notes, encrypted with a recovery key that never leaves the phone. Photos are not included. |
+| **Let someone see my doses** is on, a few seconds after changes | Your server | Today's and yesterday's doses, whether each was taken, and the last 7 days' counts, encrypted with a key that exists only in the share code you hand out. Medicine names and doses are replaced with "Medicine A", "Medicine B" unless you turn on **Include medicine names**. |
+| You follow someone with their share code | Their server | A request for their encrypted status, a few times a day and when you open the app. No account is needed and nothing about you is sent. |
+
+Server sign-in, encryption keys and the codes you follow are kept in the Android keystore,
+not in the app database or its exports. **Stop old codes working** deletes your shared
+record and makes a new key. Turning the server off signs you out, takes down your shared
+status, and can delete your backup from the server. All sync requests are made from
+[`src/sync/pocketbase.ts`](src/sync/pocketbase.ts).
+
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so
@@ -39,5 +62,6 @@ Privacy can also delete the downloaded names and labels.
   there and shown once unlocked. They are local notifications; no push service is used.
 - **Keyboard:** your phone's keyboard app can see what you type in any app. Gboard and
   Samsung Keyboard have their own settings for this.
-- **Future caregiver sync** (planned for 0.5) will only talk to a server you host yourself,
-  and will be off unless you turn it on.
+- **Photos and box scans:** pill photos stay in the app's own storage. Reading a medicine
+  box uses on-device text recognition; the photo is never uploaded.
+- **Doctor report:** the PDF is made on the phone and only goes where you send it.

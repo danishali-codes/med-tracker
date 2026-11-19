@@ -18,6 +18,8 @@ import { getPermissionState, requestExactAlarms, requestNotificationPermission, 
 import { rescheduleAll } from '../../notifications/reminders';
 import { MedIcon } from '../../components/MedIcon';
 import { NoteCard } from '../../components/NoteCard';
+import { CareCard } from '../../components/CareCard';
+import { useFollowing } from '../../hooks/useFollowing';
 import { makeStyles, useTheme } from '../../theme';
 
 export default function TodayScreen() {
@@ -25,6 +27,7 @@ export default function TodayScreen() {
   const s = useStyles();
   const meds = useMeds();
   const settings = useSettings();
+  const people = useFollowing();
   const version = useDbVersion();
   const { today, progress, byDate } = useProgress();
   const [perm, setPerm] = useState<PermissionState | null>(null);
@@ -225,6 +228,17 @@ export default function TodayScreen() {
           <View style={{ marginTop: 14 }}>
             <NoteCard date={today} />
           </View>
+        ) : null}
+
+        {people.length > 0 ? (
+          <>
+            <SectionTitle>People I look after</SectionTitle>
+            {people.map((p) => (
+              <PressableScale key={p.code.id} onPress={() => router.push('/care')} style={{ marginBottom: 10 }}>
+                <CareCard person={p} graceMinutes={settings.care.graceMinutes} />
+              </PressableScale>
+            ))}
+          </>
         ) : null}
       </Screen>
       {celebrate ? <Confetti onDone={() => setCelebrate(false)} /> : null}
