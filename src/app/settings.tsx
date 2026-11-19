@@ -169,7 +169,7 @@ export default function SettingsScreen() {
           <SectionTitle>Home screen widget</SectionTitle>
           <Card>
             <Text style={st.hint}>
-              Long-press your home screen, tap Widgets, and find Med Tracker. It shows today's progress and your next dose, and you can mark the next dose as
+              Long-press your home screen, tap Widgets, and find Sabr. It shows today's progress and your next dose, and you can mark the next dose as
               taken right from it.
             </Text>
           </Card>
@@ -177,7 +177,7 @@ export default function SettingsScreen() {
           <Card>
             <Text style={st.hint}>
               Reminders show on your watch with the Taken, Snooze and Skip buttons once the watch is allowed to show this app. On a Galaxy Watch, open the
-              Galaxy Wearable app, go to Watch settings, then Notifications, then App notifications, and turn on Med Tracker. The watch only buzzes while
+              Galaxy Wearable app, go to Watch settings, then Notifications, then App notifications, and turn on Sabr. The watch only buzzes while
               the phone screen is off.
             </Text>
           </Card>
@@ -186,7 +186,7 @@ export default function SettingsScreen() {
 
       <Button title="Open system app settings" kind="ghost" onPress={openAppSettings} />
       <Text style={[st.hint, { textAlign: 'center', marginTop: 8 }]}>
-        Med Tracker {Application.nativeApplicationVersion ?? ''} ({Application.nativeBuildVersion ?? ''})
+        Sabr {Application.nativeApplicationVersion ?? ''} ({Application.nativeBuildVersion ?? ''})
       </Text>
     </ScrollView>
   );

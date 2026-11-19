@@ -59,7 +59,7 @@ jobs:
       - name: Name the APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/med-tracker-${GITHUB_SHA::7}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/sabr-${GITHUB_SHA::7}.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: med-tracker-apk
@@ -149,10 +149,10 @@ jobs:
               files+=("screenshots-$version.zip")
             fi
             if [ "$version" = "$current" ]; then
-              cp dist/*.apk "med-tracker-$version.apk"
-              files+=("med-tracker-$version.apk")
+              cp dist/*.apk "sabr-$version.apk"
+              files+=("sabr-$version.apk")
             fi
             latest=--latest=false
             [ "$version" = "$current" ] && latest=--latest
-            gh release create "$tag" "${files[@]}" --target "${commit:-$GITHUB_SHA}" --title "Med Tracker $version" --notes-file notes.md $latest
+            gh release create "$tag" "${files[@]}" --target "${commit:-$GITHUB_SHA}" --title "Sabr $version" --notes-file notes.md $latest
           done

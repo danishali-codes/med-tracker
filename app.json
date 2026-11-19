@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Med Tracker",
+    "name": "Sabr",
     "slug": "med-tracker",
     "scheme": "medtracker",
     "version": "0.2.0",
@@ -62,7 +62,7 @@
           "widgets": [
             {
               "name": "Today",
-              "label": "Med Tracker: Today",
+              "label": "Sabr: Today",
               "description": "Today's doses, your streak and the next dose",
               "minWidth": "250dp",
               "minHeight": "110dp",
