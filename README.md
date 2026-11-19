@@ -7,17 +7,21 @@ If you take one pill a day, a phone alarm is probably enough. Once it's five med
 Med Tracker is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
 
 <p align="center">
-  <img src="docs/screenshots/0.2/today.png" width="200" alt="Today screen" />
-  <img src="docs/screenshots/0.2/meds.png" width="200" alt="Medications list" />
-  <img src="docs/screenshots/0.2/progress.png" width="200" alt="Progress and streak" />
-  <img src="docs/screenshots/0.2/today-dark.png" width="200" alt="Today screen in dark mode" />
+  <img src="docs/screenshots/0.3/today.png" width="200" alt="Today screen" />
+  <img src="docs/screenshots/0.3/meds.png" width="200" alt="Medications list" />
+  <img src="docs/screenshots/0.3/progress.png" width="200" alt="Progress and streak" />
+  <img src="docs/screenshots/0.3/today-dark.png" width="200" alt="Today screen in dark mode" />
 </p>
 
 ## Features
 
 **Schedules that fit real life.** Every day, chosen weekdays, every N days or weeks, on/off cycles (21 on, 7 off), monthly, or as needed. Each med can be due several times a day, with start and end dates. You can pause a med when your doctor says to stop for a week.
 
+**Times that follow your week.** Set different times on office days and at the weekend, move reminders for a busy week, keep home time while travelling, and switch on Ramadan mode to move doses to suhoor and iftar (from times you set or your city's prayer times, worked out on the phone).
+
 **Reminders you can answer from the notification.** Each one has Taken, Snooze and Skip buttons, so you don't need to open the app. Android's alarm-clock delivery means battery saver can't delay them, and they can repeat until you answer.
+
+**Notes on how you feel.** A quick mood, symptoms like headache or nausea, and a few words for any day. Add a photo of each pill so they're easy to tell apart.
 
 **A clear answer to "did I take it?"** The Today screen lists what's due and what's done. The History calendar colours every day, and you can tap any day to see or fix what was logged.
 
@@ -41,21 +45,22 @@ Med Tracker is a free, open-source Android app that does that. It's a simple, pr
 
 Screenshots of every version are kept in [docs/screenshots](docs/screenshots), taken on the same emulator with the same demo data, so you can compare them side by side.
 
-| | 0.1 | 0.2 |
-|---|---|---|
-| Today | <img src="docs/screenshots/0.1/today.png" width="180" /> | <img src="docs/screenshots/0.2/today.png" width="180" /> |
-| Medications | <img src="docs/screenshots/0.1/meds.png" width="180" /> | <img src="docs/screenshots/0.2/meds.png" width="180" /> |
-| History | <img src="docs/screenshots/0.1/history.png" width="180" /> | <img src="docs/screenshots/0.2/history.png" width="180" /> |
-| Edit a medication | <img src="docs/screenshots/0.1/medication.png" width="180" /> | <img src="docs/screenshots/0.2/medication.png" width="180" /> |
+| | 0.1 | 0.2 | 0.3 |
+|---|---|---|---|
+| Today | <img src="docs/screenshots/0.1/today.png" width="180" /> | <img src="docs/screenshots/0.2/today.png" width="180" /> | <img src="docs/screenshots/0.3/today.png" width="180" /> |
+| Medications | <img src="docs/screenshots/0.1/meds.png" width="180" /> | <img src="docs/screenshots/0.2/meds.png" width="180" /> | <img src="docs/screenshots/0.3/meds.png" width="180" /> |
+| History | <img src="docs/screenshots/0.1/history.png" width="180" /> | <img src="docs/screenshots/0.2/history.png" width="180" /> | <img src="docs/screenshots/0.3/history.png" width="180" /> |
+| Edit a medication | <img src="docs/screenshots/0.1/medication.png" width="180" /> | <img src="docs/screenshots/0.2/medication.png" width="180" /> | <img src="docs/screenshots/0.3/medication.png" width="180" /> |
 
 - **0.1** (Nov 2026): first version. Schedules, reminders with Taken/Snooze/Skip, history calendar, refills, streaks, badges and a room to decorate with earned coins.
+- **0.3** (Nov 2026): weekday times, temporary changes, travel and Ramadan modes, snooze choices, quiet hours, an evening check, mood and symptom notes, pill photos.
+- **0.2.1** (Nov 2026): pick each pill's shape and colour, medicine type as a dropdown, GPL licence.
 - **0.2** (Nov 2026): new design with light and dark mode, dose as strength plus amount, medicine search, interaction check, home screen widget, pausing a med, heatmaps. Room decorating removed for now.
 
 ## What's next
 
-- **0.3:** different times on different weekdays, temporary time changes, travel and Ramadan modes, better snooze, mood and symptom notes, pill photos.
 - **0.4:** a doctor report PDF for any period, scanning the box to add a med, a bigger widget.
-- **0.5:** caregiver mode through a self-hosted PocketBase server, and a Galaxy Watch tile.
+- **0.5:** bug fixes, and optional sync and caregiver mode through a PocketBase server you host yourself. Both stay off unless you turn them on, so the app can always be fully private.
 
 ## Install on Android
 
