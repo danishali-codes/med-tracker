@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('home screen widget', () => {
   it('builds a widget tree in every state', async () => {
+    // @ts-expect-error the library ships no types for this internal file
     const { buildWidgetTree } = await import('../../../node_modules/react-native-android-widget/lib/module/api/build-widget-tree.js');
     const { TodayWidget } = await import('../TodayWidget');
     const base = { done: 1, total: 3, streak: 4 };
