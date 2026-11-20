@@ -1,7 +1,7 @@
 import { addDays, formatTime, toDateKey, type DateKey, type TimeOfDay } from './dates';
 import { describeDose } from './dose';
 import { dosesOn, dueAt, groupByTime } from './schedule';
-import type { DoseLog, Medication, Settings } from './types';
+import { isSupplement, type DoseLog, type Medication, type Settings } from './types';
 
 /** One reminder per time slot: all meds due at 8:00 share a notification. */
 export function groupKey(date: DateKey, time: TimeOfDay): string {
@@ -74,6 +74,8 @@ export function planReminders(opts: {
   const today = toDateKey(now);
   const out: PlannedReminder[] = [];
   const nags = settings.nagEnabled ? nagOffsets(Math.max(0, settings.nagCount), settings.nagEveryMinutes, !!settings.nagEscalate) : [];
+  // Supplements get one gentle reminder: no repeats unless a medicine is due at the same time.
+  const supplements = new Set(meds.filter(isSupplement).map((m) => m.id));
 
   // Start yesterday so a late-night dose's follow-ups past midnight still fire.
   for (let i = -1; i <= horizonDays; i++) {
@@ -88,7 +90,8 @@ export function planReminders(opts: {
       const snoozedUntil = snoozes.get(key);
       const snoozed = snoozedUntil != null && new Date(snoozedUntil).getTime() > base.getTime();
       const anchor = snoozed ? new Date(snoozedUntil!) : base;
-      [0, ...nags].forEach((offset, k) => {
+      const onlySupplements = pending.every((d) => supplements.has(d.medId));
+      [0, ...(onlySupplements ? [] : nags)].forEach((offset, k) => {
         const at = new Date(anchor.getTime() + offset * 60_000);
         if (at.getTime() <= now.getTime()) return;
         if (k > 0 && inQuietHours(at, settings.quietHours)) return;
@@ -133,7 +136,7 @@ export function planReminders(opts: {
  */
 export function reminderText(
   r: Pick<PlannedReminder, 'kind' | 'time'>,
-  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form'>[],
+  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form' | 'supplement'>[],
   showNames: boolean,
   /** The routine's name, e.g. "Breakfast", when this time has one. */
   routine?: string,
@@ -146,18 +149,33 @@ export function reminderText(
 
 function reminderTextPlain(
   r: Pick<PlannedReminder, 'kind' | 'time'>,
-  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form'>[],
+  meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form' | 'supplement'>[],
   showNames: boolean,
 ): { title: string; body: string } {
   const when = formatTime(r.time);
-  const count = meds.length === 1 ? '1 medicine' : `${meds.length} medicines`;
+  const supps = meds.filter(isSupplement).length;
+  const allSupps = meds.length > 0 && supps === meds.length;
+  const count = allSupps
+    ? meds.length === 1
+      ? '1 supplement'
+      : `${meds.length} supplements`
+    : supps > 0
+      ? `${meds.length - supps} ${meds.length - supps === 1 ? 'medicine' : 'medicines'} and ${supps} ${supps === 1 ? 'supplement' : 'supplements'}`
+      : meds.length === 1
+        ? '1 medicine'
+        : `${meds.length} medicines`;
   if (r.kind === 'missed') {
-    if (!showNames) return { title: meds.length === 1 ? 'Did you take your medicine?' : `${meds.length} doses not logged today`, body: 'Tap Taken if you already had them.' };
+    if (!showNames) {
+      const title = meds.length === 1 ? (allSupps ? 'Did you take your supplement?' : 'Did you take your medicine?') : `${meds.length} doses not logged today`;
+      return { title, body: meds.length === 1 ? 'Tap Taken if you already had it.' : `${count}. Tap Taken if you already had them.` };
+    }
     const list = meds.map((m) => `${m.name} (${describeDose(m)})`).join(', ');
     return { title: meds.length === 1 ? `Did you take ${meds[0].name}?` : `${meds.length} doses not logged today`, body: `${list}. Tap Taken if you already had them.` };
   }
   if (!showNames) {
-    const title = r.kind === 'nag' ? `Still waiting: ${when} dose` : r.kind === 'snoozed' ? `Snoozed reminder: ${when} dose` : `Time for your ${when} dose`;
+    const what = allSupps ? (meds.length === 1 ? 'supplement' : 'supplements') : 'dose';
+    const title =
+      r.kind === 'nag' ? `Still waiting: ${when} ${what}` : r.kind === 'snoozed' ? `Snoozed reminder: ${when} ${what}` : `Time for your ${when} ${what}`;
     return { title, body: `${count} to take` };
   }
   const title =
