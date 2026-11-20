@@ -6,7 +6,7 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
-## 0.11
+## 0.12
 
 Supplements, a mood trend, routines the app learns from you, and one path for every Taken button.
 
