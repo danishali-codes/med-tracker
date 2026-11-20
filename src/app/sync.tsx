@@ -8,6 +8,7 @@ import { Button, Card, Chip, Field, Input, SectionTitle, Text } from '../compone
 import type { Settings, SyncSettings } from '../domain/types';
 import * as repo from '../db/repo';
 import { useDbVersion, useSettings } from '../hooks/useData';
+import { rescheduleAll } from '../notifications/reminders';
 import * as sync from '../sync/engine';
 import type { Session } from '../sync/pocketbase';
 import { useTheme } from '../theme';
@@ -64,7 +65,7 @@ export default function SyncScreen() {
         if (found)
           popup('Restore your backup?', `There's a backup from ${new Date(found).toLocaleString()}. Restoring replaces everything on this phone with it.`, [
             { text: 'Not now', style: 'cancel' },
-            { text: 'Restore', style: 'destructive', onPress: () => run('restore', () => sync.restoreBackup(null)) },
+            { text: 'Restore', style: 'destructive', onPress: () => run('restore', async () => (await sync.restoreBackup(null), void rescheduleAll().catch(() => {}))) },
           ]);
       }
     });
@@ -211,7 +212,7 @@ export default function SyncScreen() {
                   onPress={() =>
                     popup('Replace everything on this phone?', 'Your medicines and history here are replaced by the backup.', [
                       { text: 'Cancel', style: 'cancel' },
-                      { text: 'Restore', style: 'destructive', onPress: () => run('restore', async () => (await sync.restoreBackup(restoreKey), setRestoreKey(''))) },
+                      { text: 'Restore', style: 'destructive', onPress: () => run('restore', async () => (await sync.restoreBackup(restoreKey), setRestoreKey(''), void rescheduleAll().catch(() => {}))) },
                     ])
                   }
                 />
