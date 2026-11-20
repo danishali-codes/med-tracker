@@ -74,3 +74,30 @@ describe('supplements', () => {
     expect(missed.body).not.toContain('metformin');
   });
 });
+
+describe('evening check', () => {
+  const settings = { ...DEFAULT_SETTINGS, nagEnabled: false, missedNotice: true, missedNoticeAt: '22:00' };
+
+  it("lists what wasn't logged, with the times but never the names unless names are on", () => {
+    const meds = [med('a', ['08:00', '14:00']), med('b', ['08:00'])];
+    const logs = new Map([taken('a', '2026-11-17', '14:00')]);
+    const plan = planReminders({ meds, logs, snoozes: new Map(), settings, horizonDays: 0, maxCount: 100, now: new Date(2026, 10, 17, 21, 0) });
+    const missed = plan.find((p) => p.kind === 'missed')!;
+    expect(missed.slots.length).toBe(2);
+    expect(missed.doseTimes).toEqual(['08:00']);
+    const text = reminderText(missed, meds, false);
+    expect(text.title).toBe('2 doses not logged today');
+    expect(text.body).toBe('2 medicines from 8:00 AM. Tap Taken if you already had them.');
+  });
+
+  it('names the one dose by its time', () => {
+    const text = reminderText({ kind: 'missed', time: '22:00', doseTimes: ['14:00'] }, [med('a', ['14:00'])], false);
+    expect(text.title).toBe("You haven't logged your 2:00 PM dose today");
+  });
+
+  it('says nothing once everything is logged', () => {
+    const logs = new Map([taken('a', '2026-11-17', '08:00')]);
+    const plan = planReminders({ meds: [med('a', ['08:00'])], logs, snoozes: new Map(), settings, horizonDays: 0, maxCount: 100, now: new Date(2026, 10, 17, 21, 0) });
+    expect(plan.some((p) => p.kind === 'missed')).toBe(false);
+  });
+});

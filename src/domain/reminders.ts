@@ -29,6 +29,8 @@ export interface PlannedReminder {
   /** The doses this reminder is for (their slot keys), so buttons log the right ones. */
   slots: string[];
   kind: 'due' | 'snoozed' | 'nag' | 'missed';
+  /** Evening check only: the times of the doses it lists, earliest first. */
+  doseTimes?: TimeOfDay[];
 }
 
 /** Whether a moment falls in quiet hours (which may run past midnight). */
@@ -122,6 +124,7 @@ export function planReminders(opts: {
           medIds: earlier.map((u) => u.medId),
           slots: earlier.map((u) => u.slot),
           kind: 'missed',
+          doseTimes: [...new Set(earlier.map((u) => u.time))].sort(),
         });
       }
     }
@@ -135,7 +138,7 @@ export function planReminders(opts: {
  * them on, so by default nothing on the lock screen or a watch says what they take.
  */
 export function reminderText(
-  r: Pick<PlannedReminder, 'kind' | 'time'>,
+  r: Pick<PlannedReminder, 'kind' | 'time' | 'doseTimes'>,
   meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form' | 'supplement'>[],
   showNames: boolean,
   /** The routine's name, e.g. "Breakfast", when this time has one. */
@@ -148,7 +151,7 @@ export function reminderText(
 }
 
 function reminderTextPlain(
-  r: Pick<PlannedReminder, 'kind' | 'time'>,
+  r: Pick<PlannedReminder, 'kind' | 'time' | 'doseTimes'>,
   meds: Pick<Medication, 'name' | 'strength' | 'amount' | 'form' | 'supplement'>[],
   showNames: boolean,
 ): { title: string; body: string } {
@@ -165,9 +168,14 @@ function reminderTextPlain(
         ? '1 medicine'
         : `${meds.length} medicines`;
   if (r.kind === 'missed') {
+    // Times aren't private, so even with names hidden the notice says which doses it means.
+    const from = r.doseTimes?.length ? ` from ${listWords(r.doseTimes.map(formatTime))}` : '';
     if (!showNames) {
-      const title = meds.length === 1 ? (allSupps ? 'Did you take your supplement?' : 'Did you take your medicine?') : `${meds.length} doses not logged today`;
-      return { title, body: meds.length === 1 ? 'Tap Taken if you already had it.' : `${count}. Tap Taken if you already had them.` };
+      const title =
+        meds.length === 1
+          ? `You haven't logged your ${r.doseTimes?.length ? `${formatTime(r.doseTimes[0])} ` : ''}${allSupps ? 'supplement' : 'dose'} today`
+          : `${meds.length} doses not logged today`;
+      return { title, body: meds.length === 1 ? 'Tap Taken if you already had it.' : `${count}${from}. Tap Taken if you already had them.` };
     }
     const list = meds.map((m) => `${m.name} (${describeDose(m)})`).join(', ');
     return { title: meds.length === 1 ? `Did you take ${meds[0].name}?` : `${meds.length} doses not logged today`, body: `${list}. Tap Taken if you already had them.` };
@@ -187,6 +195,11 @@ function reminderTextPlain(
           ? `Time for ${meds[0].name}`
           : `Time for your ${when} meds`;
   return { title, body: meds.map((m) => `${m.name} (${describeDose(m)})`).join(', ') };
+}
+
+/** "a", "a and b", "a, b and c". */
+function listWords(xs: string[]): string {
+  return xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
 }
 
 /** Refill alert words, without the name unless the person turned names on. */
