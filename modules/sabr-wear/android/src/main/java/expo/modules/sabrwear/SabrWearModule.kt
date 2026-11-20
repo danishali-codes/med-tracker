@@ -2,6 +2,7 @@ package expo.modules.sabrwear
 
 import android.net.Uri
 import com.google.android.gms.tasks.Task
+import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
@@ -10,6 +11,7 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 const val PATH_TODAY = "/sabr/today"
+const val CAPABILITY = "sabr_tile"
 
 class SabrWearModule : Module() {
   private val context
@@ -35,8 +37,24 @@ class SabrWearModule : Module() {
       settle(Wearable.getDataClient(context).deleteDataItems(uri), promise) { null }
     }
 
-    AsyncFunction("connectedWatches") { promise: Promise ->
-      settle(Wearable.getNodeClient(context).connectedNodes, promise) { nodes -> nodes.map { it.displayName } }
+    // Connected watches, split by whether the Sabr watch app is on them. The watch app
+    // declares the "sabr_tile" capability, so a watch without it is listed separately.
+    AsyncFunction("watchStatus") { promise: Promise ->
+      Wearable.getNodeClient(context).connectedNodes
+        .addOnSuccessListener { nodes ->
+          Wearable.getCapabilityClient(context).getCapability(CAPABILITY, CapabilityClient.FILTER_REACHABLE)
+            .addOnSuccessListener { info ->
+              val ids = info.nodes.map { it.id }.toSet()
+              promise.resolve(
+                mapOf(
+                  "withSabr" to nodes.filter { it.id in ids }.map { it.displayName },
+                  "others" to nodes.filter { it.id !in ids }.map { it.displayName },
+                ),
+              )
+            }
+            .addOnFailureListener { promise.resolve(mapOf("withSabr" to emptyList<String>(), "others" to nodes.map { it.displayName })) }
+        }
+        .addOnFailureListener { promise.reject("ERR_SABR_WEAR", it.message, it) }
     }
   }
 

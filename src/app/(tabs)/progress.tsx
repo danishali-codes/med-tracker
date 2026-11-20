@@ -122,6 +122,14 @@ export default function ProgressScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={c.faint} />
         </PressableScale>
+        <PressableScale onPress={() => router.push('/mood')} style={s.reportLink}>
+          <Ionicons name="happy-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.reportTitle}>Mood trend</Text>
+            <Text style={[s.hint, { marginTop: 2 }]}>How you've felt over the last month, 3 months or year</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
         <PressableScale onPress={() => router.push('/patterns')} style={s.reportLink}>
           <Ionicons name="pulse-outline" size={22} color={c.primary} />
           <View style={{ flex: 1 }}>

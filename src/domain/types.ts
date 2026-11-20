@@ -120,11 +120,21 @@ export interface Medication {
   /** Alert when stock falls to this many units or fewer. */
   refillAt: number | null;
   archived: boolean;
+  /**
+   * A supplement (vitamins, fish oil...): reminded like a medicine and shown with its own ring,
+   * but left out of streaks, gold days and badges, so missing one never costs anything.
+   */
+  supplement?: boolean;
   /** Breaks (e.g. "stop for a week"): no doses or reminders, and the streak isn't affected. `to` null = until resumed. */
   pauses?: { from: DateKey; to: DateKey | null }[];
   /** When it was archived; doses before this still show in history. */
   archivedAt?: string | null;
   createdAt: string;
+}
+
+/** Supplements are tracked on their own and never count towards streaks. */
+export function isSupplement(med: Pick<Medication, 'supplement'> | undefined | null): boolean {
+  return med?.supplement === true;
 }
 
 export type DoseStatus = 'taken' | 'skipped';

@@ -1,9 +1,8 @@
 import { timeFromDate, toDateKey, type DateKey } from './domain/dates';
 import { groupKey } from './domain/reminders';
-import { dosesOn } from './domain/schedule';
 import type { DoseStatus, Medication } from './domain/types';
 import * as repo from './db/repo';
-import { dismissGroup, notifyLowStock, rescheduleAll } from './notifications/reminders';
+import { answerDoses, notifyLowStock, rescheduleAll, snoozeGroup } from './notifications/reminders';
 import { startFoodTimer } from './notifications/food';
 
 /** Log, change or clear (null) a dose from inside the app, then refresh reminders. */
@@ -11,16 +10,14 @@ export async function logDose(
   dose: { slot: string; medId: string; date: DateKey; time: string },
   status: DoseStatus | null,
 ) {
-  const low = repo.setDose(dose, status);
-  if (status === 'taken') startFoodTimer([dose.medId]).catch(() => {});
-  const group = groupKey(dose.date, dose.time);
-  const stillPending = dosesOn(repo.getMeds(), dose.date).some((d) => d.time === dose.time && !repo.getLog(d.slot));
-  if (!stillPending) {
-    repo.clearSnooze(group);
-    dismissGroup(group).catch(() => {});
-  }
-  await notifyLowStock(low).catch(() => {});
+  if (status) return answerDoses([dose], status, { replace: true });
+  repo.setDose(dose, null);
   await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
+}
+
+/** "Take all": every open dose at one time, logged together. */
+export async function takeDoses(doses: { slot: string; medId: string; date: DateKey; time: string }[]) {
+  await answerDoses(doses, 'taken');
 }
 
 /** As-needed meds: record a dose right now. */
@@ -47,8 +44,5 @@ export async function removeMedication(id: string) {
 
 /** Remind again in a few minutes for every dose due at this time. */
 export async function snoozeDoses(date: DateKey, time: string, minutes: number) {
-  const group = groupKey(date, time);
-  repo.setSnooze(group, new Date(Date.now() + minutes * 60_000));
-  await dismissGroup(group).catch(() => {});
-  await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
+  await snoozeGroup(groupKey(date, time), minutes).catch((e) => console.warn('snooze failed', e));
 }

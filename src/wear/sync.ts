@@ -1,10 +1,11 @@
 import { Platform } from 'react-native';
-import { SabrWear } from '../../modules/sabr-wear';
+import { SabrWear, type WatchStatus } from '../../modules/sabr-wear';
 import { toDateKey } from '../domain/dates';
 import { computeProgress } from '../domain/progress';
 import { dosesOn, dueAt, groupByTime, indexLogs } from '../domain/schedule';
 import * as repo from '../db/repo';
-import { ACTION_SNOOZE, ACTION_TAKEN, handleReminderAction } from '../notifications/reminders';
+import { groupKey } from '../domain/reminders';
+import { answerDoses, snoozeGroup } from '../notifications/reminders';
 import { pushShare } from '../sync/engine';
 import { refreshWidgetNow } from '../widget/update';
 import { watchPayload } from './payload';
@@ -56,9 +57,10 @@ export async function clearWatch() {
   await SabrWear.clear().catch(() => {});
 }
 
-export async function connectedWatches(): Promise<string[]> {
-  if (Platform.OS !== 'android' || !SabrWear) return [];
-  return SabrWear.connectedWatches().catch(() => []);
+export async function watchStatus(): Promise<WatchStatus> {
+  const none = { withSabr: [], others: [] };
+  if (Platform.OS !== 'android' || !SabrWear) return none;
+  return SabrWear.watchStatus().catch(() => none);
 }
 
 let pending: ReturnType<typeof setTimeout> | null = null;
@@ -105,13 +107,10 @@ async function applyWatchPress(action: 'take' | 'snooze', body: string | undefin
   if (!group || dueAt(req.date, req.time).getTime() > now.getTime() + 60_000) return;
   const open = group.doses.filter((d) => !repo.getLog(d.slot));
   if (open.length === 0) return;
-  await handleReminderAction(action === 'take' ? ACTION_TAKEN : ACTION_SNOOZE, {
-    date: req.date,
-    time: req.time,
-    medIds: open.map((d) => d.medId),
-    slots: open.map((d) => d.slot),
-  });
-  // The app may not be running, so update everything that shows doses before finishing.
+  // The same path as the notification and widget buttons.
+  if (action === 'take') await answerDoses(open, 'taken', { now });
+  else await snoozeGroup(groupKey(req.date, req.time));
+  // The app may not be running, so update the widgets and caregivers before finishing.
   await refreshWidgetNow().catch(() => {});
   await pushShare().catch(() => {});
 }

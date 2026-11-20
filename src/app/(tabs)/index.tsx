@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { popup } from '../../components/Popup';
-import { logAsNeeded, logDose } from '../../actions';
+import { logAsNeeded, takeDoses } from '../../actions';
 import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
 import { Screen } from '../../components/Screen';
@@ -12,6 +12,7 @@ import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDa
 import { describeDose } from '../../domain/dose';
 import { adherence, isGoldDay } from '../../domain/progress';
 import { routineAt } from '../../domain/routines';
+import { isSupplement } from '../../domain/types';
 import { EarnBackCard, FoodTimerCard, MilestoneCard, ReviewPrompt, TimingCard } from '../../components/TodayCards';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
@@ -45,10 +46,15 @@ export default function TodayScreen() {
   useEffect(refreshPerm, [refreshPerm, today]);
 
   const medById = useMemo(() => new Map(meds.map((m) => [m.id, m])), [meds]);
-  const doses = useMemo(() => dosesOn(meds, today), [meds, today]);
+  // Medicines fill the rings and the streak; supplements have a ring and a list of their own.
+  const allDoses = useMemo(() => dosesOn(meds, today), [meds, today]);
+  const doses = useMemo(() => allDoses.filter((d) => !isSupplement(medById.get(d.medId))), [allDoses, medById]);
+  const suppDoses = useMemo(() => allDoses.filter((d) => isSupplement(medById.get(d.medId))), [allDoses, medById]);
   const todayLogs = useMemo(() => repo.getLogs(today, today), [today, version]);
   const logs = useMemo(() => indexLogs(todayLogs), [todayLogs]);
   const groups = groupByTime(doses);
+  const suppGroups = groupByTime(suppDoses);
+  const suppDone = suppDoses.filter((d) => logs.has(d.slot)).length;
   const asNeeded = meds.filter((m) => !m.archived && m.schedule.pattern.kind === 'asNeeded');
   const answered = doses.filter((d) => logs.has(d.slot)).length;
   const taken = doses.filter((d) => logs.get(d.slot)?.status === 'taken');
@@ -78,11 +84,8 @@ export default function TodayScreen() {
 
   const activeCount = meds.filter((m) => !m.archived).length;
 
-  // One at a time, so each dose is logged before the reminders are worked out again.
   const takeAll = async (pending: typeof doses) => {
-    let failed = 0;
-    for (const d of pending) await logDose(d, 'taken').catch(() => failed++);
-    if (failed) popup('Some doses were not saved', 'Please try again.');
+    await takeDoses(pending).catch(() => popup('Some doses were not saved', 'Please try again.'));
   };
 
   return (
@@ -124,6 +127,9 @@ export default function TodayScreen() {
                 <Legend color={c.rings[0]} label="Doses today" value={doses.length ? `${answered} of ${doses.length}` : 'None due'} />
                 <Legend color={c.rings[1]} label="On time" value={taken.length ? `${onTime} of ${taken.length}` : '–'} />
                 <Legend color={c.rings[2]} label="This week" value={weekPct == null ? '–' : `${Math.round(weekPct * 100)}%`} />
+                {suppDoses.length > 0 ? (
+                  <Legend color={c.rings[0]} label="Supplements" value={`${suppDone} of ${suppDoses.length}`} ring={{ value: suppDone, total: suppDoses.length }} />
+                ) : null}
               </View>
             </View>
             <View style={s.heroPills}>
@@ -234,6 +240,27 @@ export default function TodayScreen() {
           );
         })}
 
+        {suppGroups.length > 0 ? (
+          <FadeIn delay={140}>
+            <SectionTitle
+              right={
+                suppDone === suppDoses.length ? <Text style={[s.tag, { color: c.good, backgroundColor: c.goodSoft }]}>Done</Text> : null
+              }
+            >
+              Supplements
+            </SectionTitle>
+            <Card style={{ paddingVertical: 6 }}>
+              {suppGroups.map((g) =>
+                g.doses.map((d) => {
+                  const med = medById.get(d.medId);
+                  return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} showTime /> : null;
+                }),
+              )}
+            </Card>
+            <Text style={s.suppHint}>Missing a supplement never affects your streak.</Text>
+          </FadeIn>
+        ) : null}
+
         {asNeeded.length > 0 ? (
           <>
             <SectionTitle>As needed</SectionTitle>
@@ -277,11 +304,15 @@ export default function TodayScreen() {
   );
 }
 
-function Legend({ color, label, value }: { color: string; label: string; value: string }) {
+function Legend({ color, label, value, ring }: { color: string; label: string; value: string; ring?: { value: number; total: number } }) {
   const s = useStyles();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+      {ring ? (
+        <Ring value={ring.value} total={ring.total} size={18} stroke={4} color="#fff" track="rgba(255,255,255,0.25)" />
+      ) : (
+        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+      )}
       <View>
         <Text style={s.legendLabel}>{label}</Text>
         <Text style={s.legendValue}>{value}</Text>
@@ -309,6 +340,7 @@ const useStyles = makeStyles((c) => ({
   bannerTitle: { fontSize: 17, fontWeight: '800', color: c.text },
   bannerText: { fontSize: 14, color: c.muted, marginTop: 4 },
   emptyTitle: { fontSize: 20, fontWeight: '900', color: c.text, marginTop: 8 },
+  suppHint: { fontSize: 13, color: c.muted, fontWeight: '600', marginTop: -4, marginBottom: 10, marginLeft: 6 },
   prnRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
   prnName: { fontSize: 17, fontWeight: '800', color: c.text },
   prnSub: { fontSize: 14, color: c.muted, marginTop: 1, fontWeight: '600' },

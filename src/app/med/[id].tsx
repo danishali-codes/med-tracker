@@ -12,7 +12,7 @@ import { formatDateLong, formatTime, toDateKey, weekdayShort, type DateKey, type
 import { daysOfSupply, describeDose, FORM_UNITS, formatAmount, parseAmount } from '../../domain/dose';
 import { editTimes } from '../../domain/routines';
 import { describeSchedule, isPausedOn, nextDueDate, pauseMed, resumeMed } from '../../domain/schedule';
-import { FOOD_RULES, type DayTimes, type FoodRule, type MedForm, type Medication, type PillShape, type SchedulePattern } from '../../domain/types';
+import { FOOD_RULES, isSupplement, type DayTimes, type FoodRule, type MedForm, type Medication, type PillShape, type SchedulePattern } from '../../domain/types';
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
 import { scanBox } from '../../media/scanBox';
 import * as repo from '../../db/repo';
@@ -46,7 +46,8 @@ const stepFor = (f: MedForm) => (f === 'pill' || f === 'liquid' ? 0.5 : 1);
 export default function MedEditor() {
   const c = useTheme();
   const st = useStyles();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; supplement?: string }>();
+  const { id } = params;
   const existing = useMemo(() => (id && id !== 'new' ? repo.getMed(id) : null), [id]);
   const today = toDateKey(new Date());
 
@@ -56,6 +57,7 @@ export default function MedEditor() {
   const [strength, setStrength] = useState(existing?.strength ?? '');
   const [amount, setAmount] = useState(existing?.amount ?? 1);
   const [form, setForm] = useState<MedForm>(existing?.form ?? 'pill');
+  const [supplement, setSupplement] = useState(existing ? isSupplement(existing) : params.supplement === '1');
   const [color, setColor] = useState(existing?.color ?? MED_COLORS[repo.getMeds().length % MED_COLORS.length]);
   const [shape, setShape] = useState<PillShape | undefined>(existing?.shape);
   const [pillColor, setPillColor] = useState<string | undefined>(existing?.pillColor);
@@ -217,6 +219,7 @@ export default function MedEditor() {
     refillAt: trackStock ? Math.max(0, parseInt(refillAt, 10) || 0) : null,
     pauses: existing?.pauses ?? [],
     archived: existing?.archived ?? false,
+    supplement: supplement || undefined,
     archivedAt: existing?.archivedAt ?? null,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
   });
@@ -315,7 +318,7 @@ export default function MedEditor() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack.Screen options={{ title: existing ? 'Edit medication' : 'New medication' }} />
+      <Stack.Screen options={{ title: existing ? (supplement ? 'Edit supplement' : 'Edit medication') : supplement ? 'New supplement' : 'New medication' }} />
       <PageScroll contentContainerStyle={st.container} keyboardShouldPersistTaps="handled">
         <Card>
           <Button
@@ -371,6 +374,20 @@ export default function MedEditor() {
               {loadingDetails ? <ActivityIndicator size="small" color={c.primary} /> : <Text style={st.genericText}>Active ingredient: {generic}</Text>}
             </View>
           ) : null}
+        </Card>
+
+        <Card>
+          <View style={st.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={st.cardTitle}>Supplement</Text>
+              <Text style={st.hint}>
+                {supplement
+                  ? 'Reminded like a medicine, with its own ring on Today. Missing it never breaks your streak.'
+                  : 'Turn on for vitamins and other supplements you want reminders for, without them counting towards your streak.'}
+              </Text>
+            </View>
+            <Switch value={supplement} onValueChange={setSupplement} trackColor={{ true: c.primary }} accessibilityLabel="Supplement" />
+          </View>
         </Card>
 
         <Card>

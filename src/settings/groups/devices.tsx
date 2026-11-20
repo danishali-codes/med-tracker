@@ -1,24 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Text } from '../../components/ui';
-import { clearWatch, connectedWatches, pushToWatchNow } from '../../wear/sync';
+import { WatchStatus } from '../../components/WatchStatus';
+import { clearWatch, pushToWatchNow } from '../../wear/sync';
 import { toggle, useSettingStyles } from '../rows';
 import type { SettingsGroup } from '../types';
-
-function WatchStatus() {
-  const st = useSettingStyles();
-  const [watches, setWatches] = useState<string[] | null>(null);
-  useEffect(() => {
-    connectedWatches()
-      .then(setWatches)
-      .catch(() => setWatches([]));
-  }, []);
-  return (
-    <Text style={[st.hint, { marginTop: 6 }]}>
-      {watches == null ? 'Looking for your watch...' : watches.length ? `Connected to ${watches.join(', ')}. ` : 'No watch connected right now. '}
-      The watch needs the Sabr watch app installed (see the Sabr website for how). Then swipe to your tiles, scroll to the end, tap Add tiles and pick Sabr.
-    </Text>
-  );
-}
 
 function Info({ children }: { children: string }) {
   const st = useSettingStyles();
