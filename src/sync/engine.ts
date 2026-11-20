@@ -1,5 +1,6 @@
 /**
- * Runs optional sync. With sync off (the default) none of this touches the network.
+ * Runs optional sync. With sync off (the default), or Fully local on, none of this touches
+ * the network.
  *
  * - Secrets (server sign-in, encryption keys, share codes you follow) live in the
  *   phone's secure keystore, never in the app database or its exports.
@@ -14,17 +15,30 @@ import { formatTime, timeFromDate, toDateKey } from '../domain/dates';
 import { indexLogs } from '../domain/schedule';
 import * as repo from '../db/repo';
 import { CHANNEL_ID } from '../notifications/reminders';
+import { assertCloudAllowed, cloudAllowed } from '../privacy';
 import { newKey, open, seal } from './crypto';
 import * as pb from './pocketbase';
 import { buildStatus, nextAlerts, parseStatus, type CareStatus } from './status';
+import { accountKeys, packBackup, unpackBackup } from './vault';
 
-const f: pb.Fetch = (...a) => fetch(...a);
+/** Every request goes through here, so Fully local can't be skipped by accident. */
+const f: pb.Fetch = (...a) => {
+  assertCloudAllowed();
+  return fetch(...a);
+};
+
+/** The server Sabr's developer runs for anyone who wants a backup without running their own. */
+export const SABR_SERVER = 'https://sabr-sync.danishali.dev';
+/** Longer than for your own server: this password is the only thing protecting the backup. */
+export const MIN_SABR_PASSWORD = 10;
 
 // ---- secrets ----
 
 const SESSION = 'sync_session';
 const BACKUP_KEY = 'sync_backup_key';
 const SHARE_KEY = 'sync_share_key';
+/** Made from your password at sign-in; unlocks the backup key. See vault.ts. */
+const WRAP_KEY = 'sync_wrap_key';
 const FOLLOWING = 'care_following';
 
 async function getJson<T>(key: string): Promise<T | null> {
@@ -72,10 +86,48 @@ export function backupKey(): Promise<string> {
 
 // ---- account ----
 
+export function isSabrServer(server: string | null | undefined): boolean {
+  return !!server && server.replace(/\/+$/, '') === SABR_SERVER;
+}
+
+/**
+ * Signs in or makes an account. The password itself is never sent: the server gets a code
+ * made from it, and the phone keeps a second code that unlocks the backup.
+ *
+ * Accounts made on your own server before 0.10 used the plain password; signing in to those
+ * still works (that server is yours), they just need the recovery key to restore.
+ */
 export async function connect(server: string, email: string, password: string, create: boolean): Promise<pb.Session> {
-  const s = create ? await pb.signUp(f, server, email, password) : await pb.signIn(f, server, email, password);
+  const sabr = isSabrServer(server);
+  if (sabr && password.length < MIN_SABR_PASSWORD) throw new Error(`Use a password of at least ${MIN_SABR_PASSWORD} characters.`);
+  const keys = await accountKeys(email, password);
+  let s: pb.Session;
+  let wrap: string | null = keys.wrap;
+  if (create) {
+    try {
+      s = await pb.signUp(f, server, email, keys.auth);
+    } catch (e) {
+      if (e instanceof pb.SyncError && e.status === 400) throw new Error('Could not make the account. That email may already have one: try Sign in instead.');
+      throw e;
+    }
+  } else {
+    try {
+      s = await pb.signIn(f, server, email, keys.auth);
+    } catch (e) {
+      if (sabr || !(e instanceof pb.SyncError) || e.status !== 400) throw e;
+      s = await pb.signIn(f, server, email, password);
+      wrap = null;
+    }
+  }
+  if (wrap) await SecureStore.setItemAsync(WRAP_KEY, wrap);
+  else await SecureStore.deleteItemAsync(WRAP_KEY);
   await setSession(s);
   return s;
+}
+
+/** True when your password can unlock server backups (accounts made from 0.10 on). */
+export async function hasPasswordUnlock(): Promise<boolean> {
+  return !!(await SecureStore.getItemAsync(WRAP_KEY));
 }
 
 /** Signs out and stops sharing. Your server copy is deleted too if `wipe` is set. */
@@ -100,6 +152,7 @@ export async function disconnect(wipe: boolean) {
   repo.deleteKv('backup_id');
   repo.deleteKv('share_id');
   await forgetKey(SHARE_KEY);
+  await SecureStore.deleteItemAsync(WRAP_KEY);
   await setSession(null);
   const st = repo.getSettings();
   repo.saveSettings({ ...st, sync: { ...st.sync, enabled: false, backup: false, share: false } });
@@ -128,7 +181,7 @@ function record(key: 'last_backup' | 'last_share', err?: unknown) {
 
 export async function pushShare(): Promise<void> {
   const st = repo.getSettings();
-  if (!st.sync.enabled || !st.sync.share) return;
+  if (!st.sync.enabled || !st.sync.share || !cloudAllowed()) return;
   try {
     const done = await withSession(async (s) => {
       const now = new Date();
@@ -154,10 +207,10 @@ export async function pushShare(): Promise<void> {
 
 export async function pushBackup(): Promise<void> {
   const st = repo.getSettings();
-  if (!st.sync.enabled || !st.sync.backup) return;
+  if (!st.sync.enabled || !st.sync.backup || !cloudAllowed()) return;
   try {
     const done = await withSession(async (s) => {
-      const data = seal(repo.exportAll(), await backupKey());
+      const data = packBackup(repo.exportAll(), await backupKey(), await SecureStore.getItemAsync(WRAP_KEY));
       const id = await pb.putVault(f, s, 'backup', data, repo.getKv('backup_id'));
       if (id !== repo.getKv('backup_id')) repo.setKv('backup_id', id, false);
       return true;
@@ -168,31 +221,55 @@ export async function pushBackup(): Promise<void> {
   }
 }
 
-/** Replaces everything on this phone with your server backup. */
-export async function restoreBackup(key: string): Promise<void> {
+interface FoundBackup {
+  id: string;
+  updated: string;
+  json: string;
+  backupKey: string;
+}
+
+/**
+ * The newest backup on the server that opens with the recovery key, or (without one) with
+ * your password. There can be more than one, say a new phone started its own before restoring.
+ */
+async function findBackup(recoveryKey: string | null): Promise<FoundBackup | null> {
   const s = await getSession();
-  if (!s) throw new Error('Sign in to your server first.');
-  // There can be more than one backup (say, a new phone started its own before
-  // restoring), so use the one this key opens.
-  const all = await pb.listVaults(f, s, 'backup');
-  if (all.length === 0) throw new Error('No backup on this server yet.');
-  let v: (typeof all)[number] | null = null;
-  let json = '';
-  for (const candidate of all) {
+  if (!s) throw new Error('Sign in first.');
+  const wrap = await SecureStore.getItemAsync(WRAP_KEY);
+  for (const v of await pb.listVaults(f, s, 'backup')) {
     try {
-      json = open(candidate.data, key.trim());
-      v = candidate;
-      break;
+      const { json, backupKey } = unpackBackup(v.data, { recoveryKey, wrap });
+      // Skip the empty backup this phone may have made before restoring.
+      if (v.id === repo.getKv('backup_id') && !recoveryKey) continue;
+      return { id: v.id, updated: v.updated, json, backupKey };
     } catch {
       // Not this one.
     }
   }
-  if (!v) throw new Error('This recovery key does not open any backup on this server. Check the key.');
+  return null;
+}
+
+/** When the newest backup your password opens was made, if there is one. For "Restore?" after signing in. */
+export async function backupOnServer(): Promise<string | null> {
+  if (!(await hasPasswordUnlock())) return null;
+  return (await findBackup(null))?.updated ?? null;
+}
+
+/** Replaces everything on this phone with your server backup. Without a recovery key, your password unlocks it. */
+export async function restoreBackup(recoveryKey: string | null): Promise<void> {
+  const found = await findBackup(recoveryKey?.trim() || null);
+  if (!found) {
+    throw new Error(
+      recoveryKey?.trim()
+        ? 'This recovery key does not open any backup on this server. Check the key.'
+        : 'No backup that your password opens was found. If it was made before 0.10, use your recovery key.',
+    );
+  }
   const keep = repo.getSettings().sync;
-  repo.importAll(json);
+  repo.importAll(found.json);
   await forgetKey(BACKUP_KEY);
-  await SecureStore.setItemAsync(BACKUP_KEY, key.trim());
-  repo.setKv('backup_id', v.id, false);
+  await SecureStore.setItemAsync(BACKUP_KEY, found.backupKey);
+  repo.setKv('backup_id', found.id, false);
   const st = repo.getSettings();
   repo.saveSettings({ ...st, sync: { ...keep, enabled: true } });
 }
@@ -294,7 +371,7 @@ async function check(item: Followed): Promise<Followed> {
 
 export async function refreshFollowing(): Promise<void> {
   const list = await getFollowing();
-  if (list.length === 0) return;
+  if (list.length === 0 || !cloudAllowed()) return;
   await setFollowing(await Promise.all(list.map(check)));
   await scheduleCareAlerts();
 }
@@ -336,7 +413,7 @@ export function startSync() {
   if (stop) return;
   stop = repo.subscribe(() => {
     const st = repo.getSettings();
-    if (!st.sync.enabled) return;
+    if (!st.sync.enabled || st.fullyLocal) return;
     if (st.sync.share) {
       if (shareTimer) clearTimeout(shareTimer);
       shareTimer = setTimeout(() => void pushShare(), 5_000);
@@ -352,6 +429,7 @@ export function startSync() {
 
 /** One pass of everything that is turned on. Used on app open and by the background task. */
 export async function syncNow(): Promise<void> {
+  if (!cloudAllowed()) return;
   const st = repo.getSettings();
   if (st.sync.enabled) {
     const s = await getSession();

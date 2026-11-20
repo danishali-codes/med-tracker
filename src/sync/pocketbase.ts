@@ -1,6 +1,6 @@
 /**
- * A tiny client for a PocketBase server you run yourself. Only used when you turn
- * sync on. Everything stored is already encrypted on the phone (see crypto.ts).
+ * A tiny client for PocketBase: the Sabr server, or one you run yourself. Only used when
+ * you turn sync on. Everything stored is already encrypted on the phone (see crypto.ts).
  *
  * Server setup: server/README.md. One collection, "vaults":
  *   owner (relation to users), kind ("backup" | "share"), data (encrypted text).
@@ -36,7 +36,9 @@ async function call<T>(f: Fetch, url: string, init: RequestInit & { token?: stri
   let res: Response;
   try {
     res = await f(url, { ...init, headers });
-  } catch {
+  } catch (e) {
+    // Fully local refused before anything was sent; say that rather than "can't reach".
+    if (e instanceof Error && e.name === 'FullyLocalError') throw e;
     throw new SyncError('Could not reach the server. Check the address and your connection.');
   }
   const text = await res.text();

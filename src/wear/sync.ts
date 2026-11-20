@@ -11,7 +11,9 @@ import { watchPayload } from './payload';
 
 /** The watch tile, when it's switched on in Settings (off by default). */
 function enabled() {
-  return Platform.OS === 'android' && SabrWear != null && repo.getSettings().watchTile === true;
+  const s = repo.getSettings();
+  // Fully local pauses the tile too: away from Bluetooth, the watch connection can relay through Google.
+  return Platform.OS === 'android' && SabrWear != null && s.watchTile === true && s.fullyLocal !== true;
 }
 
 function todayPayload(now = new Date()) {

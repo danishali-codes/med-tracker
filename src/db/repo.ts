@@ -369,6 +369,7 @@ export function importAll(json: string) {
       lockAfterMinutes: here.lockAfterMinutes,
       hideInRecents: here.hideInRecents,
       autoBackup: here.autoBackup,
+      fullyLocal: here.fullyLocal,
     };
     db.runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', 'settings', JSON.stringify(merged));
   });

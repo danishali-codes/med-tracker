@@ -1,10 +1,18 @@
 # Privacy
 
-Sabr has no accounts, ads, analytics, crash reporting or tracking. Your medicines,
+Sabr has no ads, analytics, crash reporting or tracking, and no account unless you choose an online backup. Your medicines,
 times, doses and history are stored only in the app's database on your phone.
 
 Anything that could share or show what you take is **off until you turn it on** in
 Settings > Privacy.
+
+## Fully local
+
+Settings > Privacy > **Fully local** is one switch that keeps Sabr off the internet
+entirely, whatever else is turned on: online medicine search, server backup and sharing,
+following someone, Google Drive backups and the watch tile all pause. Every network
+request in the app checks it first ([`src/privacy.ts`](src/privacy.ts)), and it counts as
+on if settings can't be read. It belongs to the phone, so restoring a backup doesn't change it.
 
 ## What leaves the phone
 
@@ -30,17 +38,21 @@ Privacy can also delete the downloaded names and labels.
 ## Sync and sharing (off by default)
 
 Settings > Sync and sharing connects the app to a [PocketBase](https://pocketbase.io)
-server **that you run yourself** (setup: [server/README.md](server/README.md)). While
-**Use my own server** is off, none of this code talks to any network. No server address is
-built in, so it can't send anything anywhere you didn't type in.
+server: either the **Sabr server** that Sabr's developer runs
+(`sabr-sync.danishali.dev`, how it's run: [server/SABR-SERVER.md](server/SABR-SERVER.md)),
+or one **you run yourself** (setup: [server/README.md](server/README.md)). While
+**Back up and share online** is off, none of this code talks to any network.
 
 Everything below is encrypted on the phone before it leaves (XSalsa20-Poly1305), so the
-server stores data it can't read.
+server stores data it can't read, including the Sabr server. Your password never leaves
+the phone either: it's stretched on the phone (PBKDF2-SHA512, 200,000 rounds) into two
+codes. One signs you in (the server stores a hash of it); the other stays on the phone and
+locks your backup's key.
 
 | When | Sent to | What is sent |
 | --- | --- | --- |
-| You sign in or create an account | Your server | Your email and password (the server stores a hash). |
-| **Keep an encrypted backup** is on, a couple of minutes after changes | Your server | Your medicines, history and notes, encrypted with a recovery key that never leaves the phone. Photos are not included. |
+| You sign in or create an account | The server | Your email and the sign-in code made from your password (the server stores a hash). Accounts made on your own server before 0.10 sent the password itself. |
+| **Keep an encrypted backup** is on, a couple of minutes after changes | The server | Your medicines, history and notes, encrypted with a random key. That key goes along locked with the code from your password, which never leaves the phone; your recovery key opens it too. Photos are not included. |
 | **Let someone see my doses** is on, a few seconds after changes | Your server | Today's and yesterday's doses, whether each was taken, and the last 7 days' counts, encrypted with a key that exists only in the share code you hand out. Medicine names and doses are replaced with "Medicine A", "Medicine B" unless you turn on **Include medicine names**. |
 | You follow someone with their share code | Their server | A request for their encrypted status, a few times a day and when you open the app. No account is needed and nothing about you is sent. |
 
@@ -71,11 +83,18 @@ and the [`wear/`](wear) watch app.
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so
-  the database isn't copied to Google Drive. Use Settings > Backup and restore instead. The app
-  never uploads a backup itself: it hands the file to the place you choose (Google Drive, Files...)
-  through Android's share sheet, or writes it to a folder you picked. With a password, the file is
+  the database isn't copied to Google Drive. Use Settings > Backup and restore instead. By
+  default the app hands the file to the place you choose (Google Drive, Files...) through
+  Android's share sheet, or writes it to a folder you picked.
+- **Google Drive (off by default):** if you choose **Sign in with Google** in Backup and
+  restore, Sabr asks only for the `drive.file` permission, which lets it see and change only
+  the files it made (in a "Sabr backups" folder), nothing else in your Drive. Backups sent
+  there, on demand or automatically, are always password-locked on the phone first, so Google
+  stores them but can't read them. Google learns that you use Sabr. **Disconnect** signs out
+  and takes back the permission. All Drive requests are in [`src/backup/drive.ts`](src/backup/drive.ts). With a password, the file is
   locked on the phone (PBKDF2-SHA512 key from the password, then XSalsa20-Poly1305) and can't be
-  read without it. The password for automatic backups is kept in the phone's secure storage.
+  read without it (200,000 rounds in the Android app). The password for automatic backups is
+  kept in the phone's secure storage.
   Without a password the file is plain JSON, and the app warns you before saving it.
 - **App lock:** uses the phone's own fingerprint, face or screen lock check. Sabr never sees
   your fingerprint or PIN. **Hide in recent apps** also blocks screenshots of the app.

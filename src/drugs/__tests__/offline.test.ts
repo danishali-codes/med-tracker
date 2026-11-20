@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Settings and the phone's cache are mocked so the real request code can run here.
-const settings = { onlineLookups: false };
+const settings = { onlineLookups: false, fullyLocal: false };
 vi.mock('../../db/repo', () => ({ getSettings: () => settings }));
 vi.mock('expo-file-system', () => {
   class File {
@@ -53,5 +53,14 @@ describe('online search setting', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toMatch(/^https:\/\/api\.fda\.gov\//);
     expect(init.credentials).toBe('omit');
+  });
+
+  it('stays offline while Fully local is on, even with online search on', async () => {
+    settings.onlineLookups = true;
+    settings.fullyLocal = true;
+    const online = await import('../online');
+    expect(await online.fetchLabel('paracetamol')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    settings.fullyLocal = false;
   });
 });

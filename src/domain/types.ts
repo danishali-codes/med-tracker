@@ -191,7 +191,7 @@ export interface Settings {
   /** Show medicine names on the home screen widget (off by default: it shows the dose and pill instead). */
   widgetShowNames: boolean;
   /**
-   * Optional sync with a PocketBase server you run. Off by default: with it off, nothing
+   * Optional sync with the Sabr server or a PocketBase server you run. Off by default: with it off, nothing
    * ever leaves the phone. Everything sent is end-to-end encrypted first.
    */
   sync: SyncSettings;
@@ -218,10 +218,18 @@ export interface Settings {
   watchTile: boolean;
   /** Show the advanced settings too (off: Settings shows only the everyday ones; search always finds everything). */
   showAdvanced: boolean;
+  /**
+   * Fully local: nothing goes online at all, whatever the other settings say. Online
+   * search, server backup and sharing, following someone, Google Drive and the watch tile
+   * all pause. Belongs to this phone, so restoring a backup doesn't change it.
+   */
+  fullyLocal: boolean;
 }
 
 export interface AutoBackupSettings {
   enabled: boolean;
+  /** Where automatic backups go: a folder on the phone, or your own Google Drive. */
+  target: 'folder' | 'drive';
   /** Folder picked with the system file picker (a content:// address on Android). */
   folderUri: string | null;
   folderName: string | null;
@@ -287,9 +295,10 @@ export const DEFAULT_SETTINGS: Settings = {
   routines: [],
   smartTiming: true,
   foodTimers: true,
-  autoBackup: { enabled: false, folderUri: null, folderName: null, everyDays: 7 },
+  autoBackup: { enabled: false, target: 'folder', folderUri: null, folderName: null, everyDays: 7 },
   watchTile: false,
   showAdvanced: false,
+  fullyLocal: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */
