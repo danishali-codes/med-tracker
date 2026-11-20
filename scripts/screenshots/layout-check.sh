@@ -10,7 +10,33 @@ mkdir -p "$OUT"
 
 adb install -r "$APK"
 adb shell settings put global hide_error_dialogs 1
+adb shell settings put global anr_show_background 0 || true
+# The slow emulator's launcher keeps popping "isn't responding" over the app. The app is
+# opened by intent, so the launcher isn't needed: turn it off.
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
 sleep 20
+
+# Presses "Wait" on any "isn't responding" dialog that still shows, then closes system dialogs.
+clear_dialogs() {
+  for _ in 1 2 3; do
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 </dev/null || return 0
+    local ui; ui=$(adb shell cat /sdcard/ui.xml </dev/null 2>/dev/null)
+    case "$ui" in
+      *"isn't responding"*|*"isn’t responding"*)
+        local b; b=$(printf '%s' "$ui" | grep -o 'text="Wait"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1)
+        if [ -n "$b" ]; then
+          local x1 y1 x2 y2; read -r x1 y1 x2 y2 <<<"$(echo "$b" | sed 's/\]\[/,/; s/[][]//g' | tr ',' ' ')"
+          adb shell input tap $(( (x1 + x2) / 2 )) $(( (y1 + y2) / 2 )) </dev/null
+        else
+          adb shell input keyevent KEYCODE_BACK </dev/null
+        fi
+        sleep 3 ;;
+      *) return 0 ;;
+    esac
+  done
+}
+
+
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
 adb shell appops set $PKG SCHEDULE_EXACT_ALARM allow || true
 adb shell settings put global sysui_demo_allowed 1
@@ -26,6 +52,7 @@ shoot() { # tag
   adb shell am force-stop $PKG
   adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 15
+  clear_dialogs
   local size; size=$(adb shell wm size | tail -1 | grep -o '[0-9]*x[0-9]*')
   local w=${size%x*} h=${size#*x}
   while read -r name link pages; do
@@ -34,6 +61,7 @@ shoot() { # tag
     adb shell am start -W -a android.intent.action.VIEW -d "medtracker://$link" $PKG </dev/null >/dev/null
     sleep 4
     for i in $(seq 1 "${pages:-2}"); do
+      clear_dialogs
       adb exec-out screencap -p </dev/null > "$OUT/$tag-$name-$i.png"
       adb shell input swipe $((w / 2)) $((h * 3 / 4)) $((w / 2)) $((h / 4)) 500 </dev/null
       sleep 2
