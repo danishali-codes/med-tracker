@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, AppState, View } from 'react-native';
+import { AppState, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { ToggleRow } from '../components/ToggleRow';
 import { Button, Card, FadeIn, PressableScale, SectionTitle, Text } from '../components/ui';
@@ -71,11 +72,11 @@ export default function HealthScreen() {
     }
     const st = healthStatus();
     if (st === 'unavailable') {
-      Alert.alert('Not available on this phone', 'Health Connect needs Android 8 or newer.');
+      popup('Not available on this phone', 'Health Connect needs Android 8 or newer.');
       return;
     }
     if (st === 'needsInstall') {
-      Alert.alert('Get Health Connect first', 'Samsung Health shares your steps, sleep and heart rate through the Health Connect app from Google. Install or update it, then come back here.', [
+      popup('Get Health Connect first', 'Samsung Health shares your steps, sleep and heart rate through the Health Connect app from Google. Install or update it, then come back here.', [
         { text: 'Not now', style: 'cancel' },
         { text: 'Open Play Store', onPress: installHealthConnect },
       ]);
@@ -86,7 +87,7 @@ export default function HealthScreen() {
       const kinds = await requestHealthAccess();
       setGranted(kinds);
       if (kinds.length === 0) {
-        Alert.alert('Nothing allowed yet', 'Sabr can only read what you allow in Health Connect. Tap "Choose what Sabr reads" whenever you want to change it.');
+        popup('Nothing allowed yet', 'Sabr can only read what you allow in Health Connect. Tap "Choose what Sabr reads" whenever you want to change it.');
       }
     } catch {
       // The screen couldn't open; the buttons below can try again.

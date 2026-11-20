@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import { popup } from '../../components/Popup';
 import { logAsNeeded, logDose } from '../../actions';
 import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
@@ -81,7 +82,7 @@ export default function TodayScreen() {
   const takeAll = async (pending: typeof doses) => {
     let failed = 0;
     for (const d of pending) await logDose(d, 'taken').catch(() => failed++);
-    if (failed) Alert.alert('Some doses were not saved', 'Please try again.');
+    if (failed) popup('Some doses were not saved', 'Please try again.');
   };
 
   return (

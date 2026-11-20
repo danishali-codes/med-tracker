@@ -9,11 +9,23 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 ## 0.13
 
 ### Health data
-- Bring in steps, sleep, heart rate and resting heart rate from Samsung Health (and your Galaxy Watch) through Health Connect. Off until you turn it on in Settings > Health data, and Health Connect lets you pick exactly what Sabr can read.
+- Bring in steps, sleep, heart rate and resting heart rate from Samsung Health (and your Galaxy Watch) through Health Connect. Off until you turn it on in Settings > Watch, widgets and health > Health data, and Health Connect lets you pick exactly what Sabr can read.
 - The Health data page shows the last 7 days of steps, sleep and heart rate next to each day's doses and mood.
 - Patterns now looks at health data too: sleep before days with a missed dose, busy or quiet days, resting heart rate, and how sleep and steps line up with your mood.
 - Read-only and on the phone: Sabr never writes to your health data, doesn't keep a copy, and nothing goes online.
 - Sabr now needs Android 8 or newer.
+
+## 0.10
+
+Settings is split into pages, with search and a Simple / Advanced switch, and every pop-up now looks like the rest of Sabr.
+
+### Settings
+- Settings opens on a short list: Look and feel, Reminders, Timing and routines, Privacy and security, Backup and sharing, and Watch and widgets. Each shows what's on at a glance, and opens its own page.
+- Search at the top finds any setting, on any page, including advanced ones. You can change it right there in the results.
+- Simple shows the everyday settings. Advanced adds fine-tuning, like snooze length, repeat timing, the on-time window and app lock timing. A page tells you how many it's hiding, with a link to show them.
+
+### Pop-ups
+- Questions, warnings and confirmations (delete a medicine, restore a backup, time zone changed and so on) use Sabr's own rounded pop-up in your light or dark theme instead of the plain Android dialog.
 
 ## 0.9
 

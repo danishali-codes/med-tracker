@@ -70,7 +70,7 @@ and the [`wear/`](wear) watch app.
 
 ## Health data (off by default)
 
-Settings > Health data can read your steps, sleep, heart rate and resting heart rate from
+Settings > Watch, widgets and health > Health data can read your steps, sleep, heart rate and resting heart rate from
 **Health Connect**, the place on the phone where Samsung Health (and a Galaxy Watch through it),
 Google Fit and most watch apps share them. This all happens on the phone: nothing goes online.
 

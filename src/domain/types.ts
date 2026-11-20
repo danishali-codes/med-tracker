@@ -221,6 +221,8 @@ export interface Settings {
    * Off by default. Read-only, kept in memory on the phone, never saved or sent anywhere.
    */
   healthConnect: boolean;
+  /** Show the advanced settings too (off: Settings shows only the everyday ones; search always finds everything). */
+  showAdvanced: boolean;
 }
 
 export interface AutoBackupSettings {
@@ -293,6 +295,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoBackup: { enabled: false, folderUri: null, folderName: null, everyDays: 7 },
   watchTile: false,
   healthConnect: false,
+  showAdvanced: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */
