@@ -33,7 +33,9 @@ jobs:
       - name: Add demo data with a gold day
         run: |
           cp scripts/screenshots/demo-seed.ts src/demo-seed.ts
-          printf "(globalThis as { __DEMO_GOLD?: boolean }).__DEMO_GOLD = true;\nimport './src/demo-seed';\n%s\n" "$(cat index.ts)" > index.ts
+          # Imports run before any other code in index.ts, so the flag is set by a module of its own, imported first.
+          echo "(globalThis as { __DEMO_GOLD?: boolean }).__DEMO_GOLD = true;" > src/demo-gold.ts
+          printf "import './src/demo-gold';\nimport './src/demo-seed';\n%s\n" "$(cat index.ts)" > index.ts
           echo "PKG=$(node -p "require('./app.json').expo.android.package")" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npx expo prebuild --platform android --no-install
