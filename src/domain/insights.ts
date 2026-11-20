@@ -402,3 +402,73 @@ export function moveTime(med: Medication, from: TimeOfDay, to: TimeOfDay): Medic
   const schedule = editTimes(med.schedule, [{ move: from, to }]);
   return schedule ? { ...med, schedule } : null;
 }
+
+// ---------------------------------------------------------------------------
+// Mood trend
+// ---------------------------------------------------------------------------
+
+export interface MoodTrend {
+  from: DateKey;
+  to: DateKey;
+  /** Every day in the range with a mood, oldest first. */
+  points: { date: DateKey; mood: number }[];
+  /** Average over the 7 days up to each day that has any mood nearby; null where there's none. */
+  rolling: { date: DateKey; avg: number | null }[];
+  average: number | null;
+  /** The same-length period just before, to say whether things are going up or down. */
+  previousAverage: number | null;
+  /** Average mood by weekday (0 = Sunday), null with fewer than 2 notes that weekday. */
+  byWeekday: (number | null)[];
+  /** How often each mood was picked, 1 to 5. */
+  counts: number[];
+  topSymptoms: { name: string; days: number }[];
+  /** Days in the range with any note at all. */
+  noted: number;
+}
+
+/** How mood has gone over a period, from the notes on the phone. */
+export function moodTrend(notes: DayNote[], from: DateKey, to: DateKey): MoodTrend {
+  const span = diffDays(from, to) + 1;
+  const prevFrom = addDays(from, -span);
+  const byDate = new Map(notes.map((n) => [n.date, n]));
+  const inRange = notes.filter((n) => n.date >= from && n.date <= to).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const points = inRange.filter((n) => n.mood != null).map((n) => ({ date: n.date, mood: n.mood as number }));
+  const prev = notes.filter((n) => n.date >= prevFrom && n.date < from && n.mood != null).map((n) => n.mood as number);
+
+  const rolling: MoodTrend['rolling'] = [];
+  for (let i = 0; i < span; i++) {
+    const date = addDays(from, i);
+    const week: number[] = [];
+    for (let k = 0; k < 7; k++) {
+      const m = byDate.get(addDays(date, -k))?.mood;
+      if (m != null) week.push(m);
+    }
+    rolling.push({ date, avg: week.length ? avg(week) : null });
+  }
+
+  const weekday: number[][] = Array.from({ length: 7 }, () => []);
+  const counts = [0, 0, 0, 0, 0];
+  for (const p of points) {
+    const [y, m, d] = p.date.split('-').map(Number);
+    weekday[new Date(y, m - 1, d).getDay()].push(p.mood);
+    counts[p.mood - 1]++;
+  }
+  const symptomDays = new Map<string, number>();
+  for (const n of inRange) for (const sy of new Set(n.symptoms)) symptomDays.set(sy, (symptomDays.get(sy) ?? 0) + 1);
+
+  return {
+    from,
+    to,
+    points,
+    rolling,
+    average: points.length ? avg(points.map((p) => p.mood)) : null,
+    previousAverage: prev.length ? avg(prev) : null,
+    byWeekday: weekday.map((xs) => (xs.length >= 2 ? avg(xs) : null)),
+    counts,
+    topSymptoms: [...symptomDays.entries()]
+      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+      .slice(0, 5)
+      .map(([name, days]) => ({ name, days })),
+    noted: inRange.length,
+  };
+}
