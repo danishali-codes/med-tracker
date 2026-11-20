@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Share, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { ToggleRow, useRowStyles } from '../components/ToggleRow';
 import { Button, Card, Field, Input, SectionTitle, Text } from '../components/ui';
 import type { Settings, SyncSettings } from '../domain/types';
@@ -67,7 +68,7 @@ export default function SyncScreen() {
   const error = repo.getKv('sync_error');
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Card>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <Ionicons name="lock-closed-outline" size={22} color={c.primary} />
@@ -109,9 +110,9 @@ export default function SyncScreen() {
                 <Field label="Password">
                   <Input value={password} onChangeText={setPassword} secureTextEntry />
                 </Field>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Button title={busy === 'signin' ? 'Signing in...' : 'Sign in'} onPress={() => connect(false)} disabled={!!busy} style={{ flex: 1 }} />
-                  <Button title="Create account" kind="secondary" onPress={() => connect(true)} disabled={!!busy} style={{ flex: 1 }} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  <Button title={busy === 'signin' ? 'Signing in...' : 'Sign in'} onPress={() => connect(false)} disabled={!!busy} style={{ flexGrow: 1 }} />
+                  <Button title="Create account" kind="secondary" onPress={() => connect(true)} disabled={!!busy} style={{ flexGrow: 1 }} />
                 </View>
                 <Button title="How to set up a server" kind="ghost" small onPress={() => Linking.openURL(SERVER_GUIDE)} style={{ alignSelf: 'flex-start', marginTop: 8 }} />
               </>
@@ -143,7 +144,7 @@ export default function SyncScreen() {
                         {key}
                       </Text>
                     ) : null}
-                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
                       <Button
                         title={key ? 'Save key' : 'Show recovery key'}
                         kind="secondary"
@@ -232,6 +233,6 @@ export default function SyncScreen() {
           ) : null}
         </>
       ) : null}
-    </ScrollView>
+    </PageScroll>
   );
 }

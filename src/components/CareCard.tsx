@@ -71,11 +71,11 @@ export function CareCard({ person, graceMinutes }: { person: Followed; graceMinu
 }
 
 const useStyles = makeStyles((c) => ({
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 },
+  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', columnGap: 10, marginBottom: 8 },
   name: { fontSize: 17, fontWeight: '900', color: c.text },
   meta: { fontSize: 12, fontWeight: '700', color: c.muted },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 },
-  time: { width: 70, fontSize: 14, fontWeight: '800', color: c.text },
+  time: { minWidth: 70, fontSize: 14, fontWeight: '800', color: c.text },
   label: { flex: 1, fontSize: 14, fontWeight: '700', color: c.text },
   week: { flexDirection: 'row', gap: 4, marginTop: 10 },
   day: { flex: 1, height: 8, borderRadius: 4 },

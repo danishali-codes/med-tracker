@@ -19,16 +19,34 @@ function NextSquare({ data, dark, width, height }: { data: WidgetData; dark: boo
   const c = moodColors(dark, mood);
   const next = data.next;
   const roomy = height >= 140;
+  // The rings take whatever height the text below doesn't need (with headroom for bigger
+  // system text), so a tall or roomy widget isn't a small icon in an empty box.
+  const below = data.complete ? 48 : !next ? 46 : next.due ? 104 : 66;
+  // Tall and narrow: the streak sits on its own line and the rings are centred in the space above the text.
+  const tall = height >= width * 1.4 && height >= 200;
+  const ring = Math.min(width - 28 - (data.streak > 0 && !tall ? 34 : 0), height - 28 - Math.round(below * 1.15) - (tall ? 28 : 6), 140);
+  const showRing = ring >= 30 && (roomy || data.complete);
   return (
     <OverlapWidget clickAction="OPEN_APP" style={{ height: 'match_parent', width: 'match_parent', borderRadius: 26, backgroundColor: c.bg }}>
       {Confetti({ data, mood, c, width, height })}
       <FlexWidget style={{ height: 'match_parent', width: 'match_parent', padding: 14, flexDirection: 'column' }}>
-        <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center' }}>
-          {roomy || data.complete ? <RingBadge data={data} mood={mood} c={c} size={roomy ? 40 : 30} /> : Pills({ data, size: 20 })}
-          <FlexWidget style={{ flex: 1 }} />
-          {Streak({ data, c, size: 12 })}
-        </FlexWidget>
-        <FlexWidget style={{ flex: 1 }} />
+        {tall ? (
+          <FlexWidget style={{ width: 'match_parent', flex: 1, flexDirection: 'column' }}>
+            <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', justifyContent: 'flex-end', height: 20 }}>
+              {Streak({ data, c, size: 12 })}
+            </FlexWidget>
+            <FlexWidget style={{ width: 'match_parent', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <RingBadge data={data} mood={mood} c={c} size={Math.max(30, ring)} />
+            </FlexWidget>
+          </FlexWidget>
+        ) : (
+          <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center' }}>
+            {showRing ? <RingBadge data={data} mood={mood} c={c} size={Math.max(30, ring)} /> : Pills({ data, size: 20 })}
+            <FlexWidget style={{ flex: 1 }} />
+            {Streak({ data, c, size: 12 })}
+          </FlexWidget>
+        )}
+        {tall ? null : <FlexWidget style={{ flex: 1 }} />}
         {data.complete ? (
           <FlexWidget style={{ flexDirection: 'column' }}>
             <TextWidget text={doneTitle(mood, true)} maxLines={1} style={{ fontSize: 20, fontFamily: BOLD, color: c.text }} />
@@ -38,11 +56,15 @@ function NextSquare({ data, dark, width, height }: { data: WidgetData; dark: boo
           <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
             <TextWidget text={nextKicker(data)} maxLines={1} style={{ fontSize: 10, fontFamily: REG, color: c.muted, letterSpacing: 0.08 }} />
             <TextWidget text={next.label} maxLines={1} style={{ fontSize: 21, fontFamily: BOLD, color: c.text }} />
-            <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: next.due ? 8 : 0 }}>
-              {roomy ? Pills({ data, size: 16 }) : null}
-              <TextWidget text={next.names} maxLines={1} truncate="END" style={{ fontSize: 12, fontFamily: REG, color: c.muted, marginLeft: roomy ? 2 : 0 }} />
-            </FlexWidget>
-            {Actions({ data, c, compact: true, fill: true })}
+            {!roomy && next.due ? (
+              <FlexWidget style={{ height: 6 }} />
+            ) : (
+              <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: next.due ? 8 : 0 }}>
+                {roomy ? Pills({ data, size: 16 }) : null}
+                <TextWidget text={next.names} maxLines={1} truncate="END" style={{ fontSize: 12, fontFamily: REG, color: c.muted, marginLeft: roomy ? 2 : 0 }} />
+              </FlexWidget>
+            )}
+            {Actions({ data, c, compact: true, fill: true, takeOnly: width < 140 })}
           </FlexWidget>
         ) : (
           <FlexWidget style={{ flexDirection: 'column' }}>

@@ -73,7 +73,7 @@ export function Pills({ data, size }: { data: WidgetData; size: number }) {
 }
 
 /** Taken and Snooze for the next dose. Snooze hides while a snooze is already running. */
-export function Actions({ data, c, compact = false, fill = false }: { data: WidgetData; c: MoodColors; compact?: boolean; fill?: boolean }) {
+export function Actions({ data, c, compact = false, fill = false, takeOnly = false }: { data: WidgetData; c: MoodColors; compact?: boolean; fill?: boolean; takeOnly?: boolean }) {
   const next = data.next;
   if (!next || !next.due) return null;
   const pad = compact ? 6 : 7;
@@ -96,7 +96,7 @@ export function Actions({ data, c, compact = false, fill = false }: { data: Widg
       >
         <TextWidget text="Taken" style={{ fontSize: font, fontFamily: BOLD, color: c.onButton }} />
       </FlexWidget>
-      {next.snoozedUntil ? null : (
+      {next.snoozedUntil || takeOnly ? null : (
         <FlexWidget
           clickAction="SNOOZE_NEXT"
           clickActionData={{ time: next.time }}

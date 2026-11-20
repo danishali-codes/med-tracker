@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { DateButton } from '../components/Pickers';
 import { Button, Card, Chip, Field, Input, SectionTitle, Text } from '../components/ui';
 import { addDays, formatDateLong, toDateKey, type DateKey } from '../domain/dates';
@@ -84,7 +85,7 @@ export default function ReportScreen() {
   const pct = t.adherence == null ? '–' : `${Math.round(t.adherence * 100)}%`;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <Card>
         <Field label="Period">
           <View style={st.wrap}>
@@ -148,7 +149,7 @@ export default function ReportScreen() {
       />
       <Button title="Print" kind="secondary" icon={<Ionicons name="print-outline" size={18} color={c.primary} />} onPress={print} style={{ marginTop: 10 }} />
       <Text style={[st.hint, { textAlign: 'center', marginTop: 12 }]}>The PDF is made on your phone. Nothing is sent anywhere until you choose where to share it.</Text>
-    </ScrollView>
+    </PageScroll>
   );
 }
 
@@ -164,10 +165,10 @@ function Tile({ value, label, color }: { value: string; label: string; color: st
 
 const useStyles = makeStyles((c) => ({
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
-  inline: { flexDirection: 'row', gap: 10 },
+  inline: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   hint: { fontSize: 13, color: c.muted, fontWeight: '600', lineHeight: 18 },
-  tiles: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  tile: { flex: 1, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 4, marginBottom: 0 },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  tile: { flexGrow: 1, flexBasis: 70, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 4, marginBottom: 0 },
   tileValue: { fontSize: 22, fontWeight: '900' },
   medRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 12 },
   medName: { fontSize: 16, fontWeight: '800', color: c.text },

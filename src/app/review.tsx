@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../components/ui';
 import { eachDay } from '../domain/dates';
 import { buildReview, monthRange } from '../domain/insights';
@@ -55,7 +56,7 @@ export default function ReviewScreen() {
   const delta = Math.round((review.consistencyEnd - review.consistencyStart) * 100);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <Stack.Screen options={{ title: kind === 'year' ? 'Year in review' : 'Month in review' }} />
       <View style={s.header}>
         <PressableScale onPress={() => go(-1)} hitSlop={12} style={s.arrow} accessibilityLabel="Earlier">
@@ -129,7 +130,7 @@ export default function ReviewScreen() {
           </Card>
         </>
       )}
-    </ScrollView>
+    </PageScroll>
   );
 }
 
@@ -168,7 +169,7 @@ const useStyles = makeStyles((c) => ({
   tileLabel: { fontSize: 11, color: c.muted, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
   small: { fontSize: 11, color: c.muted, fontWeight: '600', marginTop: 4 },
   body: { fontSize: 15, color: c.text, fontWeight: '600', lineHeight: 21 },
-  bars: { flexDirection: 'row', justifyContent: 'space-between', height: 140, alignItems: 'flex-end' },
+  bars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 8 },
   barCol: { alignItems: 'center', flex: 1 },
   barValue: { fontSize: 10, color: c.muted, fontWeight: '700', marginBottom: 4 },
   barTrack: { width: 14, height: 96, borderRadius: 7, backgroundColor: c.sunken, justifyContent: 'flex-end', overflow: 'hidden' },

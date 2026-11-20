@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { Card, FadeIn, SectionTitle, Text } from '../components/ui';
 import { addDays } from '../domain/dates';
 import { findPatterns, patternReadiness } from '../domain/insights';
@@ -31,7 +32,7 @@ export default function PatternsScreen() {
   }, [summaries, meds, today]);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <Text style={s.lead}>
         Compares the mood and symptoms you note each day with whether you took your doses, over the last 6 months. Worked out on this phone only.
       </Text>
@@ -71,7 +72,7 @@ export default function PatternsScreen() {
           how you take any medicine.
         </Text>
       </Card>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

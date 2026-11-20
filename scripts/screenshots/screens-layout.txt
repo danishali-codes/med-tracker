@@ -1,0 +1,15 @@
+today - 4
+history calendar 4
+meds meds 3
+progress progress 4
+medication med/demo-metformin 5
+interactions interactions 2
+settings settings 4
+times times 2
+report report 2
+sync sync 2
+care care 2
+backup backup 2
+routines routines 2
+review review 2
+patterns patterns 2

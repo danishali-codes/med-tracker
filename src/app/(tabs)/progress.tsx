@@ -16,7 +16,9 @@ import { makeStyles, useTheme } from '../../theme';
 export default function ProgressScreen() {
   const c = useTheme();
   const s = useStyles();
-  const { today, progress, badges, byDate, summaries } = useProgress();
+  const { today, progress, badges: allBadges, byDate, summaries } = useProgress();
+  // Hidden badges stay a surprise: not listed or counted until they're earned.
+  const badges = allBadges.filter((b) => !b.hidden || b.has);
   const last30 = summaries.slice(-31, -1);
   const pct30 = adherence(last30);
   const onTimePct = progress.totalTaken ? Math.round((progress.totalOnTime / progress.totalTaken) * 100) : null;
@@ -36,7 +38,7 @@ export default function ProgressScreen() {
       <FadeIn>
         <View style={[s.streak, { backgroundColor: c.flame }]}>
           <Flame />
-          <View style={{ flex: 1 }}>
+          <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 150 }}>
             <Text style={s.streakBig}>{progress.currentStreak}</Text>
             <Text style={s.streakLabel}>day streak</Text>
             <Text style={s.streakSub}>Best: {progress.bestStreak} days</Text>
@@ -263,7 +265,7 @@ const useStyles = makeStyles((c) => ({
   hintTight: { fontSize: 12, color: c.muted, fontWeight: '600' },
   reportLink: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginBottom: 14 },
   reportTitle: { fontSize: 16, fontWeight: '800', color: c.text },
-  streak: { borderRadius: 32, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
+  streak: { borderRadius: 32, padding: 20, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginBottom: 14 },
   streakBig: { fontSize: 48, fontWeight: '900', color: '#fff', lineHeight: 52 },
   streakLabel: { fontSize: 16, fontWeight: '800', color: '#fff' },
   streakSub: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.85)', marginTop: 2 },
@@ -276,9 +278,9 @@ const useStyles = makeStyles((c) => ({
   statLabel: { fontSize: 11, color: c.muted, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
   statIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   segment: { flexDirection: 'row', backgroundColor: c.sunken, borderRadius: 18, padding: 4, marginBottom: 12 },
-  segItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 14 },
+  segItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 14 },
   segText: { fontSize: 14, fontWeight: '800', color: c.muted },
-  chart: { flexDirection: 'row', justifyContent: 'space-between', height: 150, alignItems: 'flex-end' },
+  chart: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 8 },
   barCol: { alignItems: 'center', flex: 1 },
   barTrack: { width: 12, height: 100, borderRadius: 6, backgroundColor: c.sunken, justifyContent: 'flex-end', overflow: 'hidden' },
   barFill: { width: '100%', borderRadius: 6 },

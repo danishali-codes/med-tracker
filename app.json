@@ -3,7 +3,7 @@
     "name": "Sabr",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.danishalicodes.sabrmedicinetracker",
-      "versionCode": 4,
+      "versionCode": 5,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#6A4DF4",
@@ -73,7 +73,7 @@
             {
               "name": "NextDose",
               "label": "Sabr: Next dose",
-              "description": "Just your next dose, with Taken and Snooze",
+              "description": "Your next dose with Taken and Snooze. Make it bigger to see your rings and every dose",
               "minWidth": "110dp",
               "minHeight": "50dp",
               "targetCellWidth": 2,
@@ -85,7 +85,7 @@
             {
               "name": "Today",
               "label": "Sabr: Today",
-              "description": "Today's rings and your next dose, with Taken and Snooze",
+              "description": "Today's rings and your next dose. Make it taller to see every dose and your week",
               "minWidth": "110dp",
               "minHeight": "50dp",
               "targetCellWidth": 4,

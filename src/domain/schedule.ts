@@ -227,12 +227,18 @@ export function groupByTime(doses: ScheduledDose[]): { time: TimeOfDay; doses: S
   return [...groups.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([time, ds]) => ({ time, doses: ds }));
 }
 
-export type Punctuality = 'onTime' | 'late';
+export type Punctuality = 'onTime' | 'late' | 'early';
 
-/** On time when taken within the window either side of the scheduled time, on the same day. */
+/**
+ * Within the on-time window either side of the dose time is on time. Taken earlier than
+ * that is early, later is late. Early and late both still count as taken for the streak;
+ * neither counts as on time, so neither makes a gold day.
+ */
 export function punctuality(dose: { date: DateKey; time: TimeOfDay }, takenAt: Date, windowMinutes: number): Punctuality {
   const due = dueAt(dose.date, dose.time).getTime();
-  return Math.abs(takenAt.getTime() - due) <= windowMinutes * 60_000 ? 'onTime' : 'late';
+  const diff = takenAt.getTime() - due;
+  if (Math.abs(diff) <= windowMinutes * 60_000) return 'onTime';
+  return diff < 0 ? 'early' : 'late';
 }
 
 export function indexLogs(logs: DoseLog[]): Map<string, DoseLog> {
