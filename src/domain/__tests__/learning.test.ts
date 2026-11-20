@@ -59,6 +59,11 @@ describe('learning routines', () => {
     expect(s.medIds).toEqual(['a', 'b']);
   });
 
+  it("ignores logs from medicines that aren't due at those times any more", () => {
+    const logs = lastDays(14).flatMap((d) => [log('old1', d, '08:00', '08:10'), log('old2', d, '09:00', '08:10')]);
+    expect(suggestRoutines([med('a', ['08:00']), med('b', ['09:00'])], logs, TODAY)).toEqual([]);
+  });
+
   it('leaves times alone that are taken apart', () => {
     const logs = lastDays(14).flatMap((d) => [log('a', d, '08:00', '08:05'), log('b', d, '09:00', '09:05')]);
     expect(suggestRoutines([med('a', ['08:00']), med('b', ['09:00'])], logs, TODAY)).toEqual([]);

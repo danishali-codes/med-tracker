@@ -597,7 +597,9 @@ export function suggestRoutines(meds: Medication[], logs: DoseLog[], today: Date
   // When each time's doses were taken, per day: the first dose taken at that time.
   const taken = new Map<string, number>();
   for (const l of logs) {
-    if (l.status !== 'taken' || l.date < from || l.date >= today || !atTime.has(l.time)) continue;
+    if (l.status !== 'taken' || l.date < from || l.date >= today) continue;
+    // Only the medicines due at that time now, so old or archived ones don't count.
+    if (!atTime.get(l.time)?.some((m) => m.id === l.medId)) continue;
     const k = `${l.date}|${l.time}`;
     const at = clockOf(l.at);
     if (!taken.has(k) || at < taken.get(k)!) taken.set(k, at);
