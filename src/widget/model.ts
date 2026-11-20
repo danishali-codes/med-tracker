@@ -19,6 +19,8 @@ export interface WidgetRow {
   pill: PillLook;
   status: 'taken' | 'skipped' | 'open';
   due: boolean;
+  /** The scheduled dose, so a tap on the row logs exactly this one. */
+  dose: ScheduledDose;
 }
 
 export interface WidgetData {
@@ -161,6 +163,7 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
         pill: look(med),
         status: log ? log.status : 'open',
         due: dueAt(today, d.time) <= now,
+        dose: d,
       };
     }),
   };

@@ -4,7 +4,7 @@ import { toDateKey } from '../domain/dates';
 import { daysOfSupply, units } from '../domain/dose';
 import { groupFromReminderId, groupKey, planReminders, refillText, REMINDER_PREFIX, reminderText, type PlannedReminder } from '../domain/reminders';
 import { dosesOn, slotKey } from '../domain/schedule';
-import type { Medication } from '../domain/types';
+import type { DoseStatus, Medication } from '../domain/types';
 import * as repo from '../db/repo';
 import { routineAt } from '../domain/routines';
 import { setupTimerChannel, startFoodTimer } from './food';
@@ -177,6 +177,59 @@ function readData(data: unknown): ReminderData | null {
   return { date: d.date, time: d.time, medIds: d.medIds as string[], slots, group: typeof d.group === 'string' ? d.group : null };
 }
 
+type DoseRef = { slot: string; medId: string; date: string; time: string };
+
+/**
+ * The one way doses get answered: the app's screens, notification buttons, the home screen
+ * widget and the watch tile all come through here. Each dose is logged with its own
+ * scheduled time; doses already answered are left alone unless `replace` is set (the app's
+ * own screens let you change an answer). Then the food timer starts, reminders for times
+ * that are now done are cleared, low stock is announced and reminders are planned again.
+ */
+export async function answerDoses(
+  doses: DoseRef[],
+  status: DoseStatus,
+  opts: { now?: Date; replace?: boolean; group?: string | null } = {},
+) {
+  const now = opts.now ?? new Date();
+  const low: Medication[] = [];
+  const taken: string[] = [];
+  for (const d of doses) {
+    if (!opts.replace && repo.getLog(d.slot)) continue; // already answered somewhere else
+    low.push(...repo.setDose(d, status, now));
+    if (status === 'taken') taken.push(d.medId);
+  }
+  if (taken.length) await startFoodTimer(taken, now).catch(() => {});
+  await settleGroups(doses, opts.group ?? null);
+  await notifyLowStock(low).catch(() => {});
+  await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
+}
+
+/**
+ * For every time these doses belong to: once nothing there is still open, the snooze ends
+ * and the reminder showing in the shade goes away. `extra` (the evening notice) always does.
+ */
+async function settleGroups(doses: DoseRef[], extra: string | null) {
+  const groups = new Map<string, DoseRef>();
+  for (const d of doses) groups.set(groupKey(d.date, d.time), d);
+  const done: string[] = extra ? [extra] : [];
+  for (const [group, d] of groups) {
+    const open = dosesOn(repo.getMeds(), d.date).some((x) => x.time === d.time && !repo.getLog(x.slot));
+    if (!open) done.push(group);
+  }
+  for (const group of done) {
+    repo.clearSnooze(group);
+    await dismissGroup(group).catch(() => {});
+  }
+}
+
+/** Remind again in a few minutes (the snooze length from Settings) for everything due at this time. */
+export async function snoozeGroup(group: string, minutes = repo.getSettings().snoozeMinutes) {
+  repo.setSnooze(group, new Date(Date.now() + minutes * 60_000));
+  await dismissGroup(group).catch(() => {});
+  await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
+}
+
 /**
  * Handles a tap on Taken / Snooze / Skip. Runs both from the app and from the
  * background task (Android runs it even when the app is closed). Repeating it is harmless.
@@ -185,30 +238,18 @@ export async function handleReminderAction(actionId: string, rawData: unknown) {
   const data = readData(rawData);
   if (!data) return;
   const group = data.group ?? groupKey(data.date, data.time);
-  const now = new Date();
-
   if (actionId === ACTION_TAKEN || actionId === ACTION_SKIP) {
-    const status = actionId === ACTION_TAKEN ? 'taken' : 'skipped';
-    const low: Medication[] = [];
-    // The doses as scheduled today, so each is logged with its own time.
-    const today = new Map(dosesOn(repo.getMeds(), data.date).map((d) => [d.slot, d]));
-    data.medIds.forEach((medId, i) => {
+    // The doses as scheduled that day, so each is logged with its own time.
+    const day = new Map(dosesOn(repo.getMeds(), data.date).map((d) => [d.slot, d]));
+    const doses = data.medIds.map((medId, i) => {
       const slot = data.slots?.[i] ?? slotKey(medId, data.date, data.time);
-      if (repo.getLog(slot)) return; // already answered in the app
-      const dose = today.get(slot) ?? { slot, medId, date: data.date, time: data.time };
-      low.push(...repo.setDose(dose, status, now));
+      return day.get(slot) ?? { slot, medId, date: data.date, time: data.time };
     });
-    if (status === 'taken') await startFoodTimer(data.medIds, now).catch(() => {});
-    repo.clearSnooze(group);
-    await notifyLowStock(low);
+    await answerDoses(doses, actionId === ACTION_TAKEN ? 'taken' : 'skipped', { group });
   } else if (actionId === ACTION_SNOOZE) {
-    const minutes = repo.getSettings().snoozeMinutes;
-    repo.setSnooze(group, new Date(now.getTime() + minutes * 60_000));
-  } else {
-    return; // plain tap opens the app; nothing to record
+    await snoozeGroup(group);
   }
-  await dismissGroup(group);
-  await rescheduleAll();
+  // A plain tap opens the app; nothing to record.
 }
 
 export async function notifyLowStock(meds: Medication[]) {

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, useWindowDimensions, View } from 'react-native';
-import { logAsNeeded, logDose } from '../../actions';
+import { logAsNeeded, takeDoses } from '../../actions';
 import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
 import { Screen } from '../../components/Screen';
@@ -77,11 +77,8 @@ export default function TodayScreen() {
 
   const activeCount = meds.filter((m) => !m.archived).length;
 
-  // One at a time, so each dose is logged before the reminders are worked out again.
   const takeAll = async (pending: typeof doses) => {
-    let failed = 0;
-    for (const d of pending) await logDose(d, 'taken').catch(() => failed++);
-    if (failed) Alert.alert('Some doses were not saved', 'Please try again.');
+    await takeDoses(pending).catch(() => Alert.alert('Some doses were not saved', 'Please try again.'));
   };
 
   return (

@@ -23,7 +23,8 @@ import {
 } from '../notifications/permissions';
 import { rescheduleAll, resetNotificationSetup, sendTestReminder } from '../notifications/reminders';
 import { makeStyles, useTheme } from '../theme';
-import { clearWatch, connectedWatches, pushToWatchNow } from '../wear/sync';
+import { clearWatch, pushToWatchNow } from '../wear/sync';
+import { WatchStatus } from '../components/WatchStatus';
 
 export default function SettingsScreen() {
   const st = useStyles();
@@ -353,25 +354,6 @@ export default function SettingsScreen() {
         Sabr {Application.nativeApplicationVersion ?? ''} ({Application.nativeBuildVersion ?? ''})
       </Text>
     </PageScroll>
-  );
-}
-
-function WatchStatus() {
-  const st = useStyles();
-  const [watches, setWatches] = useState<string[] | null>(null);
-  useEffect(() => {
-    connectedWatches().then(setWatches).catch(() => setWatches([]));
-  }, []);
-  return (
-    <Text style={[st.hint, { marginTop: 6 }]}>
-      {watches == null
-        ? 'Looking for your watch...'
-        : watches.length
-          ? `Connected to ${watches.join(', ')}. `
-          : 'No watch connected right now. '}
-      The watch needs the Sabr watch app installed (see the Sabr website for how). Then swipe to your tiles, scroll to the end, tap Add tiles and pick
-      Sabr.
-    </Text>
   );
 }
 
