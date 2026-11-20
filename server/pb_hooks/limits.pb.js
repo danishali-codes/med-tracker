@@ -4,9 +4,9 @@
 // vaults. The app uses one backup and one share per phone, so this leaves room for a
 // couple of phones. Everything in them is encrypted on the phone, so this is all the
 // server can check.
-const MAX_VAULTS_PER_ACCOUNT = 6;
-
 onRecordCreateRequest((e) => {
+  // Declared in here: PocketBase runs each handler on its own, without this file's top-level variables.
+  const MAX_VAULTS_PER_ACCOUNT = 6;
   const owner = e.auth ? e.auth.id : '';
   if (owner) {
     const n = e.app.countRecords('vaults', $dbx.hashExp({ owner }));

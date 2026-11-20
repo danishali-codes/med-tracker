@@ -236,11 +236,13 @@ async function findBackup(recoveryKey: string | null): Promise<FoundBackup | nul
   const s = await getSession();
   if (!s) throw new Error('Sign in first.');
   const wrap = await SecureStore.getItemAsync(WRAP_KEY);
-  for (const v of await pb.listVaults(f, s, 'backup')) {
+  // Newest first, but this phone's own backup last: on a new phone that one may be a nearly
+  // empty copy made before restoring. It's still used when it's the only one that opens.
+  const mine = repo.getKv('backup_id');
+  const all = await pb.listVaults(f, s, 'backup');
+  for (const v of [...all.filter((x) => x.id !== mine), ...all.filter((x) => x.id === mine)]) {
     try {
       const { json, backupKey } = unpackBackup(v.data, { recoveryKey, wrap });
-      // Skip the empty backup this phone may have made before restoring.
-      if (v.id === repo.getKv('backup_id') && !recoveryKey) continue;
       return { id: v.id, updated: v.updated, json, backupKey };
     } catch {
       // Not this one.
