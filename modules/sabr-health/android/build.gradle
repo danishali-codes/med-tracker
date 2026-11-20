@@ -19,4 +19,6 @@ dependencies {
   // Health Connect: where Samsung Health, Google Fit and most watches share steps, sleep and
   // heart rate on the phone. Read-only here.
   implementation 'androidx.health.connect:connect-client:1.1.0'
+  // The activity-result registry that launches Health Connect's permission screen.
+  implementation 'androidx.activity:activity-ktx:1.9.3'
 }

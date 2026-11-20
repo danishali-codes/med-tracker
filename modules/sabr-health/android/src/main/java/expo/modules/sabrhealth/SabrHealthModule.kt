@@ -1,6 +1,8 @@
 package expo.modules.sabrhealth
 
 import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregateMetric
@@ -28,16 +30,21 @@ import java.time.LocalDate
 import java.time.Period
 import java.time.ZoneId
 
-private const val REQUEST_CODE = 0x5ab4
-
 /**
  * Reads steps, sleep and heart rate from Health Connect, where Samsung Health and most watches
  * share them. Read-only: Sabr never writes to Health Connect, and what it reads stays in memory
  * on the phone.
  */
+private val AWAKE_STAGES = setOf(
+  SleepSessionRecord.STAGE_TYPE_AWAKE,
+  SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+  SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+)
+
 class SabrHealthModule : Module() {
   private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
   private var pending: Promise? = null
+  private var launcher: ActivityResultLauncher<Set<String>>? = null
 
   private val perms = mapOf(
     "steps" to HealthPermission.getReadPermission(StepsRecord::class),
@@ -56,7 +63,10 @@ class SabrHealthModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("SabrHealth")
 
-    OnDestroy { scope.cancel() }
+    OnDestroy {
+      launcher?.unregister()
+      scope.cancel()
+    }
 
     // "ready", "needsInstall" (Health Connect missing or out of date) or "unavailable".
     Function("status") {
@@ -71,36 +81,44 @@ class SabrHealthModule : Module() {
       names(client().permissionController.getGrantedPermissions())
     }
 
-    // Shows Health Connect's own screen where you pick what Sabr may read.
+    // Shows Health Connect's own screen where you pick what Sabr may read. Goes through the
+    // activity-result registry: on Android 14 and newer the contract is a runtime permission
+    // request that only the registry can launch.
     AsyncFunction("request") { promise: Promise ->
-      val activity = appContext.currentActivity
+      val activity = appContext.currentActivity as? ComponentActivity
       if (activity == null) {
         promise.reject("ERR_SABR_HEALTH", "No screen to ask from", null)
         return@AsyncFunction
       }
       pending?.resolve(emptyList<String>())
       pending = promise
+      launcher?.unregister()
       try {
-        val intent = PermissionController.createRequestPermissionResultContract().createIntent(activity, perms.values.toSet())
-        activity.startActivityForResult(intent, REQUEST_CODE)
+        val l = activity.activityResultRegistry.register(
+          "sabr-health-permissions",
+          PermissionController.createRequestPermissionResultContract(),
+        ) { _: Set<String> ->
+          launcher?.unregister()
+          launcher = null
+          val p = pending ?: return@register
+          pending = null
+          scope.launch {
+            try {
+              p.resolve(names(client().permissionController.getGrantedPermissions()))
+            } catch (e: Exception) {
+              p.resolve(emptyList<String>())
+            }
+          }
+        }
+        launcher = l
+        l.launch(perms.values.toSet())
       } catch (e: Exception) {
+        launcher?.unregister()
+        launcher = null
         pending = null
         promise.reject("ERR_SABR_HEALTH", e.message, e)
       }
     }.runOnQueue(Queues.MAIN)
-
-    OnActivityResult { _, payload ->
-      if (payload.requestCode != REQUEST_CODE) return@OnActivityResult
-      val p = pending ?: return@OnActivityResult
-      pending = null
-      scope.launch {
-        try {
-          p.resolve(names(client().permissionController.getGrantedPermissions()))
-        } catch (e: Exception) {
-          p.resolve(emptyList<String>())
-        }
-      }
-    }
 
     // Health Connect's settings, where access can be changed or taken back.
     Function("openSettings") {
@@ -110,8 +128,18 @@ class SabrHealthModule : Module() {
 
     // One entry per day from `from` to `to` (inclusive, YYYY-MM-DD, phone's time zone) that
     // has any data. Only reads the kinds you allowed.
+    // Without the history permission, Health Connect only allows reading from 30 days before
+    // Sabr was first allowed in. If the longer range is refused, read what is allowed.
     AsyncFunction("daily") Coroutine { from: String, to: String ->
-      readDaily(LocalDate.parse(from), LocalDate.parse(to))
+      val start = LocalDate.parse(from)
+      val end = LocalDate.parse(to)
+      try {
+        readDaily(start, end)
+      } catch (e: Exception) {
+        val recent = LocalDate.now().minusDays(28)
+        if (!start.isBefore(recent)) throw e
+        readDaily(recent, end)
+      }
     }
   }
 
@@ -169,7 +197,7 @@ class SabrHealthModule : Module() {
         if (woke < from || woke > to) continue
         var ms = Duration.between(s.startTime, s.endTime).toMillis()
         for (stage in s.stages) {
-          if (stage.stage == SleepSessionRecord.STAGE_TYPE_AWAKE || stage.stage == SleepSessionRecord.STAGE_TYPE_OUT_OF_BED) {
+          if (stage.stage in AWAKE_STAGES) {
             ms -= Duration.between(stage.startTime, stage.endTime).toMillis()
           }
         }
