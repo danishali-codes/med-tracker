@@ -3,7 +3,7 @@
     "name": "Sabr",
     "slug": "med-tracker",
     "scheme": "medtracker",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.danishalicodes.sabrmedicinetracker",
-      "versionCode": 5,
+      "versionCode": 6,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#6A4DF4",

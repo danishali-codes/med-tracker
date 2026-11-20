@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Alert, Pressable, Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { DateButton, TimeButton } from '../components/Pickers';
 import { Button, Card, Chip, Field, SectionTitle, Select, Text } from '../components/ui';
@@ -269,7 +270,7 @@ function ChangeRow({
         })}
       </View>
       <Pressable
-        onPress={() => Alert.alert('Remove this change?', undefined, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: onRemove }])}
+        onPress={() => popup('Remove this change?', undefined, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: onRemove }])}
         style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}
       >
         <Ionicons name="trash-outline" size={16} color={c.bad} />
