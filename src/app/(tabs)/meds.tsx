@@ -9,7 +9,7 @@ import { daysOfSupply, describeDose, isLowStock, units } from '../../domain/dose
 import { medConsistency, medDays, medStreak } from '../../domain/progress';
 import { foodLabel } from '../../domain/routines';
 import { describeSchedule, indexLogs, isPausedOn, nextDueDate } from '../../domain/schedule';
-import type { DoseLog } from '../../domain/types';
+import { isSupplement, type DoseLog } from '../../domain/types';
 import type { Medication } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useToday } from '../../hooks/useData';
@@ -26,6 +26,8 @@ export default function MedsScreen() {
   const [showArchived, setShowArchived] = useState(false);
   const logs = useMemo(() => indexLogs(repo.getLogs()), [version]);
   const active = meds.filter((m) => !m.archived);
+  const activeMeds = active.filter((m) => !isSupplement(m));
+  const supplements = active.filter(isSupplement);
   const archived = meds.filter((m) => m.archived);
 
   return (
@@ -52,8 +54,27 @@ export default function MedsScreen() {
           <Button title="Add medication" onPress={() => router.push('/med/new')} style={{ marginTop: 16 }} />
         </Card>
       ) : null}
-      {active.map((m, i) => (
+      {activeMeds.map((m, i) => (
         <FadeIn key={m.id} delay={i * 40}>
+          <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
+        </FadeIn>
+      ))}
+      {active.length > 0 ? (
+        <SectionTitle
+          right={
+            <Pressable onPress={() => router.push({ pathname: '/med/[id]', params: { id: 'new', supplement: '1' } })} hitSlop={10}>
+              <Text style={{ color: c.primary, fontWeight: '800' }}>Add</Text>
+            </Pressable>
+          }
+        >
+          Supplements
+        </SectionTitle>
+      ) : null}
+      {active.length > 0 && supplements.length === 0 ? (
+        <Text style={[s.sub, { marginLeft: 6, marginBottom: 14 }]}>Vitamins and the like: reminders and their own ring, without counting towards your streak.</Text>
+      ) : null}
+      {supplements.map((m, i) => (
+        <FadeIn key={m.id} delay={(activeMeds.length + i) * 40}>
           <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}

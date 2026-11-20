@@ -4,10 +4,13 @@ import * as SecureStore from 'expo-secure-store';
 import * as Sharing from 'expo-sharing';
 import { diffDays, toDateKey } from '../domain/dates';
 import * as repo from '../db/repo';
+import { cloudAllowed } from '../privacy';
 import { isLockedBackup, lockBackup, unlockBackup } from './crypto';
+import { driveAccount, uploadToDrive } from './drive';
 
 // Backups are files you keep yourself: shared to wherever you like (Files, Google Drive,
-// a USB stick) or written once a week to a folder you picked. Nothing is uploaded by the app.
+// a USB stick), or written on a schedule to a folder you picked or (if you connect it) your
+// own Google Drive. Files going to Drive are always password-locked first.
 
 const AUTO_PASSWORD = 'auto_backup_password';
 const LAST_AUTO = 'last_backup_auto';
@@ -19,9 +22,15 @@ function backupFileName(locked: boolean, date = new Date()): string {
 }
 
 /** The backup as text: locked with the password, or plain JSON when there's none. */
-function makeBackup(password: string | null): string {
+async function makeBackup(password: string | null): Promise<string> {
   const plain = repo.exportAll();
   return password ? lockBackup(plain, password) : plain;
+}
+
+/** Locks a backup with the password and uploads it to your Google Drive. */
+export async function saveToDrive(password: string) {
+  if (!password) throw new Error('Backups going to Google Drive need a password.');
+  await uploadToDrive(backupFileName(true), await makeBackup(password));
 }
 
 /** Saves a backup to the cache and opens the share sheet so it can go anywhere. */
@@ -30,7 +39,7 @@ export async function shareBackup(password: string | null) {
   const file = new File(Paths.cache, backupFileName(locked));
   if (file.exists) file.delete();
   file.create();
-  file.write(makeBackup(password));
+  file.write(await makeBackup(password));
   await Sharing.shareAsync(file.uri, { mimeType: locked ? 'application/octet-stream' : 'application/json', dialogTitle: 'Save your backup' });
 }
 
@@ -39,12 +48,12 @@ export function needsPassword(text: string): boolean {
 }
 
 /** Replaces everything in the app with the backup. Throws a readable message on failure. */
-export function restoreBackup(text: string, password: string | null) {
-  const plain = isLockedBackup(text) ? unlockBackup(text, password ?? '') : text;
+export async function restoreBackup(text: string, password: string | null) {
+  const plain = isLockedBackup(text) ? await unlockBackup(text, password ?? '') : text;
   repo.importAll(plain);
 }
 
-// ---- weekly backup to a folder ----
+// ---- automatic backup to a folder or Google Drive ----
 
 export async function pickBackupFolder(): Promise<{ uri: string; name: string } | null> {
   try {
@@ -71,18 +80,29 @@ export function lastAutoBackup(): string | null {
   return repo.getKv(LAST_AUTO);
 }
 
-/** Writes a backup to the chosen folder now, and keeps only the newest few there. */
+/** Whether the chosen place for automatic backups is set up (and allowed right now). */
+export function autoBackupReady(s = repo.getSettings().autoBackup): boolean {
+  return s.target === 'drive' ? !!driveAccount() && cloudAllowed() : !!s.folderUri;
+}
+
+/** Writes a backup to the chosen folder or Drive now, and keeps only the newest few there. */
 export async function runAutoBackup(): Promise<void> {
   const s = repo.getSettings().autoBackup;
-  if (!s.folderUri) throw new Error('Choose a folder first.');
+  if (s.target === 'drive' && !driveAccount()) throw new Error('Connect Google Drive first.');
   const password = await SecureStore.getItemAsync(AUTO_PASSWORD);
   if (!password) throw new Error('Set a backup password first.');
+  if (s.target === 'drive') {
+    await uploadToDrive(backupFileName(true), await makeBackup(password), KEEP_AUTO_FILES);
+    repo.setKv(LAST_AUTO, new Date().toISOString());
+    return;
+  }
+  if (!s.folderUri) throw new Error('Choose a folder first.');
   const dir = new Directory(s.folderUri);
   const name = backupFileName(true);
   const old = dir.list().filter((x): x is File => x instanceof File && (x.name ?? '').startsWith(PREFIX));
   for (const f of old) if (f.name === name) f.delete();
   const file = dir.createFile(name, 'application/octet-stream');
-  file.write(makeBackup(password));
+  file.write(await makeBackup(password));
   const rest = old.filter((f) => f.name !== name && f.exists).sort((a, b) => ((a.name ?? '') < (b.name ?? '') ? 1 : -1));
   for (const f of rest.slice(KEEP_AUTO_FILES - 1)) {
     try {
@@ -97,7 +117,7 @@ export async function runAutoBackup(): Promise<void> {
 /** Runs the weekly backup when it's due. Quiet on failure; Settings shows the last good one. */
 export async function autoBackupIfDue(now = new Date()): Promise<boolean> {
   const s = repo.getSettings().autoBackup;
-  if (!s.enabled || !s.folderUri) return false;
+  if (!s.enabled || !autoBackupReady(s)) return false;
   const last = lastAutoBackup();
   if (last && diffDays(toDateKey(new Date(last)), toDateKey(now)) < s.everyDays) return false;
   try {

@@ -15,6 +15,53 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 - Read-only and on the phone: Sabr never writes to your health data, doesn't keep a copy, and nothing goes online.
 - Sabr now needs Android 8 or newer.
 
+## 0.12
+
+Supplements, a mood trend, routines the app learns from you, and one path for every Taken button.
+
+### Supplements
+- Mark a medicine as a supplement (vitamins, fish oil...) in its editor, or add one from the Supplements section on the Medications tab.
+- Supplements get reminders like medicines, but only one: no repeats unless a medicine is due at the same time.
+- They have their own ring and list on the Today screen and never count towards streaks, gold days or badges. Missing one costs nothing.
+
+### Mood
+- The mood check-in now has a Save button. Once saved it folds down to a short summary you can change.
+- New Mood trend screen (Progress tab, or from the saved check-in): your daily moods with a 7-day average line, the change from the period before, how often you picked each mood, your best weekday and the symptoms you noted most.
+
+### Learned routines
+- On top of moving a reminder you're always late for, Sabr now spots doses you take at a different time on certain weekdays (for example later at the weekend) and offers a different time on those days.
+- It also spots two reminder times whose doses you take in one go and offers to join them into one routine.
+- All of this is worked out on the phone from your own logs. Nothing changes until you accept, and Not now hides a suggestion for 30 days.
+
+### Evening check
+- The end-of-day notice now says which dose times are still open (for example "2 medicines from 8:00 AM"), even with medicine names hidden. It was already on by default at 10 PM; you can change the time in Settings.
+
+### Fixed
+- Taken on a notification, the widget, the watch tile and in the app now all log doses through the same code, so they behave the same (food timer, stock, clearing the reminder).
+- A Take press on the widget now updates the watch tile and caregivers straight away, and the reverse.
+- Settings only says the watch is ready when the Sabr watch app is installed on it. A connected watch without it is named, with how to install it. Update the watch app too: older versions don't report themselves.
+
+## 0.11
+
+Online backup without running your own server, Google Drive backups, and a Fully local switch. Everything online stays off until you turn it on.
+
+### Online backup on the Sabr server
+- Settings, Backup and sharing, Sync and sharing now offers the **Sabr server** next to your own server. Make an account with an email and a password, nothing to set up.
+- It's end-to-end encrypted. Your password never leaves the phone: it locks your data here, and the server only gets a code made from it to sign you in. Whoever runs the server, Sabr's developer included, can't read your backup.
+- On a new phone, sign in with the same email and password and Sabr offers to restore your backup. Your recovery key still works too, if you ever lose the password.
+- Your own server works as before. New accounts there get the same password unlock.
+
+### Google Drive
+- Optional **Sign in with Google** in Backup and restore. Sabr can only see the files it makes, in a Sabr backups folder, nothing else in your Drive.
+- Save a backup straight to Drive, restore from a list of your Drive backups, or pick Google Drive as the place for automatic backups.
+- Backups going to Drive are always locked with your password first, so Google can't read them.
+
+### Fully local
+- One switch in Privacy that keeps Sabr off the internet completely: online search, online backup and sharing, people you look after, Google Drive and the watch tile all pause. A popup says exactly what stops before it turns on.
+
+### Also
+- Password-locked backup files are much harder to guess at: the password is stretched in native code, 10 times more than before, in about the same time.
+
 ## 0.10
 
 Settings is split into pages, with search and a Simple / Advanced switch, and every pop-up now looks like the rest of Sabr.

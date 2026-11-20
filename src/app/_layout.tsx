@@ -115,6 +115,7 @@ export default function RootLayout() {
             <Stack.Screen name="review" options={{ title: 'In review' }} />
             <Stack.Screen name="patterns" options={{ title: 'Patterns' }} />
             <Stack.Screen name="health" options={{ title: 'Health data' }} />
+            <Stack.Screen name="mood" options={{ title: 'Mood trend' }} />
           </Stack>
           <PopupHost />
           </AppLockGate>

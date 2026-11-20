@@ -33,7 +33,9 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
   <img src="docs/screenshots/latest/notification.png" width="200" />
 </p>
 
-**Notes on how you feel.** A quick mood, symptoms like headache or nausea, and a few words for any day. Add a photo of each pill so they're easy to tell apart.
+**Notes on how you feel.** A quick mood, symptoms like headache or nausea, and a few words for any day, saved with one tap. The mood trend shows how you've felt over the last month, 3 months or year. Add a photo of each pill so they're easy to tell apart.
+
+**Supplements.** Vitamins and the like get reminders and their own ring on the Today screen, but they're kept out of your streak, so missing one never costs you anything.
 
 **A clear answer to "did I take it?"** The Today screen lists what's due and what's done. The History calendar colours every day, and you can tap any day to see or fix what was logged.
 
@@ -58,7 +60,7 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
 
 **Streaks that are fair.** A dose taken late still counts. Only a dose never taken that day breaks the streak, and streak freezes cover the odd bad day. Lost one anyway? Take every dose for the next 3 days and it comes back. Days you plan to skip (a test, a doctor's instruction) don't count against you at all. A consistency score, gold days (every dose on time), a perfect streak, milestones, rings, heatmaps and badges show how you're doing.
 
-**Routines and timing.** Group medicines you take together, like Breakfast at 8:00, under one reminder with Take all. Empty-stomach medicines start a timer that tells you when you can eat. If you always take a dose 40 minutes after its reminder, Sabr offers to move the reminder.
+**Routines and timing.** Group medicines you take together, like Breakfast at 8:00, under one reminder with Take all. Empty-stomach medicines start a timer that tells you when you can eat. Sabr also learns from when you really take your doses: if you always take one 40 minutes after its reminder, take it later at weekends, or take two doses together, it offers to move the reminder, use a different time on those days, or join them into one routine. This is worked out on the phone. An evening check lists anything from earlier in the day that isn't logged yet.
 
 **Month and year in review, and patterns.** A page on how each month and year went, and a view that lines up your mood and symptom notes with missed doses. All worked out on the phone.
 
@@ -112,7 +114,9 @@ No accounts, ads, analytics or crash reports, and your data stays on your phone.
 
 ## What's next
 
-- **0.5.x:** fixes from testing 0.5 on a phone.
+- First-run setup that walks you through notifications, alarms and battery settings.
+- Arabic and right-to-left layout.
+- An F-Droid listing.
 
 ## Install on Android
 

@@ -326,7 +326,8 @@ export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySumm
 // day_summary is included: it holds finished days as they were, which can't be rebuilt
 // once a med has been archived or its schedule changed. purchase and placement belong to
 // the room decorating, which is switched off for now; they stay so nothing is lost.
-const LOCAL_ONLY_KV = ['care_', 'sync_', 'share_id', 'backup_id', 'last_share', 'last_backup'];
+// drive_: which Google account and folder this phone backs up to.
+const LOCAL_ONLY_KV = ['care_', 'sync_', 'share_id', 'backup_id', 'last_share', 'last_backup', 'drive_'];
 const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv', 'day_note'] as const;
 
 export function exportAll(): string {
@@ -369,6 +370,7 @@ export function importAll(json: string) {
       lockAfterMinutes: here.lockAfterMinutes,
       hideInRecents: here.hideInRecents,
       autoBackup: here.autoBackup,
+      fullyLocal: here.fullyLocal,
     };
     db.runSync('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)', 'settings', JSON.stringify(merged));
   });

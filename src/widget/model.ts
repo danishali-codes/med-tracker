@@ -3,7 +3,7 @@ import { describeDose } from '../domain/dose';
 import { adherence, computeProgress, isGoldDay, type DaySummary } from '../domain/progress';
 import { groupKey } from '../domain/reminders';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../domain/schedule';
-import type { DoseLog, Medication, ScheduledDose, Settings } from '../domain/types';
+import { isSupplement, type DoseLog, type Medication, type ScheduledDose, type Settings } from '../domain/types';
 import { lookOf } from '../components/pillLook';
 
 export type PillLook = ReturnType<typeof lookOf>;
@@ -19,6 +19,8 @@ export interface WidgetRow {
   pill: PillLook;
   status: 'taken' | 'skipped' | 'open';
   due: boolean;
+  /** The scheduled dose, so a tap on the row logs exactly this one. */
+  dose: ScheduledDose;
 }
 
 export interface WidgetData {
@@ -83,10 +85,12 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
   const byId = new Map(meds.map((m) => [m.id, m]));
   const showNames = !!settings.widgetShowNames;
 
-  const taken = doses.filter((d) => logs.get(d.slot)?.status === 'taken');
+  // The rings and colours follow medicines only, like the app; supplements still show in the lists.
+  const counted = doses.filter((d) => !isSupplement(byId.get(d.medId)));
+  const taken = counted.filter((d) => logs.get(d.slot)?.status === 'taken');
   const onTime = taken.filter((d) => punctuality(d, new Date(logs.get(d.slot)!.at), settings.onTimeWindowMinutes) === 'onTime').length;
-  const done = doses.filter((d) => logs.has(d.slot)).length;
-  const complete = doses.length > 0 && done === doses.length;
+  const done = counted.filter((d) => logs.has(d.slot)).length;
+  const complete = counted.length > 0 && done === counted.length;
 
   let streak = 0;
   try {
@@ -137,7 +141,7 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
   return {
     date: today,
     done,
-    total: doses.length,
+    total: counted.length,
     taken: taken.length,
     onTime,
     week,
@@ -161,6 +165,7 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
         pill: look(med),
         status: log ? log.status : 'open',
         due: dueAt(today, d.time) <= now,
+        dose: d,
       };
     }),
   };
