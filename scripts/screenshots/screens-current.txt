@@ -13,4 +13,5 @@ backup backup
 routines routines
 review review
 patterns patterns
+health health
 notification settings @notify

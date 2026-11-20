@@ -226,6 +226,11 @@ export interface Settings {
    * the Wear OS data layer; names are only included when showMedNames is on.
    */
   watchTile: boolean;
+  /**
+   * Read steps, sleep and heart rate from Health Connect (where Samsung Health shares them).
+   * Off by default. Read-only, kept in memory on the phone, never saved or sent anywhere.
+   */
+  healthConnect: boolean;
   /** Show the advanced settings too (off: Settings shows only the everyday ones; search always finds everything). */
   showAdvanced: boolean;
   /**
@@ -307,6 +312,7 @@ export const DEFAULT_SETTINGS: Settings = {
   foodTimers: true,
   autoBackup: { enabled: false, target: 'folder', folderUri: null, folderName: null, everyDays: 7 },
   watchTile: false,
+  healthConnect: false,
   showAdvanced: false,
   fullyLocal: false,
 };

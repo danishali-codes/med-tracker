@@ -1,0 +1,36 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Read-only. Nothing is asked for until you turn on Health data in Sabr's settings,
+       and Health Connect lets you pick which of these Sabr may read. -->
+  <uses-permission android:name="android.permission.health.READ_STEPS" />
+  <uses-permission android:name="android.permission.health.READ_SLEEP" />
+  <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+  <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+
+  <!-- To find the Health Connect app on Android 13 and older. -->
+  <queries>
+    <package android:name="com.google.android.apps.healthdata" />
+  </queries>
+
+  <application>
+    <!-- Health Connect's "why does this app want access" link (Android 13 and older). -->
+    <activity
+      android:name="expo.modules.sabrhealth.HealthRationaleActivity"
+      android:exported="true"
+      android:theme="@android:style/Theme.Translucent.NoTitleBar">
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+      </intent-filter>
+    </activity>
+    <!-- The same link on Android 14 and newer. -->
+    <activity-alias
+      android:name="expo.modules.sabrhealth.ViewPermissionUsageActivity"
+      android:exported="true"
+      android:targetActivity="expo.modules.sabrhealth.HealthRationaleActivity"
+      android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+      </intent-filter>
+    </activity-alias>
+  </application>
+</manifest>

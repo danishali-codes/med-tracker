@@ -80,6 +80,22 @@ Only the Sabr app on your own phone and watch, signed with the same key, can rea
 off deletes the summary from the watch. All of it is in [`src/wear/sync.ts`](src/wear/sync.ts)
 and the [`wear/`](wear) watch app.
 
+## Health data (off by default)
+
+Settings > Watch, widgets and health > Health data can read your steps, sleep, heart rate and resting heart rate from
+**Health Connect**, the place on the phone where Samsung Health (and a Galaxy Watch through it),
+Google Fit and most watch apps share them. This all happens on the phone: nothing goes online.
+
+- Nothing is read until you turn it on, and Health Connect's own screen lets you pick which of
+  the four Sabr may read. You can take access back in Health Connect at any time.
+- Sabr only reads. It never writes, changes or deletes anything in your health data.
+- What it reads is kept in memory for a few minutes to show the Health data page and Patterns,
+  then forgotten. It isn't saved in Sabr's database, so it's never in backups, doctor reports,
+  sync or anything shared.
+
+All of it is in [`src/health/connect.ts`](src/health/connect.ts) and
+[`modules/sabr-health`](modules/sabr-health).
+
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so
