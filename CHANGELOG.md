@@ -6,6 +6,15 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.10
+
+### Health data
+- Bring in steps, sleep, heart rate and resting heart rate from Samsung Health (and your Galaxy Watch) through Health Connect. Off until you turn it on in Settings > Health data, and Health Connect lets you pick exactly what Sabr can read.
+- The Health data page shows the last 7 days of steps, sleep and heart rate next to each day's doses and mood.
+- Patterns now looks at health data too: sleep before days with a missed dose, busy or quiet days, resting heart rate, and how sleep and steps line up with your mood.
+- Read-only and on the phone: Sabr never writes to your health data, doesn't keep a copy, and nothing goes online.
+- Sabr now needs Android 8 or newer.
+
 ## 0.9
 
 A layout pass over every screen, bigger widgets that show more as they grow, and early doses.

@@ -93,6 +93,8 @@ Sabr (صبر, "patience") is a free, open-source Android app that does that. It'
   <img src="docs/screenshots/latest/settings.png" width="200" />
 </p>
 
+**Sleep, steps and heart rate from Samsung Health.** Turn on Health data and Sabr reads them from Health Connect (where Samsung Health and your Galaxy Watch share them), shows them next to each day's doses and mood, and adds them to Patterns: for example, whether you miss doses more after a short night. Read-only, on the phone, and off until you turn it on.
+
 **Optional backup and caregiver sharing, on your own server.** If you run a [PocketBase](https://pocketbase.io) server, the app can keep an encrypted backup there, and let a family member see whether today's doses were taken. Everything is encrypted on the phone first, so the server can't read it, and medicine names are only shared if you choose. Both are off until you turn them on. Setup: [server/README.md](server/README.md).
 
 <p>

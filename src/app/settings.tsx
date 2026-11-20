@@ -303,6 +303,19 @@ export default function SettingsScreen() {
       </PressableScale>
 
       {Platform.OS === 'android' ? (
+        <PressableScale onPress={() => router.push('/health')} style={st.linkCard}>
+          <Ionicons name="heart-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={st.label}>Health data</Text>
+            <Text style={st.hint}>
+              {settings.healthConnect ? 'Reading steps, sleep and heart rate from Health Connect' : 'Off. Bring in steps, sleep and heart rate from Samsung Health'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
+      ) : null}
+
+      {Platform.OS === 'android' ? (
         <>
           <SectionTitle>Home screen widget</SectionTitle>
           <Card>

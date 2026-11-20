@@ -1,13 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMemo } from 'react';
-import { View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
+import { Platform, View } from 'react-native';
 import { PageScroll } from '../components/Screen';
-import { Card, FadeIn, SectionTitle, Text } from '../components/ui';
+import { Card, FadeIn, PressableScale, SectionTitle, Text } from '../components/ui';
 import { addDays } from '../domain/dates';
+import { findHealthPatterns, type HealthDay } from '../domain/health';
 import { findPatterns, patternReadiness } from '../domain/insights';
 import { indexLogs } from '../domain/schedule';
 import * as repo from '../db/repo';
-import { useMeds, useProgress } from '../hooks/useData';
+import { healthEnabled, readHealth } from '../health/connect';
+import { useMeds, useProgress, useSettings } from '../hooks/useData';
 import { makeStyles, useTheme } from '../theme';
 
 const LOOKBACK_DAYS = 180;
@@ -21,20 +24,40 @@ export default function PatternsScreen() {
   const s = useStyles();
   const meds = useMeds();
   const { summaries, today } = useProgress();
+  const settings = useSettings();
+
+  // Steps, sleep and heart rate from Health Connect, only when that's turned on.
+  const [health, setHealth] = useState<HealthDay[]>([]);
+  useEffect(() => {
+    if (!settings.healthConnect || !healthEnabled()) {
+      setHealth([]);
+      return;
+    }
+    let live = true;
+    readHealth(addDays(today, -LOOKBACK_DAYS), addDays(today, -1)).then((d) => live && setHealth(d));
+    return () => {
+      live = false;
+    };
+  }, [settings.healthConnect, today]);
 
   const { patterns, ready } = useMemo(() => {
     const from = addDays(today, -LOOKBACK_DAYS);
     const notes = repo.getNotes(from, addDays(today, -1));
+    const past = summaries.filter((x) => x.date >= from && x.date < today);
     return {
-      patterns: findPatterns({ summaries: summaries.filter((x) => x.date >= from && x.date < today), notes, meds, logs: indexLogs(repo.getLogs(from, today)) }),
+      patterns: [
+        ...findPatterns({ summaries: past, notes, meds, logs: indexLogs(repo.getLogs(from, today)) }),
+        ...findHealthPatterns({ summaries: past, notes, health }),
+      ].sort((a, b) => b.weight - a.weight),
       ready: patternReadiness(notes),
     };
-  }, [summaries, meds, today]);
+  }, [summaries, meds, today, health]);
 
   return (
     <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <Text style={s.lead}>
-        Compares the mood and symptoms you note each day with whether you took your doses, over the last 6 months. Worked out on this phone only.
+        Compares the mood and symptoms you note each day with whether you took your doses, over the last 6 months
+        {settings.healthConnect ? ', along with your steps, sleep and heart rate from Health Connect' : ''}. Worked out on this phone only.
       </Text>
 
       {patterns.length === 0 ? (
@@ -54,7 +77,7 @@ export default function PatternsScreen() {
             <FadeIn key={p.id} delay={i * 40}>
               <Card style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={[s.icon, { backgroundColor: c.primarySoft }]}>
-                  <Ionicons name={p.id.startsWith('symptom') ? 'medkit-outline' : 'happy-outline'} size={20} color={c.primary} />
+                  <Ionicons name={patternIcon(p.id)} size={20} color={c.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.title}>{p.title}</Text>
@@ -66,6 +89,17 @@ export default function PatternsScreen() {
         </>
       )}
 
+      {!settings.healthConnect && Platform.OS === 'android' ? (
+        <PressableScale onPress={() => router.push('/health')} style={s.linkCard}>
+          <Ionicons name="heart-outline" size={22} color={c.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.title}>Add sleep, steps and heart rate</Text>
+            <Text style={s.body}>Bring them in from Samsung Health to see how they line up with your doses and mood.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </PressableScale>
+      ) : null}
+
       <Card style={{ backgroundColor: c.sunken, marginTop: 6 }}>
         <Text style={s.body}>
           These are coincidences in your own notes, not medical findings. A pattern can be chance, or have another cause. Talk to your doctor before changing
@@ -76,7 +110,16 @@ export default function PatternsScreen() {
   );
 }
 
+function patternIcon(id: string): keyof typeof Ionicons.glyphMap {
+  if (id.startsWith('symptom')) return 'medkit-outline';
+  if (id.startsWith('health-sleep')) return 'moon-outline';
+  if (id.startsWith('health-steps')) return 'footsteps-outline';
+  if (id.startsWith('health-resting')) return 'heart-outline';
+  return 'happy-outline';
+}
+
 const useStyles = makeStyles((c) => ({
+  linkCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginTop: 8, marginBottom: 8 },
   lead: { fontSize: 14, color: c.muted, fontWeight: '600', lineHeight: 20, marginBottom: 12, marginHorizontal: 4 },
   icon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 16, fontWeight: '800', color: c.text },

@@ -1,0 +1,22 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.danishalicodes.sabr'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.sabrhealth"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  // Health Connect: where Samsung Health, Google Fit and most watches share steps, sleep and
+  // heart rate on the phone. Read-only here.
+  implementation 'androidx.health.connect:connect-client:1.1.0'
+}

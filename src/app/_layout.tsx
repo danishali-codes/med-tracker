@@ -112,6 +112,7 @@ export default function RootLayout() {
             <Stack.Screen name="routines" options={{ title: 'Routines' }} />
             <Stack.Screen name="review" options={{ title: 'In review' }} />
             <Stack.Screen name="patterns" options={{ title: 'Patterns' }} />
+            <Stack.Screen name="health" options={{ title: 'Health data' }} />
           </Stack>
           </AppLockGate>
         </ThemeProvider>
