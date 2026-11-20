@@ -16,19 +16,19 @@ describe('backup encryption', () => {
     expect(Buffer.from(pbkdf2(pw, salt, 10)).toString('hex')).toBe(pbkdf2Sync(pw, Buffer.from(salt), 10, 32, 'sha512').toString('hex'));
   });
 
-  it('locks and unlocks a backup, and refuses the wrong password', () => {
+  it('locks and unlocks a backup, and refuses the wrong password', async () => {
     const plain = JSON.stringify({ app: 'med-tracker', data: { meds: [{ id: 'a' }] } });
-    const locked = lockBackup(plain, 'pw1', 50);
+    const locked = await lockBackup(plain, 'pw1', 50);
     expect(isLockedBackup(locked)).toBe(true);
     expect(isLockedBackup(plain)).toBe(false);
     expect(locked).not.toContain('meds');
-    expect(unlockBackup(locked, 'pw1')).toBe(plain);
-    expect(() => unlockBackup(locked, 'pw2')).toThrow(/Wrong password/);
+    expect(await unlockBackup(locked, 'pw1')).toBe(plain);
+    await expect(unlockBackup(locked, 'pw2')).rejects.toThrow(/Wrong password/);
   });
 
-  it('refuses a file that asks for an absurd amount of work', () => {
-    const file = JSON.parse(lockBackup('{}', 'pw', 10));
+  it('refuses a file that asks for an absurd amount of work', async () => {
+    const file = JSON.parse(await lockBackup('{}', 'pw', 10));
     file.kdf.iterations = 1e12;
-    expect(() => unlockBackup(JSON.stringify(file), 'pw')).toThrow('damaged');
+    await expect(unlockBackup(JSON.stringify(file), 'pw')).rejects.toThrow('damaged');
   });
 });

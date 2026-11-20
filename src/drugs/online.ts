@@ -28,10 +28,11 @@ class OfflineModeError extends Error {
   }
 }
 
-/** True only when online search is turned on. Fails closed: if settings can't be read, stay offline. */
+/** True only when online search is turned on (and Fully local is off). Fails closed: if settings can't be read, stay offline. */
 export function onlineAllowed(): boolean {
   try {
-    return getSettings().onlineLookups === true;
+    const s = getSettings();
+    return s.onlineLookups === true && s.fullyLocal !== true;
   } catch {
     return false;
   }

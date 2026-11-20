@@ -1,4 +1,5 @@
 import nacl from 'tweetnacl';
+import { SabrCrypto } from '../../modules/sabr-crypto';
 import { fromB64, open, seal, toB64, utf8 } from '../sync/crypto';
 
 /**
@@ -7,10 +8,15 @@ import { fromB64, open, seal, toB64, utf8 } from '../sync/crypto';
  * same as sync). A wrong password or a changed file fails to open.
  */
 
-// Hermes has no JIT, so this takes a couple of seconds on a phone. Stored in the file, so it can change later.
-const KDF_ITERATIONS = 20_000;
+// Stored in the file, so it can change later. The native version takes well under a second
+// for 200,000 rounds; plain JavaScript (Hermes has no JIT) needs a couple of seconds for 20,000.
+const KDF_ITERATIONS_NATIVE = 200_000;
+const KDF_ITERATIONS_JS = 20_000;
 /** Upper limit on what a file may ask for, so a damaged or hostile file cannot hang the app. */
 const MAX_ITERATIONS = 200_000;
+
+/** True when the fast native password stretching is built in (the Android app). */
+export const hasNativeKdf = !!SabrCrypto;
 const BLOCK = 128; // SHA-512 block size
 
 function hmacSha512(key: Uint8Array, msg: Uint8Array): Uint8Array {
@@ -45,6 +51,12 @@ export function pbkdf2(password: string, salt: Uint8Array, iterations: number, l
   return t.slice(0, length);
 }
 
+/** PBKDF2-HMAC-SHA512, in native code when it's there (same result, many times faster). */
+export async function pbkdf2Fast(password: string, salt: Uint8Array, iterations: number, length = 32): Promise<Uint8Array> {
+  if (SabrCrypto) return fromB64(await SabrCrypto.pbkdf2Sha512(toB64(utf8.encode(password)), toB64(salt), iterations, length));
+  return pbkdf2(password, salt, iterations, length);
+}
+
 export interface LockedBackup {
   app: 'sabr-backup';
   version: 1;
@@ -53,9 +65,9 @@ export interface LockedBackup {
   data: string;
 }
 
-export function lockBackup(plainJson: string, password: string, iterations = KDF_ITERATIONS): string {
+export async function lockBackup(plainJson: string, password: string, iterations = hasNativeKdf ? KDF_ITERATIONS_NATIVE : KDF_ITERATIONS_JS): Promise<string> {
   const salt = nacl.randomBytes(16);
-  const key = toB64(pbkdf2(password, salt, iterations));
+  const key = toB64(await pbkdf2Fast(password, salt, iterations));
   const file: LockedBackup = {
     app: 'sabr-backup',
     version: 1,
@@ -74,14 +86,14 @@ export function isLockedBackup(text: string): boolean {
   }
 }
 
-export function unlockBackup(text: string, password: string): string {
+export async function unlockBackup(text: string, password: string): Promise<string> {
   const file = JSON.parse(text) as LockedBackup;
   if (file.app !== 'sabr-backup' || file.kdf?.name !== 'pbkdf2-sha512') throw new Error('This is not a Sabr backup file.');
   const n = file.kdf.iterations;
   if (!Number.isInteger(n) || n < 1 || n > MAX_ITERATIONS || typeof file.kdf.salt !== 'string' || typeof file.data !== 'string') {
     throw new Error('This backup file is damaged.');
   }
-  const key = toB64(pbkdf2(password, fromB64(file.kdf.salt), n));
+  const key = toB64(await pbkdf2Fast(password, fromB64(file.kdf.salt), n));
   try {
     return open(file.data, key);
   } catch {

@@ -5,15 +5,18 @@ import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import {
   autoBackupIfDue,
+  autoBackupReady,
   hasAutoBackupPassword,
   lastAutoBackup,
   needsPassword,
   pickBackupFolder,
   restoreBackup,
   runAutoBackup,
+  saveToDrive,
   setAutoBackupPassword,
   shareBackup,
 } from '../backup/backup';
+import { connectDrive, disconnectDrive, downloadFromDrive, driveAccount, listDriveBackups, type DriveBackup } from '../backup/drive';
 import { ToggleRow, useRowStyles } from '../components/ToggleRow';
 import { Button, Card, Chip, Field, Input, SectionTitle, Text } from '../components/ui';
 import type { AutoBackupSettings } from '../domain/types';
@@ -45,6 +48,9 @@ export default function BackupScreen() {
   const [restorePw, setRestorePw] = useState('');
   const [autoPwSet, setAutoPwSet] = useState(false);
   const [autoPw, setAutoPw] = useState('');
+  const [driveList, setDriveList] = useState<DriveBackup[] | null>(null);
+  const drive = driveAccount();
+  const local = settings.fullyLocal;
 
   useEffect(() => {
     hasAutoBackupPassword().then(setAutoPwSet).catch(() => {});
@@ -72,6 +78,50 @@ export default function BackupScreen() {
       setBusy(null);
     }
   };
+
+  const run = async (label: string, fn: () => Promise<unknown>, failTitle = 'Something went wrong') => {
+    setBusy(label);
+    try {
+      await afterPaint(fn);
+    } catch (e) {
+      popup(failTitle, String(e instanceof Error ? e.message : e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const toDrive = () => {
+    if (!pw) return popup('Add a password', 'Backups going to Google Drive are always locked with a password, so Google stores them but cannot read them.');
+    if (pw !== pw2) return popup('Passwords differ', 'Type the same password twice.');
+    return run('drive-save', async () => {
+      await saveToDrive(pw);
+      popup('Saved', 'Your backup is in Google Drive, in the Sabr backups folder.');
+    }, 'Backup failed');
+  };
+
+  const openDriveList = () => run('drive-list', async () => setDriveList(await listDriveBackups()), 'Could not read Google Drive');
+
+  const pickDriveBackup = (b: DriveBackup) =>
+    run('drive-get', async () => {
+      const text = await downloadFromDrive(b.id);
+      setDriveList(null);
+      if (needsPassword(text)) {
+        setPending(text);
+        setRestorePw('');
+      } else confirmRestore(text, null);
+    }, 'Could not download it');
+
+  const connect = () =>
+    run('drive-connect', async () => {
+      const email = await connectDrive();
+      if (email) repo.deleteKv('last_backup_error');
+    }, 'Could not connect Google Drive');
+
+  const disconnect = () =>
+    popup('Disconnect Google Drive?', 'Sabr signs out of Google and loses access to your Drive. Backups already there stay where they are.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Disconnect', style: 'destructive', onPress: () => run('drive-connect', disconnectDrive) },
+    ]);
 
   const confirmRestore = (text: string, password: string | null) => {
     popup('Restore this backup?', 'This replaces everything in the app with the backup.', [
@@ -143,7 +193,7 @@ export default function BackupScreen() {
 
   const toggleAuto = async (v: boolean) => {
     saveAuto({ enabled: v });
-    if (v && auto.folderUri && autoPwSet) autoBackupIfDue().catch(() => {});
+    if (v && autoBackupReady(auto) && autoPwSet) autoBackupIfDue().catch(() => {});
   };
 
   const lastError = repo.getKv('last_backup_error');
@@ -151,7 +201,8 @@ export default function BackupScreen() {
   return (
     <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Text style={st.hint}>
-        Sabr never uploads your data. A backup is a file you keep: save it to Google Drive, your Files app or anywhere else, and restore it on a new phone.
+        A backup is a file you keep: save it to Google Drive, your Files app or anywhere else, and restore it on a new phone. Sabr only uploads
+        anything if you connect Google Drive below, and then always locked with your password first.
       </Text>
 
       <SectionTitle>Save a backup</SectionTitle>
@@ -171,6 +222,15 @@ export default function BackupScreen() {
           icon={busy === 'export' ? <ActivityIndicator color={c.onPrimary} /> : null}
         />
         <Text style={[st.hint, { marginTop: 10 }]}>Then pick Drive to keep it in your Google Drive, or Files to keep it on the phone or a card.</Text>
+        {drive && !local ? (
+          <Button
+            title={busy === 'drive-save' ? 'Uploading...' : 'Save straight to Google Drive'}
+            kind="secondary"
+            onPress={toDrive}
+            disabled={!!busy}
+            style={{ marginTop: 10 }}
+          />
+        ) : null}
       </Card>
 
       <SectionTitle>Restore</SectionTitle>
@@ -189,9 +249,63 @@ export default function BackupScreen() {
           <>
             <Text style={st.hint}>Choose a backup file from Google Drive, Files or a download. Everything in the app is replaced by what's in the file.</Text>
             <Button title="Choose a backup file" kind="secondary" onPress={pickRestore} disabled={!!busy} style={{ marginTop: 10 }} />
+            {drive && !local ? (
+              driveList ? (
+                <View style={{ marginTop: 10 }}>
+                  <Text style={[st.label, { marginBottom: 6 }]}>{driveList.length ? 'Backups in Google Drive' : 'No backups in Google Drive yet'}</Text>
+                  {driveList.slice(0, 8).map((b) => (
+                    <View key={b.id} style={st.row}>
+                      <Text style={[st.hint, { flex: 1 }]}>{when(b.createdTime)}</Text>
+                      <Button title="Restore" small kind="secondary" onPress={() => pickDriveBackup(b)} disabled={!!busy} />
+                    </View>
+                  ))}
+                  <Button title="Close" small kind="ghost" onPress={() => setDriveList(null)} style={{ alignSelf: 'flex-start' }} />
+                </View>
+              ) : (
+                <Button
+                  title={busy === 'drive-list' ? 'Looking...' : 'Restore from Google Drive'}
+                  kind="secondary"
+                  onPress={openDriveList}
+                  disabled={!!busy}
+                  style={{ marginTop: 10 }}
+                />
+              )
+            ) : null}
           </>
         )}
       </Card>
+
+      {Platform.OS === 'android' ? (
+        <>
+          <SectionTitle>Google Drive</SectionTitle>
+          <Card>
+            <Text style={st.hint}>
+              Optional. Sign in with Google so Sabr can save backups straight to your Drive, on demand or automatically. Sabr can only see the files it
+              makes, in a folder called Sabr backups, and nothing else in your Drive. Every backup is locked with your password on this phone first, so
+              Google can't read it.
+            </Text>
+            {local ? (
+              <Text style={[st.hint, { color: c.warn, marginTop: 8 }]}>Paused while Fully local is on.</Text>
+            ) : drive ? (
+              <View style={st.row}>
+                <View style={{ flex: 1 }}>
+                  <Text style={st.label}>Connected</Text>
+                  <Text style={st.hint}>{drive}</Text>
+                </View>
+                <Button title="Disconnect" small kind="ghost" onPress={disconnect} disabled={!!busy} />
+              </View>
+            ) : (
+              <Button
+                title={busy === 'drive-connect' ? 'Connecting...' : 'Sign in with Google'}
+                kind="secondary"
+                onPress={connect}
+                disabled={!!busy}
+                style={{ marginTop: 10 }}
+              />
+            )}
+          </Card>
+        </>
+      ) : null}
 
       {Platform.OS === 'android' ? (
         <>
@@ -199,18 +313,35 @@ export default function BackupScreen() {
           <Card>
             <ToggleRow
               label="Back up automatically"
-              hint="Saves a password-locked backup to a folder you choose, and keeps the last 4."
+              hint="Saves a password-locked backup to a folder or your Google Drive, and keeps the last 4."
               value={auto.enabled}
               onChange={toggleAuto}
             />
-            <View style={st.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={st.label}>Folder</Text>
-                <Text style={st.hint}>{auto.folderName ?? 'None chosen yet'}</Text>
-              </View>
-              <Button title={auto.folderUri ? 'Change' : 'Choose'} small kind="secondary" onPress={chooseFolder} />
+            <Text style={[st.label, { marginTop: 6, marginBottom: 6 }]}>Save to</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <Chip label="A folder on this phone" selected={auto.target === 'folder'} onPress={() => saveAuto({ target: 'folder' })} />
+              <Chip label="Google Drive" selected={auto.target === 'drive'} onPress={() => saveAuto({ target: 'drive' })} />
             </View>
-            <Text style={st.hint}>Pick a folder in your phone's storage, such as Documents. A folder on an SD card survives losing the phone's own storage.</Text>
+            {auto.target === 'drive' ? (
+              <Text style={st.hint}>
+                {local
+                  ? 'Paused while Fully local is on.'
+                  : drive
+                    ? `To ${drive}, in the Sabr backups folder.`
+                    : 'Sign in with Google in the Google Drive section above first.'}
+              </Text>
+            ) : (
+              <>
+                <View style={st.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={st.label}>Folder</Text>
+                    <Text style={st.hint}>{auto.folderName ?? 'None chosen yet'}</Text>
+                  </View>
+                  <Button title={auto.folderUri ? 'Change' : 'Choose'} small kind="secondary" onPress={chooseFolder} />
+                </View>
+                <Text style={st.hint}>Pick a folder in your phone's storage, such as Documents. A folder on an SD card survives losing the phone's own storage.</Text>
+              </>
+            )}
             <Field label={autoPwSet ? 'Password (set)' : 'Password'} style={{ marginTop: 12 }}>
               <Input value={autoPw} onChangeText={setAutoPw} secureTextEntry autoCapitalize="none" placeholder={autoPwSet ? 'Type a new one to change it' : 'At least 6 characters'} />
             </Field>
@@ -222,7 +353,7 @@ export default function BackupScreen() {
               title={busy === 'auto' ? 'Backing up...' : 'Back up now'}
               kind="secondary"
               onPress={backUpNow}
-              disabled={!!busy || !auto.folderUri || !autoPwSet}
+              disabled={!!busy || !autoBackupReady(auto) || !autoPwSet}
               style={{ marginTop: 10 }}
             />
           </Card>

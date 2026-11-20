@@ -32,6 +32,27 @@ Supplements, a mood trend, routines the app learns from you, and one path for ev
 - A Take press on the widget now updates the watch tile and caregivers straight away, and the reverse.
 - Settings only says the watch is ready when the Sabr watch app is installed on it. A connected watch without it is named, with how to install it. Update the watch app too: older versions don't report themselves.
 
+## 0.11
+
+Online backup without running your own server, Google Drive backups, and a Fully local switch. Everything online stays off until you turn it on.
+
+### Online backup on the Sabr server
+- Settings, Backup and sharing, Sync and sharing now offers the **Sabr server** next to your own server. Make an account with an email and a password, nothing to set up.
+- It's end-to-end encrypted. Your password never leaves the phone: it locks your data here, and the server only gets a code made from it to sign you in. Whoever runs the server, Sabr's developer included, can't read your backup.
+- On a new phone, sign in with the same email and password and Sabr offers to restore your backup. Your recovery key still works too, if you ever lose the password.
+- Your own server works as before. New accounts there get the same password unlock.
+
+### Google Drive
+- Optional **Sign in with Google** in Backup and restore. Sabr can only see the files it makes, in a Sabr backups folder, nothing else in your Drive.
+- Save a backup straight to Drive, restore from a list of your Drive backups, or pick Google Drive as the place for automatic backups.
+- Backups going to Drive are always locked with your password first, so Google can't read them.
+
+### Fully local
+- One switch in Privacy that keeps Sabr off the internet completely: online search, online backup and sharing, people you look after, Google Drive and the watch tile all pause. A popup says exactly what stops before it turns on.
+
+### Also
+- Password-locked backup files are much harder to guess at: the password is stretched in native code, 10 times more than before, in about the same time.
+
 ## 0.10
 
 Settings is split into pages, with search and a Simple / Advanced switch, and every pop-up now looks like the rest of Sabr.
