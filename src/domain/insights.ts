@@ -1,4 +1,4 @@
-import { addDays, daysInMonth, diffDays, monthName, parseTime, type DateKey, type TimeOfDay } from './dates';
+import { addDays, daysInMonth, diffDays, monthName, parseTime, weekdayOf, type DateKey, type TimeOfDay } from './dates';
 import { consistencySeries, isFullDay, isGoldDay, trackedFrom, type DaySummary } from './progress';
 import { isMedDueOn, slotKey } from './schedule';
 import { editTimes } from './routines';
@@ -471,4 +471,175 @@ export function moodTrend(notes: DayNote[], from: DateKey, to: DateKey): MoodTre
       .map(([name, days]) => ({ name, days })),
     noted: inRange.length,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Learned routines
+// ---------------------------------------------------------------------------
+// Two more things the phone can learn from when doses are actually taken. Both only
+// suggest; nothing changes until you accept, and nothing leaves the phone.
+
+const toMinutes = (t: TimeOfDay) => {
+  const { h, min } = parseTime(t);
+  return h * 60 + min;
+};
+const fromMinutes = (m: number): TimeOfDay => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const round5 = (m: number) => Math.round(m / 5) * 5;
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+};
+/** Minutes from the dose's time to when it was taken (negative = early). */
+const offsetOf = (l: DoseLog) => {
+  const [y, mo, d] = l.date.split('-').map(Number);
+  const { h, min } = parseTime(l.time);
+  return Math.round((new Date(l.at).getTime() - new Date(y, mo - 1, d, h, min).getTime()) / 60_000);
+};
+const clockOf = (iso: string) => {
+  const at = new Date(iso);
+  return at.getHours() * 60 + at.getMinutes();
+};
+const scheduled = (meds: Medication[]) => meds.filter((m) => !m.archived && m.schedule.pattern.kind !== 'asNeeded');
+
+export interface DayTimeSuggestion {
+  id: string;
+  /** The usual time that runs late (or early) on some days. */
+  time: TimeOfDay;
+  /** Those weekdays (0 = Sunday). */
+  days: number[];
+  suggested: TimeOfDay;
+  /** Typical minutes off on those days. */
+  typicalOffset: number;
+  medIds: string[];
+}
+
+const WEEKDAY_LOOKBACK = 42;
+const WEEKDAY_MIN_SAMPLES = 3;
+const WEEKDAY_MIN_SHIFT = 45;
+
+/**
+ * Finds a dose you take at a clearly different time on certain weekdays, for example an hour
+ * and a half later on Saturdays and Sundays, and suggests a different time on those days.
+ */
+export function suggestDayTimes(meds: Medication[], logs: DoseLog[], today: DateKey): DayTimeSuggestion[] {
+  const from = addDays(today, -WEEKDAY_LOOKBACK);
+  const byKey = new Map<string, DayTimeSuggestion>();
+  for (const med of scheduled(meds)) {
+    const covered = new Set((med.schedule.dayTimes ?? []).flatMap((r) => r.days));
+    for (const time of med.schedule.times) {
+      const perDay: number[][] = Array.from({ length: 7 }, () => []);
+      for (const l of logs) {
+        // Only days the dose was at its usual time, so an existing change doesn't count.
+        if (l.medId !== med.id || l.status !== 'taken' || l.time !== time || l.date < from || l.date >= today) continue;
+        const off = offsetOf(l);
+        if (Math.abs(off) > 6 * 60) continue;
+        perDay[weekdayOf(l.date)].push(off);
+      }
+      const medians = perDay.map((xs) => (xs.length >= WEEKDAY_MIN_SAMPLES ? median(xs) : null));
+      const known = medians.filter((x): x is number => x != null);
+      if (known.length < 4) continue; // too little to tell the usual days from the odd ones
+      const usual = median(known);
+      const odd = medians.map((m, day) => ({ m, day })).filter((x): x is { m: number; day: number } => x.m != null && Math.abs(x.m - usual) >= WEEKDAY_MIN_SHIFT);
+      if (odd.length === 0 || odd.length > 3) continue;
+      if (!odd.every((x) => Math.sign(x.m - usual) === Math.sign(odd[0].m - usual))) continue;
+      if (Math.max(...odd.map((x) => x.m)) - Math.min(...odd.map((x) => x.m)) > 60) continue;
+      if (odd.some((x) => covered.has(x.day))) continue;
+      const shift = round5(avg(odd.map((x) => x.m)));
+      const total = toMinutes(time) + shift;
+      if (total < 0 || total >= 24 * 60) continue;
+      const suggested = fromMinutes(total);
+      if (med.schedule.times.includes(suggested)) continue;
+      const days = odd.map((x) => x.day);
+      const key = `${time}|${days.join(',')}|${suggested}`;
+      const e = byKey.get(key) ?? { id: `days:${key}`, time, days, suggested, typicalOffset: shift, medIds: [] };
+      e.medIds.push(med.id);
+      byKey.set(key, e);
+    }
+  }
+  return [...byKey.values()];
+}
+
+/** Adds "on these days, take it at this time instead" to a medicine. Null if those days already have their own times. */
+export function addDayTime(med: Medication, time: TimeOfDay, days: number[], to: TimeOfDay): Medication | null {
+  const s = med.schedule;
+  const i = s.times.indexOf(time);
+  if (i < 0 || s.times.includes(to)) return null;
+  if ((s.dayTimes ?? []).some((r) => r.days.some((d) => days.includes(d)))) return null;
+  const times = s.times.map((t, k) => (k === i ? to : t));
+  return { ...med, schedule: { ...s, dayTimes: [...(s.dayTimes ?? []), { days: [...days].sort(), times }] } };
+}
+
+export interface RoutineSuggestion {
+  id: string;
+  /** The two reminder times you take together in practice. */
+  times: [TimeOfDay, TimeOfDay];
+  /** One time for both, from when you usually take them. */
+  suggested: TimeOfDay;
+  /** A name for the routine, from the time of day. */
+  name: string;
+  together: number;
+  medIds: string[];
+}
+
+const ROUTINE_LOOKBACK = 21;
+const ROUTINE_MIN_DAYS = 7;
+const TOGETHER_MINUTES = 15;
+
+/**
+ * Finds two reminder times close together (within 2 hours) whose doses you usually take in
+ * one go, for example 8:00 and 9:00 both taken around 8:20, and suggests one routine instead.
+ */
+export function suggestRoutines(meds: Medication[], logs: DoseLog[], today: DateKey, routines: { time: TimeOfDay }[] = []): RoutineSuggestion[] {
+  const from = addDays(today, -ROUTINE_LOOKBACK);
+  const active = scheduled(meds);
+  const atTime = new Map<TimeOfDay, Medication[]>();
+  for (const m of active) for (const t of m.schedule.times) atTime.set(t, [...(atTime.get(t) ?? []), m]);
+  // When each time's doses were taken, per day: the first dose taken at that time.
+  const taken = new Map<string, number>();
+  for (const l of logs) {
+    if (l.status !== 'taken' || l.date < from || l.date >= today || !atTime.has(l.time)) continue;
+    const k = `${l.date}|${l.time}`;
+    const at = clockOf(l.at);
+    if (!taken.has(k) || at < taken.get(k)!) taken.set(k, at);
+  }
+
+  const times = [...atTime.keys()].sort();
+  const out: RoutineSuggestion[] = [];
+  for (let a = 0; a < times.length; a++) {
+    for (let b = a + 1; b < times.length; b++) {
+      const t1 = times[a];
+      const t2 = times[b];
+      if (toMinutes(t2) - toMinutes(t1) > 120) break;
+      const meds1 = atTime.get(t1)!;
+      const meds2 = atTime.get(t2)!;
+      if (meds1.some((m) => meds2.includes(m))) continue; // one medicine twice: keep them apart
+      let both = 0;
+      const together: number[] = [];
+      for (let i = 1; i <= ROUTINE_LOOKBACK; i++) {
+        const date = addDays(today, -i);
+        const x = taken.get(`${date}|${t1}`);
+        const y = taken.get(`${date}|${t2}`);
+        if (x == null || y == null) continue;
+        both++;
+        if (Math.abs(x - y) <= TOGETHER_MINUTES) together.push(Math.min(x, y));
+      }
+      if (together.length < ROUTINE_MIN_DAYS || together.length / both < 0.75) continue;
+      const suggested = fromMinutes(Math.min(24 * 60 - 5, round5(median(together))));
+      if (routines.some((r) => r.time === suggested)) continue;
+      out.push({
+        id: `routine:${t1}|${t2}`,
+        times: [t1, t2],
+        suggested,
+        name: routineName(suggested),
+        together: together.length,
+        medIds: [...meds1, ...meds2].map((m) => m.id),
+      });
+    }
+  }
+  return out;
+}
+
+function routineName(t: TimeOfDay): string {
+  const h = parseTime(t).h;
+  return h < 5 ? 'Night' : h < 11 ? 'Morning' : h < 15 ? 'Midday' : h < 18 ? 'Afternoon' : h < 22 ? 'Evening' : 'Bedtime';
 }
