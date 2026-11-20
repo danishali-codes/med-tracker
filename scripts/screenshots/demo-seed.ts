@@ -23,7 +23,7 @@ function seed() {
       schedule: { pattern: { kind: 'daily' }, times: ['07:30'], startDate: start } },
     { id: 'demo-atorvastatin', name: 'Atorvastatin', generic: 'atorvastatin', dose: '20 mg', strength: '20 mg', amount: 1, perDose: 1, form: 'pill', shape: 'oval', pillColor: '#FBE37A', color: '#F29D0C', stock: 26, refillAt: 7,
       schedule: { pattern: { kind: 'daily' }, times: ['21:00'], startDate: start } },
-    { id: 'demo-vitd', name: 'Vitamin D3', generic: 'cholecalciferol', dose: '50,000 IU', strength: '50,000 IU', amount: 1, perDose: 1, form: 'capsule', shape: 'oval', pillColor: '#F7A541', color: '#3AB7F0', stock: null, refillAt: null,
+    { id: 'demo-vitd', name: 'Vitamin D3', generic: 'cholecalciferol', dose: '50,000 IU', strength: '50,000 IU', amount: 1, perDose: 1, form: 'capsule', shape: 'oval', pillColor: '#F7A541', color: '#3AB7F0', stock: null, refillAt: null, supplement: true,
       schedule: { pattern: { kind: 'weekdays', days: [5] }, times: ['10:00'], startDate: start } },
   ];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
