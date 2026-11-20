@@ -48,6 +48,10 @@ function seed() {
       setDose(d, 'taken', new Date(Math.min(due.getTime() + lateMin * 60000, now.getTime())));
     }
   }
+  // Layout check builds: every dose today taken on time, so Today shows a gold day.
+  if ((globalThis as { __DEMO_GOLD?: boolean }).__DEMO_GOLD) {
+    for (const d of dosesOn(all, today)) setDose(d, 'taken', atTime(today, d.time));
+  }
   // A note for today, where the version has notes (0.3 onwards).
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
