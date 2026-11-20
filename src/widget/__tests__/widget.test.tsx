@@ -21,6 +21,8 @@ const SIZES: [string, number, number][] = [
   [NEXT_WIDGET_NAME, 120, 120],
   [NEXT_WIDGET_NAME, 300, 70],
   [NEXT_WIDGET_NAME, 180, 70],
+  [NEXT_WIDGET_NAME, 330, 175],
+  [NEXT_WIDGET_NAME, 160, 330],
   [WIDGET_NAME, 320, 150],
   [WIDGET_NAME, 260, 110],
   [WIDGET_NAME, 0, 0],
@@ -48,7 +50,15 @@ describe('home screen widgets', () => {
     expect(layoutFor(LIST_WIDGET_NAME, 320, 300)).toBe('list');
     expect(layoutFor(LIST_WIDGET_NAME, 320, 150)).toBe('today');
     expect(layoutFor(LIST_WIDGET_NAME, 0, 0)).toBe('list');
-    expect(layoutFor(NEXT_WIDGET_NAME, 400, 400)).toBe('next');
+    expect(layoutFor(NEXT_WIDGET_NAME, 0, 0)).toBe('next');
+    expect(layoutFor(WIDGET_NAME, 0, 0)).toBe('today');
+    // Any widget made bigger shows more: the list of every dose once it's tall enough.
+    expect(layoutFor(NEXT_WIDGET_NAME, 400, 400)).toBe('list');
+    expect(layoutFor(WIDGET_NAME, 330, 250)).toBe('list');
+    expect(layoutFor(NEXT_WIDGET_NAME, 160, 330)).toBe('next');
+    // Next dose stretched wide shows the big rings beside the dose instead of an empty box.
+    expect(layoutFor(NEXT_WIDGET_NAME, 330, 175)).toBe('today');
+    expect(layoutFor(NEXT_WIDGET_NAME, 330, 80)).toBe('next');
     expect(listRows(320, { showNames: false })).toBeGreaterThan(listRows(320, { showNames: true }));
   });
 

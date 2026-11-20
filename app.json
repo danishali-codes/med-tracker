@@ -73,7 +73,7 @@
             {
               "name": "NextDose",
               "label": "Sabr: Next dose",
-              "description": "Just your next dose, with Taken and Snooze",
+              "description": "Your next dose with Taken and Snooze. Make it bigger to see your rings and every dose",
               "minWidth": "110dp",
               "minHeight": "50dp",
               "targetCellWidth": 2,
@@ -85,7 +85,7 @@
             {
               "name": "Today",
               "label": "Sabr: Today",
-              "description": "Today's rings and your next dose, with Taken and Snooze",
+              "description": "Today's rings and your next dose. Make it taller to see every dose and your week",
               "minWidth": "110dp",
               "minHeight": "50dp",
               "targetCellWidth": 4,

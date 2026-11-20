@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { MedIcon } from '../components/MedIcon';
 import { TimeButton } from '../components/Pickers';
 import { useRowStyles } from '../components/ToggleRow';
@@ -72,7 +73,7 @@ export default function RoutinesScreen() {
 
   if (editing) {
     return (
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Card>
           <Field label="Name">
             <Input value={editing.name} onChangeText={(name) => setEditing({ ...editing, name })} placeholder="e.g. Breakfast" />
@@ -120,17 +121,17 @@ export default function RoutinesScreen() {
           Ticked medicines are reminded at {formatTime(editing.time)} together, and Today shows them under {editing.name.trim() || 'this routine'} with a Take all
           button.{editing.original && editing.original.time !== editing.time ? ` Their ${formatTime(editing.original.time)} time moves to ${formatTime(editing.time)}.` : ''}
         </Text>
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-          <Button title="Cancel" kind="secondary" onPress={() => setEditing(null)} style={{ flex: 1 }} />
-          <Button title="Save" onPress={save} style={{ flex: 1 }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 16 }}>
+          <Button title="Cancel" kind="secondary" onPress={() => setEditing(null)} style={{ flexGrow: 1 }} />
+          <Button title="Save" onPress={save} style={{ flexGrow: 1 }} />
         </View>
         {editing.original ? <Button title="Remove routine" kind="ghost" onPress={() => remove(editing.original!)} style={{ marginTop: 8 }} /> : null}
-      </ScrollView>
+      </PageScroll>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <Text style={st.hint}>
         A routine is a time you take several medicines together, like Breakfast at 8:00. They share one reminder, which says the routine's name, and one Take all
         button.
@@ -153,6 +154,6 @@ export default function RoutinesScreen() {
         );
       })}
       <Button title="New routine" onPress={startNew} style={{ marginTop: 16 }} />
-    </ScrollView>
+    </PageScroll>
   );
 }

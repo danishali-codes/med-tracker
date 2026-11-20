@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useState } from 'react';
 import * as Application from 'expo-application';
-import { Alert, Platform, ScrollView, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { router } from 'expo-router';
 import { ToggleRow } from '../components/ToggleRow';
 import { canUseAppLock, unlockWithDevice } from '../components/AppLock';
@@ -55,7 +56,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <SectionTitle>Look and feel</SectionTitle>
       <Card>
         <Text style={[st.label, { marginBottom: 8 }]}>Appearance</Text>
@@ -136,7 +137,7 @@ export default function SettingsScreen() {
           onChange={(v) => update({ quietHours: { ...settings.quietHours, enabled: v } })}
         />
         {settings.quietHours.enabled ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <TimeButton value={settings.quietHours.from} onChange={(from) => update({ quietHours: { ...settings.quietHours, from } })} />
             <Text style={st.label}>to</Text>
             <TimeButton value={settings.quietHours.to} onChange={(to) => update({ quietHours: { ...settings.quietHours, to } })} />
@@ -351,7 +352,7 @@ export default function SettingsScreen() {
       <Text style={[st.hint, { textAlign: 'center', marginTop: 8 }]}>
         Sabr {Application.nativeApplicationVersion ?? ''} ({Application.nativeBuildVersion ?? ''})
       </Text>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

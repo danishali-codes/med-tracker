@@ -170,9 +170,9 @@ export function TimingCard({ meds, settings, today, version }: { meds: Medicatio
             </Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          <Button title="Not now" kind="secondary" small onPress={later} style={{ flex: 1 }} />
-          <Button title={`Move to ${formatTime(suggested)}`} small onPress={accept} style={{ flex: 1 }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+          <Button title="Not now" kind="secondary" small onPress={later} style={{ flexGrow: 1 }} />
+          <Button title={`Move to ${formatTime(suggested)}`} small onPress={accept} style={{ flexGrow: 1 }} />
         </View>
       </Card>
     </FadeIn>

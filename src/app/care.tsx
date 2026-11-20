@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, RefreshControl, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { CareCard } from '../components/CareCard';
 import { ToggleRow, useRowStyles } from '../components/ToggleRow';
 import { Button, Card, Chip, Field, Input, SectionTitle, Text } from '../components/ui';
@@ -45,7 +46,7 @@ export default function CareScreen() {
   };
 
   return (
-    <ScrollView
+    <PageScroll
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => (setRefreshing(true), sync.refreshFollowing().finally(() => setRefreshing(false)))} />}
@@ -109,6 +110,6 @@ export default function CareScreen() {
           </Card>
         </>
       ) : null}
-    </ScrollView>
+    </PageScroll>
   );
 }

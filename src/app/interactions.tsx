@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { Card, FadeIn, SectionTitle, Text } from '../components/ui';
 import type { InteractionKind, InteractionNote } from '../domain/interactions';
 import type { Medication } from '../domain/types';
@@ -47,7 +48,7 @@ export default function InteractionsScreen() {
   const online = useMemo(() => onlineAllowed(), []);
 
   return (
-    <ScrollView contentContainerStyle={s.container}>
+    <PageScroll contentContainerStyle={s.container}>
       <Stack.Screen options={{ title: focusName ? `${focusName}` : 'Interactions' }} />
       <Card style={{ backgroundColor: c.warnSoft }}>
         <View style={s.noticeRow}>
@@ -99,7 +100,7 @@ export default function InteractionsScreen() {
             : `No saved label for ${result.missing.join(', ')}, so only the built-in list was checked for it.`}
         </Text>
       ) : null}
-    </ScrollView>
+    </PageScroll>
   );
 }
 

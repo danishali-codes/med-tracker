@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import {
   autoBackupIfDue,
   hasAutoBackupPassword,
@@ -147,7 +148,7 @@ export default function BackupScreen() {
   const lastError = repo.getKv('last_backup_error');
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Text style={st.hint}>
         Sabr never uploads your data. A backup is a file you keep: save it to Google Drive, your Files app or anywhere else, and restore it on a new phone.
       </Text>
@@ -178,9 +179,9 @@ export default function BackupScreen() {
             <Field label="This backup has a password">
               <Input value={restorePw} onChangeText={setRestorePw} secureTextEntry autoCapitalize="none" autoFocus />
             </Field>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Button title="Cancel" kind="secondary" onPress={() => setPending(null)} style={{ flex: 1 }} />
-              <Button title={busy === 'restore' ? 'Unlocking...' : 'Unlock'} onPress={() => confirmRestore(pending, restorePw)} disabled={!restorePw || !!busy} style={{ flex: 1 }} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+              <Button title="Cancel" kind="secondary" onPress={() => setPending(null)} style={{ flexGrow: 1 }} />
+              <Button title={busy === 'restore' ? 'Unlocking...' : 'Unlock'} onPress={() => confirmRestore(pending, restorePw)} disabled={!restorePw || !!busy} style={{ flexGrow: 1 }} />
             </View>
           </>
         ) : (
@@ -226,7 +227,7 @@ export default function BackupScreen() {
           </Card>
         </>
       ) : null}
-    </ScrollView>
+    </PageScroll>
   );
 }
 

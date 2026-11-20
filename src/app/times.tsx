@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, Switch, View } from 'react-native';
+import { PageScroll } from '../components/Screen';
 import { DateButton, TimeButton } from '../components/Pickers';
 import { Button, Card, Chip, Field, SectionTitle, Select, Text } from '../components/ui';
 import { addDays, formatDateLong, formatTime, toDateKey } from '../domain/dates';
@@ -31,7 +32,7 @@ export default function TimesScreen() {
   const phoneZone = phoneTimeZone();
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <PageScroll contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <SectionTitle>Travel</SectionTitle>
       <Card>
         <View style={st.row}>
@@ -187,7 +188,7 @@ export default function TimesScreen() {
           style={{ alignSelf: 'flex-start', marginTop: 12 }}
         />
       </Card>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

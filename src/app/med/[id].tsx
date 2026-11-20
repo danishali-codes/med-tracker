@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, Switch, View } from 'react-native';
+import { PageScroll } from '../../components/Screen';
 import { removeMedication, saveMedication } from '../../actions';
 import { defaultShape, hasShape, lookOf, PILL_COLORS, PILL_SHAPES, PillArt } from '../../components/PillArt';
 import { DateButton, TimeButton } from '../../components/Pickers';
@@ -314,7 +315,7 @@ export default function MedEditor() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: existing ? 'Edit medication' : 'New medication' }} />
-      <ScrollView contentContainerStyle={st.container} keyboardShouldPersistTaps="handled">
+      <PageScroll contentContainerStyle={st.container} keyboardShouldPersistTaps="handled">
         <Card>
           <Button
             title={scanning ? 'Reading the box...' : 'Scan the box'}
@@ -679,12 +680,12 @@ export default function MedEditor() {
           </Text>
         ) : null}
         {existing ? (
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-            <Button title={existing.archived ? 'Unarchive' : 'Archive'} kind="secondary" onPress={archive} style={{ flex: 1 }} />
-            <Button title="Delete" kind="danger" onPress={remove} style={{ flex: 1 }} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+            <Button title={existing.archived ? 'Unarchive' : 'Archive'} kind="secondary" onPress={archive} style={{ flexGrow: 1 }} />
+            <Button title="Delete" kind="danger" onPress={remove} style={{ flexGrow: 1 }} />
           </View>
         ) : null}
-      </ScrollView>
+      </PageScroll>
     </KeyboardAvoidingView>
   );
 }

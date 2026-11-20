@@ -18,6 +18,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { FONT, makeStyles, radius, useTheme } from '../theme';
 
@@ -51,9 +52,11 @@ export function PressableScale({
 }: PressableProps & { children: ReactNode; style?: StyleProp<ViewStyle>; scaleTo?: number; haptic?: boolean }) {
   const scale = useRef(new Animated.Value(1)).current;
   const to = (v: number) => Animated.spring(scale, { toValue: v, useNativeDriver: true, speed: 40, bounciness: 8 }).start();
+  const { outer, inner } = splitLayout(style);
   return (
     <Pressable
       {...props}
+      style={outer}
       onPressIn={() => to(scaleTo)}
       onPressOut={() => to(1)}
       onPress={(e) => {
@@ -61,9 +64,48 @@ export function PressableScale({
         onPress?.(e);
       }}
     >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
+      <Animated.View style={[inner, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>
   );
+}
+
+// How the box sits among its siblings (flex share, width, margins, position) has to be set on
+// the Pressable itself. Left on the inner animated view, `flex: 1` or `width: '48%'` does nothing,
+// which squashed segmented controls and button rows down to their text width.
+const OUTER_KEYS = new Set<string>([
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'flexBasis',
+  'alignSelf',
+  'width',
+  'minWidth',
+  'maxWidth',
+  'margin',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginHorizontal',
+  'marginVertical',
+  'marginStart',
+  'marginEnd',
+  'position',
+  'top',
+  'bottom',
+  'left',
+  'right',
+  'zIndex',
+]);
+
+function splitLayout(style: StyleProp<ViewStyle>): { outer: ViewStyle; inner: ViewStyle } {
+  const flat: ViewStyle = StyleSheet.flatten(style) ?? {};
+  const outer: Record<string, unknown> = {};
+  const inner: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(flat)) (OUTER_KEYS.has(k) ? outer : inner)[k] = v;
+  // When the Pressable is told to grow, the visible box grows with it.
+  if (outer.flex != null || outer.flexGrow != null) inner.flexGrow = 1;
+  return { outer: outer as ViewStyle, inner: inner as ViewStyle };
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -142,6 +184,7 @@ export function Select<T extends string>({
 }) {
   const c = useTheme();
   const s = useStyles();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
   return (
@@ -151,11 +194,11 @@ export function Select<T extends string>({
         <Text style={s.selectText}>{current?.label ?? ''}</Text>
         <Ionicons name="chevron-down" size={20} color={c.muted} />
       </PressableScale>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent statusBarTranslucent navigationBarTranslucent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={s.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={s.sheet}>
+          <Pressable style={[s.sheet, { paddingBottom: 16 + Math.max(insets.bottom, 12) }]}>
             {title ? <Text style={s.sheetTitle}>{title}</Text> : null}
-            <ScrollView style={{ maxHeight: 420 }}>
+            <ScrollView style={{ flexShrink: 1 }}>
               {options.map((o) => {
                 const on = o.value === value;
                 return (
@@ -206,10 +249,12 @@ export function ActionSheet({
 }) {
   const c = useTheme();
   const s = useStyles();
+  const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent statusBarTranslucent navigationBarTranslucent animationType="fade" onRequestClose={onClose}>
       <Pressable style={s.backdrop} onPress={onClose}>
-        <Pressable style={s.sheet}>
+        <Pressable style={[s.sheet, { paddingBottom: 16 + Math.max(insets.bottom, 12) }]}>
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
           {header}
           <Text style={s.sheetTitle}>{title}</Text>
           {subtitle ? <Text style={[s.optionText, { color: c.muted, marginLeft: 8, marginTop: -6, marginBottom: 8, flex: 0 }]}>{subtitle}</Text> : null}
@@ -229,6 +274,7 @@ export function ActionSheet({
           <Pressable onPress={onClose} style={[s.option, { justifyContent: 'center' }]}>
             <Text style={[s.optionText, { flex: 0, color: c.muted }]}>Cancel</Text>
           </Pressable>
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -375,7 +421,7 @@ const useStyles = makeStyles((c) => ({
   },
   buttonShadow: { shadowColor: c.primary, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   buttonSmall: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: radius.chip },
-  buttonText: { fontSize: 16, fontWeight: '800' },
+  buttonText: { fontSize: 16, fontWeight: '800', textAlign: 'center', flexShrink: 1 },
   buttonTextSmall: { fontSize: 14 },
   chip: {
     paddingVertical: 9,
@@ -405,7 +451,7 @@ const useStyles = makeStyles((c) => ({
   select: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   selectText: { flex: 1, fontSize: 16, fontWeight: '700', color: c.text },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: c.card, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, padding: 16, paddingBottom: 28 },
+  sheet: { backgroundColor: c.card, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, padding: 16, maxHeight: '90%' },
   sheetTitle: { fontSize: 18, fontWeight: '900', color: c.text, marginBottom: 10, marginLeft: 8 },
   option: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 12, borderRadius: 14 },
   optionText: { flex: 1, fontSize: 16, fontWeight: '600', color: c.text },

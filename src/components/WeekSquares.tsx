@@ -41,8 +41,8 @@ export function WeekSquares({ days, color, today }: { days: { date: string; mark
 
 const useStyles = makeStyles((c) => ({
   row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-  col: { alignItems: 'center', gap: 4, flex: 1 },
-  box: { width: 34, height: 34, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  col: { alignItems: 'center', gap: 4, flex: 1, paddingHorizontal: 1.5 },
+  box: { width: '100%', maxWidth: 34, aspectRatio: 1, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   num: { fontSize: 11, fontWeight: '800' },
   letter: { fontSize: 10, fontWeight: '800', color: c.muted },
 }));

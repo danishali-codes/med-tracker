@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, useWindowDimensions, View } from 'react-native';
 import { logAsNeeded, logDose } from '../../actions';
 import { Confetti } from '../../components/Confetti';
 import { DoseRow } from '../../components/DoseRow';
@@ -34,6 +34,9 @@ export default function TodayScreen() {
   const summariesCount = summaries.length;
   const [perm, setPerm] = useState<PermissionState | null>(null);
   const [celebrate, setCelebrate] = useState(false);
+  // On a narrow phone (or with big text) the rings give up some width so the legend beside them fits.
+  const { width: screenWidth, fontScale } = useWindowDimensions();
+  const ringSize = Math.max(112, Math.min(148, Math.round((screenWidth - 76) * (fontScale > 1.15 ? 0.42 : 0.5))));
 
   const refreshPerm = useCallback(() => {
     getPermissionState().then(setPerm).catch(() => {});
@@ -102,8 +105,8 @@ export default function TodayScreen() {
           <View style={[s.hero, { backgroundColor: c.hero }]}>
             <View style={s.heroTop}>
               <Rings
-                size={148}
-                stroke={14}
+                size={ringSize}
+                stroke={Math.round(ringSize * 0.095)}
                 track="rgba(255,255,255,0.18)"
                 rings={[
                   { value: answered, total: doses.length, color: c.rings[0] },
@@ -111,9 +114,9 @@ export default function TodayScreen() {
                   { value: weekPct ?? 0, total: weekPct == null ? 0 : 1, color: c.rings[2] },
                 ]}
               >
-                <Text style={s.ringBig}>
+                <Text style={[s.ringBig, { fontSize: Math.round(ringSize * 0.2) }]} maxFontSizeMultiplier={1.2}>
                   {answered}
-                  <Text style={s.ringOf}>/{doses.length}</Text>
+                  <Text style={[s.ringOf, { fontSize: Math.round(ringSize * 0.12) }]}>/{doses.length}</Text>
                 </Text>
               </Rings>
               <View style={{ flex: 1, gap: 12 }}>
@@ -293,7 +296,7 @@ const useStyles = makeStyles((c) => ({
   ringOf: { fontSize: 18, fontWeight: '700', color: 'rgba(255,255,255,0.75)' },
   legendLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)' },
   legendValue: { fontSize: 17, fontWeight: '900', color: '#fff' },
-  heroPills: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  heroPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   pillText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   week: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 12 },

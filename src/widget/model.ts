@@ -1,6 +1,6 @@
 import { addDays, diffDays, formatTime, timeFromDate, toDateKey, weekdayOf, type DateKey } from '../domain/dates';
 import { describeDose } from '../domain/dose';
-import { adherence, computeProgress, type DaySummary } from '../domain/progress';
+import { adherence, computeProgress, isGoldDay, type DaySummary } from '../domain/progress';
 import { groupKey } from '../domain/reminders';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../domain/schedule';
 import type { DoseLog, Medication, ScheduledDose, Settings } from '../domain/types';
@@ -52,6 +52,16 @@ export interface WidgetData {
   } | null;
   /** Every dose today, by time, for the bigger list widget. */
   rows: WidgetRow[];
+  /** This week, Monday first, for the tallest widget. */
+  days: WidgetDay[];
+}
+
+export interface WidgetDay {
+  date: DateKey;
+  /** M, T, W... */
+  letter: string;
+  mark: 'gold' | 'complete' | 'partial' | 'missed' | 'none' | 'future';
+  today: boolean;
 }
 
 export interface WidgetInput {
@@ -86,6 +96,24 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
   }
   const monday = addDays(today, -((weekdayOf(today) + 6) % 7));
   const week = adherence(summaries.filter((s) => diffDays(monday, s.date) >= 0 && diffDays(s.date, today) >= 0));
+  const byDate = new Map(summaries.map((s) => [s.date, s]));
+  const days: WidgetDay[] = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(monday, i);
+    const sum = byDate.get(date);
+    const mark: WidgetDay['mark'] =
+      diffDays(today, date) > 0
+        ? 'future'
+        : isGoldDay(sum)
+          ? 'gold'
+          : sum?.status === 'complete'
+            ? 'complete'
+            : sum?.status === 'missed'
+              ? 'missed'
+              : sum && sum.taken + sum.skipped > 0
+                ? 'partial'
+                : 'none';
+    return { date, letter: 'MTWTFSS'[i], mark, today: date === today };
+  });
 
   const open = groupByTime(doses)
     .map((g) => ({ ...g, doses: g.doses.filter((d) => !logs.has(d.slot)) }))
@@ -119,6 +147,7 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
     showNames,
     snoozeMinutes: settings.snoozeMinutes,
     next,
+    days,
     rows: doses.map((d) => {
       const log = logs.get(d.slot);
       const med = byId.get(d.medId);
