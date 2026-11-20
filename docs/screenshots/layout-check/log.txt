@@ -1,0 +1,6 @@
+--------- beginning of main
+I/ReactNativeJS( 5116): Running "main"
+I/ReactNativeJS( 5116): Running "main"
+I/ReactNativeJS( 5116): Running "main"
+I/ReactNativeJS(12340): Running "main"
+I/ReactNativeJS(12340): Running "main"
