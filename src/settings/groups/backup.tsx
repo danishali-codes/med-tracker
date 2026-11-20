@@ -14,23 +14,32 @@ export const backupGroup: SettingsGroup = {
         link({
           id: 'backupRestore',
           title: 'Backup and restore',
-          hint: 'Save a password-locked file to Google Drive or your phone.',
-          keywords: ['backup', 'restore', 'export', 'import', 'google drive', 'file', 'automatic', 'weekly', 'new phone', 'password'],
+          hint: 'Save a password-locked file to your phone or Google Drive, by hand or automatically.',
+          keywords: ['backup', 'restore', 'export', 'import', 'google drive', 'google', 'sign in', 'file', 'automatic', 'weekly', 'new phone', 'password'],
           icon: 'cloud-download-outline',
           href: '/backup',
-          summary: (s) => (s.autoBackup.enabled && s.autoBackup.folderName ? `Automatic backup to ${s.autoBackup.folderName}` : null),
+          summary: (s) =>
+            s.autoBackup.enabled
+              ? s.autoBackup.target === 'drive'
+                ? 'Automatic backup to Google Drive'
+                : s.autoBackup.folderName
+                  ? `Automatic backup to ${s.autoBackup.folderName}`
+                  : null
+              : null,
         }),
         link({
           id: 'sync',
           title: 'Sync and sharing',
-          hint: 'Encrypted backup and sharing through a server. Off until you set it up.',
-          keywords: ['sync', 'server', 'pocketbase', 'share', 'caregiver', 'family', 'encrypted', 'share code'],
+          hint: 'End-to-end encrypted backup and sharing, on the Sabr server or your own. Off until you set it up.',
+          keywords: ['sync', 'server', 'pocketbase', 'share', 'caregiver', 'family', 'encrypted', 'share code', 'cloud', 'account', 'online backup', 'sabr server'],
           icon: 'lock-closed-outline',
           href: '/sync',
           summary: (s) =>
-            s.sync.enabled
+            s.fullyLocal && s.sync.enabled
+              ? 'Paused while Fully local is on'
+              : s.sync.enabled
               ? [s.sync.backup ? 'Encrypted backup on' : null, s.sync.share ? 'Sharing with a caregiver' : null].filter(Boolean).join(' · ') ||
-                'Connected to your server'
+                'Signed in'
               : 'Off. Nothing leaves this phone.',
         }),
         link({

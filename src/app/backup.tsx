@@ -84,18 +84,18 @@ export default function BackupScreen() {
     try {
       await afterPaint(fn);
     } catch (e) {
-      Alert.alert(failTitle, String(e instanceof Error ? e.message : e));
+      popup(failTitle, String(e instanceof Error ? e.message : e));
     } finally {
       setBusy(null);
     }
   };
 
   const toDrive = () => {
-    if (!pw) return Alert.alert('Add a password', 'Backups going to Google Drive are always locked with a password, so Google stores them but cannot read them.');
-    if (pw !== pw2) return Alert.alert('Passwords differ', 'Type the same password twice.');
+    if (!pw) return popup('Add a password', 'Backups going to Google Drive are always locked with a password, so Google stores them but cannot read them.');
+    if (pw !== pw2) return popup('Passwords differ', 'Type the same password twice.');
     return run('drive-save', async () => {
       await saveToDrive(pw);
-      Alert.alert('Saved', 'Your backup is in Google Drive, in the Sabr backups folder.');
+      popup('Saved', 'Your backup is in Google Drive, in the Sabr backups folder.');
     }, 'Backup failed');
   };
 
@@ -118,7 +118,7 @@ export default function BackupScreen() {
     }, 'Could not connect Google Drive');
 
   const disconnect = () =>
-    Alert.alert('Disconnect Google Drive?', 'Sabr signs out of Google and loses access to your Drive. Backups already there stay where they are.', [
+    popup('Disconnect Google Drive?', 'Sabr signs out of Google and loses access to your Drive. Backups already there stay where they are.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Disconnect', style: 'destructive', onPress: () => run('drive-connect', disconnectDrive) },
     ]);

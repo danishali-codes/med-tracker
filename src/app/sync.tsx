@@ -62,7 +62,7 @@ export default function SyncScreen() {
       if (!create) {
         const found = await sync.backupOnServer().catch(() => null);
         if (found)
-          Alert.alert('Restore your backup?', `There's a backup from ${new Date(found).toLocaleString()}. Restoring replaces everything on this phone with it.`, [
+          popup('Restore your backup?', `There's a backup from ${new Date(found).toLocaleString()}. Restoring replaces everything on this phone with it.`, [
             { text: 'Not now', style: 'cancel' },
             { text: 'Restore', style: 'destructive', onPress: () => run('restore', () => sync.restoreBackup(null)) },
           ]);
