@@ -20,6 +20,7 @@ export function ListWidget({
   width = 320,
   header = HEADER,
   week = false,
+  rowPad = 0,
 }: {
   data: WidgetData;
   dark: boolean;
@@ -29,6 +30,8 @@ export function ListWidget({
   header?: number;
   /** Show this week's days under the doses (the tallest sizes). */
   week?: boolean;
+  /** Extra space above and below each row when the widget has room to spare. */
+  rowPad?: number;
 }) {
   const ring = Math.min(header - 24, Math.round(width * 0.36));
   const legendFont = header >= 130 ? 13 : 12;
@@ -63,7 +66,7 @@ export function ListWidget({
           <TextWidget text="Nothing due today" style={{ fontSize: 14, fontFamily: REG, color: s.muted, marginTop: 8 }} />
         ) : null}
         {rows.map((r) => (
-          <Row key={r.slot} r={r} s={s} dark={dark} />
+          <Row key={r.slot} r={r} s={s} dark={dark} pad={4 + rowPad} />
         ))}
         {more > 0 ? <TextWidget text={`+${more} more`} style={{ fontSize: 12, fontFamily: REG, color: s.muted, marginTop: 2 }} /> : null}
       </FlexWidget>
@@ -119,10 +122,10 @@ function Legend({ color, label, value, c, font = 12 }: { color: Hex; label: stri
   );
 }
 
-function Row({ r, s, dark }: { r: WidgetRow; s: Surface; dark: boolean }) {
+function Row({ r, s, dark, pad = 4 }: { r: WidgetRow; s: Surface; dark: boolean; pad?: number }) {
   const open = r.status === 'open';
   return (
-    <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', paddingVertical: 4 }}>
+    <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', paddingVertical: pad }}>
       <SvgWidget svg={pillSvg(r.pill, 22)} style={{ width: 22, height: 22, marginRight: 8 }} />
       <TextWidget text={r.label} maxLines={1} style={{ fontSize: 12, fontFamily: REG, color: s.muted, width: 64 }} />
       <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>

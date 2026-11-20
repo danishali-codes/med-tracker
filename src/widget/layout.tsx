@@ -50,7 +50,10 @@ export function listSpace(height: number, data: Pick<WidgetData, 'showNames' | '
   let spare = height - LIST_HEADER - 16 - 8 - shown * listRowHeight(data) - (data.rows.length > rows ? 18 : 0);
   const week = spare >= LIST_WEEK + 4;
   if (week) spare -= LIST_WEEK;
-  return { rows, week, header: LIST_HEADER + Math.max(0, Math.min(72, Math.floor(spare * 0.7))) };
+  const grow = Math.max(0, Math.min(72, Math.floor(spare * 0.7)));
+  // Whatever is still left spreads the rows out a little.
+  const rowPad = Math.max(0, Math.min(8, Math.floor((spare - grow) / shown / 2)));
+  return { rows, week, header: LIST_HEADER + grow, rowPad };
 }
 
 const DEFAULT_SIZE: Record<Layout, [number, number]> = { next: [160, 160], today: [320, 150], list: [320, 300] };
@@ -62,7 +65,7 @@ export function renderLayout(name: string, data: WidgetData, dark: boolean, widt
   const h = height && height > 0 ? height : DEFAULT_SIZE[layout][1];
   if (layout === 'list') {
     const space = listSpace(h, data);
-    return <ListWidget data={data} dark={dark} width={w} maxRows={space.rows} header={space.header} week={space.week} />;
+    return <ListWidget data={data} dark={dark} width={w} maxRows={space.rows} header={space.header} week={space.week} rowPad={space.rowPad} />;
   }
   if (layout === 'next') return <NextWidget data={data} dark={dark} width={w} height={h} />;
   return <TodayWidget data={data} dark={dark} width={w} height={h} />;
