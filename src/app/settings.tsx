@@ -394,7 +394,7 @@ function Options({ label, value, options, suffix, onChange }: { label: string; v
       <Text style={[st.label, { marginBottom: 6 }]}>{label}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {options.map((o) => (
-          <Chip key={o} label={o === 0 ? "Straight away" : `${o} ${suffix}`} selected={value === o} onPress={() => onChange(o)} />
+          <Chip key={o} label={o === 0 ? "Straight away" : `${o} ${o === 1 && suffix === 'times' ? 'time' : suffix}`} selected={value === o} onPress={() => onChange(o)} />
         ))}
       </View>
     </View>

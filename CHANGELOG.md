@@ -6,6 +6,28 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.9
+
+A layout pass over every screen, bigger widgets that show more as they grow, and early doses.
+
+### Fixed
+- Buttons, the 2 weeks / Month / Year switch and the mood chips no longer get squished. They fill their space evenly.
+- Content no longer slides under the status bar when you scroll, and the last card on each tab clears the floating tab bar.
+- On a gold day the "All on time" pill no longer runs off the screen.
+- The History calendar shows all seven days in a row again, instead of wrapping Sunday onto its own line.
+- Pages and pop-up menus keep clear of the phone's navigation bar, and long menus scroll.
+- Rows of buttons wrap onto a second line on narrow phones or with large text.
+- The streak card, review tiles and charts make room for large text sizes.
+
+### Widgets
+- The ring and text grow to fill the widget instead of sitting small in a corner.
+- Each widget changes with its size: small shows the next dose, medium adds today's ring and a Take button, and tall shows today's dose times, this week's days and more.
+- Medicine names stay hidden on widgets unless you turn them on in Settings.
+
+### Early doses
+- A dose taken more than the on-time window before its time shows as "Early". It counts for your streak, but not as on time, so it doesn't make a gold day.
+- There's a hidden badge to find for taking a dose early.
+
 ## 0.8
 
 A full check-up of the code: bug fixes, a leaner app, and a sturdier watch tile.

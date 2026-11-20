@@ -38,7 +38,7 @@ export default function ProgressScreen() {
       <FadeIn>
         <View style={[s.streak, { backgroundColor: c.flame }]}>
           <Flame />
-          <View style={{ flex: 1 }}>
+          <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 150 }}>
             <Text style={s.streakBig}>{progress.currentStreak}</Text>
             <Text style={s.streakLabel}>day streak</Text>
             <Text style={s.streakSub}>Best: {progress.bestStreak} days</Text>
@@ -265,7 +265,7 @@ const useStyles = makeStyles((c) => ({
   hintTight: { fontSize: 12, color: c.muted, fontWeight: '600' },
   reportLink: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: c.card, borderRadius: 28, padding: 18, marginBottom: 14 },
   reportTitle: { fontSize: 16, fontWeight: '800', color: c.text },
-  streak: { borderRadius: 32, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
+  streak: { borderRadius: 32, padding: 20, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginBottom: 14 },
   streakBig: { fontSize: 48, fontWeight: '900', color: '#fff', lineHeight: 52 },
   streakLabel: { fontSize: 16, fontWeight: '800', color: '#fff' },
   streakSub: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.85)', marginTop: 2 },
