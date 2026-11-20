@@ -1,8 +1,10 @@
 import { View } from 'react-native';
 import { canUseAppLock, unlockWithDevice } from '../../components/AppLock';
-import { popup } from '../../components/Popup';
+import { confirm, popup } from '../../components/Popup';
 import { Button, Text } from '../../components/ui';
 import { clearDownloads } from '../../drugs/online';
+import { syncNow } from '../../sync/engine';
+import { clearWatch, pushToWatchNow } from '../../wear/sync';
 import { choice, toggle, useSettingStyles } from '../rows';
 import type { SettingsGroup } from '../types';
 
@@ -25,8 +27,11 @@ export const privacyGroup: SettingsGroup = {
   id: 'privacy',
   title: 'Privacy and security',
   icon: 'shield-checkmark-outline',
-  blurb: 'App lock, medicine names, online search',
-  summary: (s) => [s.appLock ? 'App lock on' : null, s.onlineLookups ? 'Online search on' : 'Offline search'].filter(Boolean).join(' · '),
+  blurb: 'Fully local, app lock, medicine names, online search',
+  summary: (s) =>
+    [s.fullyLocal ? 'Fully local' : null, s.appLock ? 'App lock on' : null, s.fullyLocal ? null : s.onlineLookups ? 'Online search on' : 'Offline search']
+      .filter(Boolean)
+      .join(' · '),
   sections: [
     {
       title: 'Privacy',
@@ -40,12 +45,52 @@ export const privacyGroup: SettingsGroup = {
             const st = useSettingStyles();
             return (
               <Text style={[st.hint, { marginBottom: 4 }]}>
-                Everything that could share anything is off until you turn it on. There are no accounts, ads, analytics or crash reports, and your doses,
-                times and history never leave this phone.
+                Everything that could share anything is off until you turn it on. There are no ads, analytics or crash reports, no account unless you
+                choose an online backup, and your doses, times and history never leave this phone unless you choose to back them up.
               </Text>
             );
           },
         },
+        toggle({
+          id: 'fullyLocal',
+          title: 'Fully local',
+          hint: 'One switch that keeps Sabr off the internet completely, whatever else is turned on.',
+          keywords: ['offline', 'local', 'no internet', 'airplane', 'cloud', 'network', 'private', 'turn off everything', 'sync', 'backup', 'drive'],
+          get: (s) => s.fullyLocal,
+          set: (fullyLocal) => ({ fullyLocal }),
+          liveHint: (s) =>
+            s.fullyLocal
+              ? 'On. Nothing leaves this phone: online search, online backup and sharing, people you follow, Google Drive and the watch tile are all paused.'
+              : 'Off. Only what you turned on yourself goes online.',
+          handle: async (v, { settings, update }) => {
+            if (v) {
+              const ok = await confirm(
+                'Go fully local?',
+                'Sabr stops using the internet completely, whatever your other settings say:\n\n' +
+                  '- Online medicine search\n' +
+                  '- Online backup and caregiver sharing (you stay signed in)\n' +
+                  '- Updates from people you look after\n' +
+                  '- Backups to Google Drive (backups to a folder on the phone carry on)\n' +
+                  '- The watch tile (reminders still show on your watch)\n\n' +
+                  'Your settings for each are kept, so they pick up again if you turn this off.',
+                'Go fully local',
+              );
+              if (!ok) return;
+              update({ fullyLocal: true });
+              clearWatch().catch(() => {});
+              return;
+            }
+            const ok = await confirm(
+              'Turn off Fully local?',
+              'Anything you had turned on that uses the internet starts again. Nothing else changes.',
+              'Turn off',
+            );
+            if (!ok) return;
+            update({ fullyLocal: false });
+            if (settings.watchTile) pushToWatchNow().catch(() => {});
+            syncNow().catch(() => {});
+          },
+        }),
         toggle({
           id: 'onlineLookups',
           title: 'Online medicine search',

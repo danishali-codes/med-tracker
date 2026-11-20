@@ -6,7 +6,10 @@ folder is only for people who want one or both of these:
 - **An encrypted backup** of their medicines, history and notes, to restore on a new phone.
 - **Caregiver sharing**, so a family member can see whether today's doses were taken.
 
-Both use a [PocketBase](https://pocketbase.io) server that you run yourself.
+Both use a [PocketBase](https://pocketbase.io) server: the Sabr server that Sabr's
+developer runs for anyone (pick "Sabr server" in the app, nothing to set up), or one
+that you run yourself with the steps below. How the Sabr server itself is run is in
+[SABR-SERVER.md](SABR-SERVER.md).
 
 ## What the server can see
 
@@ -15,8 +18,8 @@ secretbox). The server stores:
 
 | Stored | Readable by the server? |
 | --- | --- |
-| Your account email and a hashed password | Yes, that's how sign-in works |
-| Your backup | No. Locked with a recovery key that only exists on your phone (and wherever you save it) |
+| Your account email and a hashed sign-in code | The email, yes. The code is made from your password on the phone; the password itself is never sent, and the code can't be turned back into it |
+| Your backup | No. Locked with a random key; that key is locked again with a second code made from your password, which never leaves the phone. Your recovery key opens it too |
 | Your shared status | No. Locked with a key that only exists in the share code you hand out |
 | When each was last updated, and its size | Yes |
 
@@ -30,7 +33,7 @@ and HTTPS in front of it.
 
 1. Download PocketBase 0.23 or newer for your machine from
    https://github.com/pocketbase/pocketbase/releases and unzip it into a folder.
-2. Copy `pb_migrations/` from this folder next to the `pocketbase` binary.
+2. Copy `pb_migrations/` and `pb_hooks/` from this folder next to the `pocketbase` binary.
 3. Start it:
 
    ```sh
@@ -59,6 +62,7 @@ services:
     volumes:
       - ./pb_data:/pb_data
       - ./pb_migrations:/pb_migrations
+      - ./pb_hooks:/pb_hooks
 ```
 
 ## Who can sign up
@@ -76,13 +80,19 @@ encrypted status.
 
 ## In the app
 
-1. Settings, **Sync and sharing**, turn on **Use my own server**.
+1. Settings, **Sync and sharing**, turn on **Back up and share online**, then pick
+   **My own server**.
 2. Enter the server address (for example `pb.example.com`), your email and a password.
 3. Turn on what you want:
-   - **Keep an encrypted backup**, then tap **Show recovery key** and save it somewhere
-     safe. Without it the backup can't be opened, by anyone.
+   - **Keep an encrypted backup**. On a new phone, sign in with the same email and
+     password to restore it. Also tap **Show recovery key** and save it somewhere safe:
+     it opens the backup if you lose the password. Without either, nobody can open it.
    - **Let someone see my doses**, then **Get share code** and send it to them. They
      paste it in Settings, **People I look after**. **Stop old codes working** makes a
      new code and cuts off everyone using the old one.
 
 Turning sync off signs you out, stops all sharing, and can delete the server copies.
+**Fully local** (Settings, Privacy) pauses all of it without signing out.
+
+Accounts made before Sabr 0.10 signed in with the plain password. They still work on
+your own server; their backups open with the recovery key only.
