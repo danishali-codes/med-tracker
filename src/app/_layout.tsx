@@ -10,7 +10,8 @@ import * as Notifications from 'expo-notifications';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
-import { Alert, Appearance, AppState, useColorScheme } from 'react-native';
+import { Appearance, AppState, useColorScheme } from 'react-native';
+import { popup, PopupHost } from '../components/Popup';
 import { phoneTimeZone } from '../domain/schedule';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSettings } from '../hooks/useData';
@@ -39,7 +40,7 @@ export default function RootLayout() {
   const settings = useSettings();
   const system = useColorScheme();
 
-  // Native pieces (date pickers, alerts) follow the chosen appearance too.
+  // Native pieces (date pickers) follow the chosen appearance too.
   useEffect(() => {
     Appearance.setColorScheme(settings.appearance === 'system' ? 'unspecified' : settings.appearance);
   }, [settings.appearance]);
@@ -103,7 +104,8 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="med/[id]" options={{ title: 'Medication', presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="interactions" options={{ title: 'Interactions' }} />
-            <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+            <Stack.Screen name="settings/index" options={{ title: 'Settings' }} />
+            <Stack.Screen name="settings/[group]" options={{ title: 'Settings' }} />
             <Stack.Screen name="times" options={{ title: 'Ramadan, travel and changes' }} />
             <Stack.Screen name="report" options={{ title: 'Doctor report' }} />
             <Stack.Screen name="sync" options={{ title: 'Sync and sharing' }} />
@@ -114,6 +116,7 @@ export default function RootLayout() {
             <Stack.Screen name="patterns" options={{ title: 'Patterns' }} />
             <Stack.Screen name="mood" options={{ title: 'Mood trend' }} />
           </Stack>
+          <PopupHost />
           </AppLockGate>
         </ThemeProvider>
       </ThemeContext.Provider>
@@ -134,7 +137,7 @@ function checkTimeZone() {
   if (!last) return;
   const s = repo.getSettings();
   const msg = s.travelMode
-    ? `Reminders stay on your home time (${s.homeTimeZone}). You can change this under Settings, Ramadan, travel and time changes.`
-    : 'Reminders now follow the local time here, so an 8:00 AM dose rings at 8:00 AM local time. To keep your home time instead, turn on "Keep home time" in Settings.';
-  Alert.alert(`Time zone changed to ${now}`, msg);
+    ? `Reminders stay on your home time (${s.homeTimeZone}). You can change this under Settings, Timing and routines.`
+    : 'Reminders now follow the local time here, so an 8:00 AM dose rings at 8:00 AM local time. To keep your home time instead, turn on "Keep home time" in Settings, Timing and routines.';
+  popup(`Time zone changed to ${now}`, msg);
 }

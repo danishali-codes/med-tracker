@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { MedIcon } from '../components/MedIcon';
 import { TimeButton } from '../components/Pickers';
@@ -32,15 +33,15 @@ export default function RoutinesScreen() {
   const save = async () => {
     if (!editing) return;
     const name = editing.name.trim();
-    if (!name) return Alert.alert('Name it', 'Give the routine a name, like Breakfast.');
+    if (!name) return popup('Name it', 'Give the routine a name, like Breakfast.');
     const clash = settings.routines.find((r) => r.time === editing.time && r.id !== editing.original?.id);
-    if (clash) return Alert.alert('Time taken', `${clash.name} is already at ${formatTime(clash.time)}. Pick another time, or add these medicines to ${clash.name}.`);
+    if (clash) return popup('Time taken', `${clash.name} is already at ${formatTime(clash.time)}. Pick another time, or add these medicines to ${clash.name}.`);
     // A medicine taken out of the routine can't be left with no time at all.
     const stranded = editing.original
       ? routineMembers(editing.original, meds).filter((m) => !editing.members.has(m.id) && m.schedule.times.length === 1)
       : [];
     if (stranded.length) {
-      return Alert.alert(
+      return popup(
         "Can't take these out",
         `${stranded.map((m) => m.name).join(', ')} ${stranded.length === 1 ? 'has' : 'have'} no other time. Change ${stranded.length === 1 ? 'its' : 'their'} time in the medicine first.`,
       );
@@ -58,7 +59,7 @@ export default function RoutinesScreen() {
   };
 
   const remove = (r: Routine) =>
-    Alert.alert(`Remove ${r.name}?`, 'The medicines keep their times; they just lose the group name.', [
+    popup(`Remove ${r.name}?`, 'The medicines keep their times; they just lose the group name.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',

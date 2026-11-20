@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Share, View } from 'react-native';
+import { ActivityIndicator, Linking, Share, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { ToggleRow, useRowStyles } from '../components/ToggleRow';
 import { Button, Card, Field, Input, SectionTitle, Text } from '../components/ui';
@@ -39,7 +40,7 @@ export default function SyncScreen() {
     try {
       await fn();
     } catch (e) {
-      Alert.alert('Something went wrong', e instanceof Error ? e.message : String(e));
+      popup('Something went wrong', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
     }
@@ -53,7 +54,7 @@ export default function SyncScreen() {
     });
 
   const signOut = () =>
-    Alert.alert('Sign out of your server?', 'Sharing and backups stop. Your data on this phone stays.', [
+    popup('Sign out of your server?', 'Sharing and backups stop. Your data on this phone stays.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', onPress: () => run('out', async () => (await sync.disconnect(false), setSession(null), setCode(null))) },
       {
@@ -165,7 +166,7 @@ export default function SyncScreen() {
                   disabled={!restoreKey.trim() || !!busy}
                   style={{ alignSelf: 'flex-start' }}
                   onPress={() =>
-                    Alert.alert('Replace everything on this phone?', 'Your medicines and history here are replaced by the backup.', [
+                    popup('Replace everything on this phone?', 'Your medicines and history here are replaced by the backup.', [
                       { text: 'Cancel', style: 'cancel' },
                       { text: 'Restore', style: 'destructive', onPress: () => run('restore', async () => (await sync.restoreBackup(restoreKey), setRestoreKey(''))) },
                     ])
@@ -210,7 +211,7 @@ export default function SyncScreen() {
                             const c2 = code ?? (await sync.shareCode());
                             if (!c2) throw new Error(repo.getKv('sync_error') ?? 'Could not reach your server.');
                             setCode(c2);
-                            if (code) await Share.share({ message: `Follow my medicines in Sabr. In the app, go to Settings, then People I look after, and paste this code:\n\n${c2}` });
+                            if (code) await Share.share({ message: `Follow my medicines in Sabr. In the app, go to Settings, then Backup and sharing, then People I look after, and paste this code:\n\n${c2}` });
                           })
                         }
                       />
@@ -219,7 +220,7 @@ export default function SyncScreen() {
                         kind="ghost"
                         small
                         onPress={() =>
-                          Alert.alert('Make a new code?', 'Anyone following you with the old code stops seeing your doses.', [
+                          popup('Make a new code?', 'Anyone following you with the old code stops seeing your doses.', [
                             { text: 'Cancel', style: 'cancel' },
                             { text: 'New code', style: 'destructive', onPress: () => run('code', async () => (await sync.resetShare(), setCode(await sync.shareCode()))) },
                           ])

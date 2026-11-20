@@ -32,6 +32,18 @@ Supplements, a mood trend, routines the app learns from you, and one path for ev
 - A Take press on the widget now updates the watch tile and caregivers straight away, and the reverse.
 - Settings only says the watch is ready when the Sabr watch app is installed on it. A connected watch without it is named, with how to install it. Update the watch app too: older versions don't report themselves.
 
+## 0.10
+
+Settings is split into pages, with search and a Simple / Advanced switch, and every pop-up now looks like the rest of Sabr.
+
+### Settings
+- Settings opens on a short list: Look and feel, Reminders, Timing and routines, Privacy and security, Backup and sharing, and Watch and widgets. Each shows what's on at a glance, and opens its own page.
+- Search at the top finds any setting, on any page, including advanced ones. You can change it right there in the results.
+- Simple shows the everyday settings. Advanced adds fine-tuning, like snooze length, repeat timing, the on-time window and app lock timing. A page tells you how many it's hiding, with a link to show them.
+
+### Pop-ups
+- Questions, warnings and confirmations (delete a medicine, restore a backup, time zone changed and so on) use Sabr's own rounded pop-up in your light or dark theme instead of the plain Android dialog.
+
 ## 0.9
 
 A layout pass over every screen, bigger widgets that show more as they grow, and early doses.

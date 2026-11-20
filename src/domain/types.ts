@@ -226,6 +226,8 @@ export interface Settings {
    * the Wear OS data layer; names are only included when showMedNames is on.
    */
   watchTile: boolean;
+  /** Show the advanced settings too (off: Settings shows only the everyday ones; search always finds everything). */
+  showAdvanced: boolean;
 }
 
 export interface AutoBackupSettings {
@@ -297,6 +299,7 @@ export const DEFAULT_SETTINGS: Settings = {
   foodTimers: true,
   autoBackup: { enabled: false, folderUri: null, folderName: null, everyDays: 7 },
   watchTile: false,
+  showAdvanced: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */

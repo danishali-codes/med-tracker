@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, Switch, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Switch, View } from 'react-native';
+import { popup } from '../../components/Popup';
 import { PageScroll } from '../../components/Screen';
 import { removeMedication, saveMedication } from '../../actions';
 import { defaultShape, hasShape, lookOf, PILL_COLORS, PILL_SHAPES, PillArt } from '../../components/PillArt';
@@ -134,7 +135,7 @@ export default function MedEditor() {
       res = await scanBox('camera');
     } catch (e) {
       setScanning(false);
-      Alert.alert('Could not scan', String(e instanceof Error ? e.message : e));
+      popup('Could not scan', String(e instanceof Error ? e.message : e));
       return;
     }
     setScanning(false);
@@ -143,7 +144,7 @@ export default function MedEditor() {
     const known = res.barcode ? repo.getMeds().find((m) => m.barcode === res!.barcode && m.id !== existing?.id) : null;
     if (known) {
       const n = res.packCount;
-      Alert.alert(`This is ${known.name}`, n && known.stock != null ? `Add ${n} to its stock?` : 'You already have this medicine.', [
+      popup(`This is ${known.name}`, n && known.stock != null ? `Add ${n} to its stock?` : 'You already have this medicine.', [
         { text: 'Cancel', style: 'cancel' },
         ...(n && known.stock != null ? [{ text: `Add ${n}`, onPress: () => saveMedication({ ...known, stock: (known.stock ?? 0) + n }).then(() => router.back()) }] : []),
         { text: 'Open it', onPress: () => router.replace(`/med/${known.id}`) },
@@ -167,7 +168,7 @@ export default function MedEditor() {
       setStock(String(res.packCount));
       found.push(`${res.packCount} in the pack`);
     }
-    Alert.alert(
+    popup(
       found.length ? 'Read from the box' : 'Nothing recognised',
       found.length ? `${found.join(', ')}. Please check the details before saving.` : 'Try again with the name facing the camera in good light, or type the name.',
     );
@@ -233,9 +234,9 @@ export default function MedEditor() {
   const u = FORM_UNITS[form];
 
   const save = async () => {
-    if (!name.trim()) return Alert.alert('Add a name', 'What is this medication called?');
-    if (kind !== 'asNeeded' && times.length === 0) return Alert.alert('Add a time', 'When should you take it?');
-    if (kind === 'weekdays' && days.length === 0) return Alert.alert('Pick a day', 'Choose at least one day of the week.');
+    if (!name.trim()) return popup('Add a name', 'What is this medication called?');
+    if (kind !== 'asNeeded' && times.length === 0) return popup('Add a time', 'When should you take it?');
+    if (kind === 'weekdays' && days.length === 0) return popup('Pick a day', 'Choose at least one day of the week.');
     await saveMedication(
       build(),
       Object.entries(origins)
@@ -260,7 +261,7 @@ export default function MedEditor() {
   };
 
   const remove = () =>
-    Alert.alert('Delete medication?', 'This removes it and its dose log. Your past streaks stay. Archive it instead if you want to keep its log.', [
+    popup('Delete medication?', 'This removes it and its dose log. Your past streaks stay. Archive it instead if you want to keep its log.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -298,7 +299,7 @@ export default function MedEditor() {
   // Moving a time carries its weekday overrides with it, and never merges two doses into one.
   const moveTime = (from: TimeOfDay, to: TimeOfDay) => {
     const next = editTimes({ ...draft.schedule, times, dayTimes }, [{ move: from, to }]);
-    if (!next) return Alert.alert('Already set', `This medicine already has a dose at ${formatTime(to)}.`);
+    if (!next) return popup('Already set', `This medicine already has a dose at ${formatTime(to)}.`);
     setTimes(next.times);
     setDayTimes(next.dayTimes ?? []);
     setOrigins(({ [from]: original, ...rest }) => (original ? { ...rest, [to]: original } : rest));
@@ -364,7 +365,7 @@ export default function MedEditor() {
               </View>
             ) : null}
             {nameFocused && !onlineAllowed() ? (
-              <Text style={[st.hint, { marginTop: 6 }]}>Searching the built-in list. Turn on online search in Settings, Privacy for more names.</Text>
+              <Text style={[st.hint, { marginTop: 6 }]}>Searching the built-in list. Turn on online search in Settings, Privacy and security for more names.</Text>
             ) : null}
           </Field>
           {generic || loadingDetails ? (
