@@ -25,7 +25,10 @@ export interface DaySummary {
   scheduled: number;
   taken: number;
   onTime: number;
+  /** Taken, but not within the on-time window: late or early. */
   late: number;
+  /** Of those, how many were taken early. Missing on summaries made before this existed. */
+  early?: number;
   skipped: number;
   status: DayStatus;
 }
@@ -61,6 +64,7 @@ export function summarizeDay(
   let taken = 0,
     onTime = 0,
     late = 0,
+    early = 0,
     skipped = 0;
   for (const d of doses) {
     const log = logs.get(d.slot);
@@ -70,8 +74,12 @@ export function summarizeDay(
       continue;
     }
     taken++;
-    if (punctuality(d, new Date(log.at), windowMinutes) === 'onTime') onTime++;
-    else late++;
+    const p = punctuality(d, new Date(log.at), windowMinutes);
+    if (p === 'onTime') onTime++;
+    else {
+      late++;
+      if (p === 'early') early++;
+    }
   }
   const scheduled = doses.length;
   const resolved = taken + skipped;
@@ -82,7 +90,7 @@ export function summarizeDay(
   else if (resolved === scheduled) status = 'complete';
   else if (diffDays(date, today) <= 0) status = 'pending';
   else status = resolved > 0 ? 'partial' : 'missed';
-  return { date, scheduled, taken, onTime, late, skipped, status };
+  return { date, scheduled, taken, onTime, late, early, skipped, status };
 }
 
 /** The first day a med counts towards streaks: the later of its start date and the day it was added. */
@@ -114,6 +122,8 @@ export interface Progress {
   perfectDays: number;
   totalTaken: number;
   totalOnTime: number;
+  /** Doses taken earlier than the on-time window. */
+  totalEarly: number;
   perfectMonths: number;
   coinsEarned: number;
 }
@@ -126,6 +136,7 @@ export function computeProgress(days: DaySummary[]): Progress {
     perfectDays = 0,
     totalTaken = 0,
     totalOnTime = 0,
+    totalEarly = 0,
     coins = 0,
     perfect = 0,
     bestPerfect = 0,
@@ -138,6 +149,7 @@ export function computeProgress(days: DaySummary[]): Progress {
   for (const s of days) {
     totalTaken += s.taken;
     totalOnTime += s.onTime;
+    totalEarly += s.early ?? 0;
     coins += dayCoins(s);
     switch (s.status) {
       case 'none':
@@ -188,6 +200,7 @@ export function computeProgress(days: DaySummary[]): Progress {
     perfectDays,
     totalTaken,
     totalOnTime,
+    totalEarly,
     perfectMonths: countPerfectMonths(days),
     coinsEarned: coins,
   };
@@ -237,6 +250,8 @@ export interface BadgeDef {
   icon: string;
   description: string;
   earned: (s: BadgeStats) => boolean;
+  /** A surprise: not listed until it's earned. */
+  hidden?: boolean;
 }
 
 export type BadgeStats = Progress;
@@ -255,6 +270,14 @@ export const BADGES: BadgeDef[] = [
   { id: 'perfect_14', name: 'Spotless', icon: 'sparkles-outline', description: 'Reach a 14-day perfect streak', earned: (s) => s.bestPerfectStreak >= 14 },
   { id: 'perfect_60', name: 'Unbroken', icon: 'ribbon-outline', description: 'Reach a 60-day perfect streak', earned: (s) => s.bestPerfectStreak >= 60 },
   { id: 'perfect_month', name: 'Flawless month', icon: 'calendar-outline', description: 'Finish a calendar month with every dose taken', earned: (s) => s.perfectMonths >= 1 },
+  {
+    id: 'early_bird',
+    name: 'Early bird',
+    icon: 'sunny-outline',
+    description: 'Took a dose well ahead of its time',
+    earned: (s) => s.totalEarly >= 1,
+    hidden: true,
+  },
 ];
 
 /** Share of scheduled doses answered (taken or skipped) across these days, or null when none were due. */

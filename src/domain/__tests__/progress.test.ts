@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, eachDay } from '../dates';
-import { COINS, computeProgress, medStreak, summarizeDay, type DaySummary } from '../progress';
+import { BADGES, COINS, computeProgress, isGoldDay, medStreak, summarizeDay, type DaySummary } from '../progress';
 import { indexLogs, slotKey } from '../schedule';
 import type { DoseLog, Medication } from '../types';
 
@@ -52,6 +52,28 @@ describe('summarizeDay', () => {
     expect(s.status).toBe('complete');
     expect(s.late).toBe(1);
     expect(s.onTime).toBe(1);
+  });
+
+  it('a dose taken well before its time is early: it completes the day but is not on time', () => {
+    // 8:00 PM dose taken at 6:30 PM, outside the 60 minute window.
+    const logs = indexLogs([take('a', '2026-11-03', '08:00', local('2026-11-03', 8)), take('a', '2026-11-03', '20:00', local('2026-11-03', 18, 30))]);
+    const s = summarizeDay(meds, logs, '2026-11-03', '2026-11-04', 60);
+    expect(s.status).toBe('complete');
+    expect(s.onTime).toBe(1);
+    expect(s.early).toBe(1);
+    expect(s.late).toBe(1);
+    expect(isGoldDay(s)).toBe(false);
+    // Within the window counts as on time, even if a little early.
+    const close = summarizeDay(meds, indexLogs([take('a', '2026-11-03', '08:00', local('2026-11-03', 7, 15)), take('a', '2026-11-03', '20:00', local('2026-11-03', 20))]), '2026-11-03', '2026-11-04', 60);
+    expect(close.early).toBe(0);
+    expect(isGoldDay(close)).toBe(true);
+  });
+
+  it('the early bird badge is hidden and earned by an early dose', () => {
+    const bird = BADGES.find((b) => b.id === 'early_bird')!;
+    expect(bird.hidden).toBe(true);
+    expect(bird.earned(computeProgress([day('complete')]))).toBe(false);
+    expect(bird.earned(computeProgress([day('complete', { onTime: 0, late: 1, early: 1 })]))).toBe(true);
   });
 
   it('a dose never taken makes a finished day partial', () => {

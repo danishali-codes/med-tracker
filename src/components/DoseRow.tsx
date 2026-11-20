@@ -64,8 +64,9 @@ export function DoseRow({
 
   let status: { text: string; color: string } | null = null;
   if (taken) {
-    const late = punctuality(dose, new Date(log!.at), windowMinutes) === 'late';
-    status = { text: `${late ? 'Late' : 'Taken'} at ${formatTime(timeFromDate(new Date(log!.at)))}`, color: late ? c.warn : c.good };
+    const p = punctuality(dose, new Date(log!.at), windowMinutes);
+    const word = p === 'late' ? 'Late' : p === 'early' ? 'Early' : 'Taken';
+    status = { text: `${word} at ${formatTime(timeFromDate(new Date(log!.at)))}`, color: p === 'onTime' ? c.good : c.warn };
   } else if (skipped) {
     status = { text: 'Skipped', color: c.muted };
   }

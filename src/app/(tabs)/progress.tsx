@@ -16,7 +16,9 @@ import { makeStyles, useTheme } from '../../theme';
 export default function ProgressScreen() {
   const c = useTheme();
   const s = useStyles();
-  const { today, progress, badges, byDate, summaries } = useProgress();
+  const { today, progress, badges: allBadges, byDate, summaries } = useProgress();
+  // Hidden badges stay a surprise: not listed or counted until they're earned.
+  const badges = allBadges.filter((b) => !b.hidden || b.has);
   const last30 = summaries.slice(-31, -1);
   const pct30 = adherence(last30);
   const onTimePct = progress.totalTaken ? Math.round((progress.totalOnTime / progress.totalTaken) * 100) : null;
