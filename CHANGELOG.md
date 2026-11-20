@@ -6,7 +6,7 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
-## 0.10
+## 0.13
 
 ### Health data
 - Bring in steps, sleep, heart rate and resting heart rate from Samsung Health (and your Galaxy Watch) through Health Connect. Off until you turn it on in Settings > Health data, and Health Connect lets you pick exactly what Sabr can read.
