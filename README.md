@@ -106,7 +106,7 @@ Every version's notes, APK and screenshots (light and dark, every screen) are on
 
 ## Privacy
 
-No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
+No accounts, ads, analytics or crash reports, and your data stays on your phone. Anything that could share or show what you take is off until you turn it on in Settings > Privacy and security: online medicine search (sends only a medicine name to free US government services) and medicine names in reminders. See [PRIVACY.md](PRIVACY.md) for exactly what is sent and to whom.
 
 ## What's next
 
@@ -116,7 +116,7 @@ No accounts, ads, analytics or crash reports, and your data stays on your phone.
 
 1. Open the [latest release](../../releases/tag/latest) on your phone and download the `.apk`.
 2. Open it. Android will ask you to allow installs from your browser or files app; allow it once.
-3. In the app, open **Settings** and:
+3. In the app, open **Settings**, then **Reminders**, and:
    - allow **Notifications** and **Alarms & reminders**;
    - tap **Battery → Open** and choose *Unrestricted*. On Samsung phones, also check *Settings → Battery → Background usage limits* and make sure Sabr isn't in "Sleeping apps";
    - tap **Send a test reminder** to check it works.

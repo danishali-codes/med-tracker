@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import {
   autoBackupIfDue,
@@ -52,10 +53,10 @@ export default function BackupScreen() {
   const saveAuto = (patch: Partial<AutoBackupSettings>) => repo.saveSettings({ ...settings, autoBackup: { ...auto, ...patch } });
 
   const exportNow = async () => {
-    if (pw && pw !== pw2) return Alert.alert('Passwords differ', 'Type the same password twice.');
+    if (pw && pw !== pw2) return popup('Passwords differ', 'Type the same password twice.');
     if (!pw) {
       const go = await new Promise<boolean>((resolve) =>
-        Alert.alert('Save without a password?', 'Anyone who gets the file can read your medicines and history. A password is safer, especially for Google Drive.', [
+        popup('Save without a password?', 'Anyone who gets the file can read your medicines and history. A password is safer, especially for Google Drive.', [
           { text: 'Add a password', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Save without', onPress: () => resolve(true) },
         ]),
@@ -66,14 +67,14 @@ export default function BackupScreen() {
     try {
       await afterPaint(() => shareBackup(pw || null));
     } catch (e) {
-      Alert.alert('Backup failed', String(e instanceof Error ? e.message : e));
+      popup('Backup failed', String(e instanceof Error ? e.message : e));
     } finally {
       setBusy(null);
     }
   };
 
   const confirmRestore = (text: string, password: string | null) => {
-    Alert.alert('Restore this backup?', 'This replaces everything in the app with the backup.', [
+    popup('Restore this backup?', 'This replaces everything in the app with the backup.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Restore',
@@ -85,9 +86,9 @@ export default function BackupScreen() {
             setPending(null);
             setRestorePw('');
             rescheduleAll().catch(() => {});
-            Alert.alert('Restored', 'Your backup has been restored.');
+            popup('Restored', 'Your backup has been restored.');
           } catch (e) {
-            Alert.alert('Could not restore', String(e instanceof Error ? e.message : e));
+            popup('Could not restore', String(e instanceof Error ? e.message : e));
           } finally {
             setBusy(null);
           }
@@ -107,7 +108,7 @@ export default function BackupScreen() {
       } else confirmRestore(text, null);
     } catch (e) {
       if (String(e).toLowerCase().includes('cancel')) return;
-      Alert.alert('Could not open the file', String(e));
+      popup('Could not open the file', String(e));
     }
   };
 
@@ -116,16 +117,16 @@ export default function BackupScreen() {
       const f = await pickBackupFolder();
       if (f) saveAuto({ folderUri: f.uri, folderName: f.name });
     } catch (e) {
-      Alert.alert('Could not use that folder', String(e instanceof Error ? e.message : e));
+      popup('Could not use that folder', String(e instanceof Error ? e.message : e));
     }
   };
 
   const saveAutoPw = async () => {
-    if (autoPw.length < 6) return Alert.alert('Too short', 'Use at least 6 characters.');
+    if (autoPw.length < 6) return popup('Too short', 'Use at least 6 characters.');
     await setAutoBackupPassword(autoPw);
     setAutoPw('');
     setAutoPwSet(true);
-    Alert.alert('Saved', "Weekly backups will be locked with this password. Write it down somewhere safe: without it the backups can't be opened.");
+    popup('Saved', "Weekly backups will be locked with this password. Write it down somewhere safe: without it the backups can't be opened.");
   };
 
   const backUpNow = async () => {
@@ -134,7 +135,7 @@ export default function BackupScreen() {
       await afterPaint(() => runAutoBackup());
       repo.deleteKv('last_backup_error');
     } catch (e) {
-      Alert.alert('Backup failed', String(e instanceof Error ? e.message : e));
+      popup('Backup failed', String(e instanceof Error ? e.message : e));
     } finally {
       setBusy(null);
     }

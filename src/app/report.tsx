@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { DateButton } from '../components/Pickers';
 import { Button, Card, Chip, Field, Input, SectionTitle, Text } from '../components/ui';
@@ -67,7 +68,7 @@ export default function ReportScreen() {
       const { uri } = await Print.printToFileAsync({ html: html() });
       await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: 'Share the report' });
     } catch (e) {
-      Alert.alert('Could not make the PDF', String(e));
+      popup('Could not make the PDF', String(e));
     } finally {
       setBusy(false);
     }
@@ -77,7 +78,7 @@ export default function ReportScreen() {
     try {
       await Print.printAsync({ html: html() });
     } catch (e) {
-      Alert.alert('Could not print', String(e));
+      popup('Could not print', String(e));
     }
   };
 

@@ -4,7 +4,13 @@ meds meds 3
 progress progress 4
 medication med/demo-metformin 5
 interactions interactions 2
-settings settings 4
+settings settings 2
+settings-look settings/look 1
+settings-reminders settings/reminders 3
+settings-timing settings/timing 2
+settings-privacy settings/privacy 3
+settings-backup settings/backup 1
+settings-devices settings/devices 3
 times times 2
 report report 2
 sync sync 2

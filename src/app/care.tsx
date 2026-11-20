@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, RefreshControl, View } from 'react-native';
+import { RefreshControl, View } from 'react-native';
+import { popup } from '../components/Popup';
 import { PageScroll } from '../components/Screen';
 import { CareCard } from '../components/CareCard';
 import { ToggleRow, useRowStyles } from '../components/ToggleRow';
@@ -31,9 +32,9 @@ export default function CareScreen() {
     try {
       const p = await sync.follow(text);
       setText('');
-      Alert.alert('Added', `You can now see ${p.status?.name ?? 'their'} doses.`);
+      popup('Added', `You can now see ${p.status?.name ?? 'their'} doses.`);
     } catch (e) {
-      Alert.alert('Could not add', e instanceof Error ? e.message : String(e));
+      popup('Could not add', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -55,7 +56,7 @@ export default function CareScreen() {
         <Card>
           <Text style={st.label}>Look after someone's medicines</Text>
           <Text style={st.hint}>
-            If a family member uses Sabr with their own server, they can send you a share code from Settings, Sync and sharing. Paste it below to see
+            If a family member uses Sabr with their own server, they can send you a share code from Settings, Backup and sharing, Sync and sharing. Paste it below to see
             whether they've taken today's doses. You don't need an account.
           </Text>
         </Card>
@@ -70,7 +71,7 @@ export default function CareScreen() {
             small
             style={{ alignSelf: 'flex-end' }}
             onPress={() =>
-              Alert.alert('Stop following?', 'You can add them again with their code.', [
+              popup('Stop following?', 'You can add them again with their code.', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Stop', style: 'destructive', onPress: () => void sync.unfollow(p.code.id) },
               ])

@@ -6,6 +6,18 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.10
+
+Settings is split into pages, with search and a Simple / Advanced switch, and every pop-up now looks like the rest of Sabr.
+
+### Settings
+- Settings opens on a short list: Look and feel, Reminders, Timing and routines, Privacy and security, Backup and sharing, and Watch and widgets. Each shows what's on at a glance, and opens its own page.
+- Search at the top finds any setting, on any page, including advanced ones. You can change it right there in the results.
+- Simple shows the everyday settings. Advanced adds fine-tuning, like snooze length, repeat timing, the on-time window and app lock timing. A page tells you how many it's hiding, with a link to show them.
+
+### Pop-ups
+- Questions, warnings and confirmations (delete a medicine, restore a backup, time zone changed and so on) use Sabr's own rounded pop-up in your light or dark theme instead of the plain Android dialog.
+
 ## 0.9
 
 A layout pass over every screen, bigger widgets that show more as they grow, and early doses.
