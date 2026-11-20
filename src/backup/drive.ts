@@ -49,6 +49,8 @@ export async function connectDrive(): Promise<string | null> {
   } catch (e) {
     if (isErrorWithCode(e) && e.code === statusCodes.IN_PROGRESS) return null;
     if (isErrorWithCode(e) && e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) throw new Error('Google Play services are needed to sign in with Google.');
+    // DEVELOPER_ERROR: this build's signing key isn't registered with Google for Sabr.
+    if (isErrorWithCode(e) && String(e.code) === '10') throw new Error("Google sign-in isn't set up for this copy of Sabr. Install the official release from the Sabr website.");
     throw new Error(`Google sign-in didn't work. ${e instanceof Error ? e.message : String(e)}`.trim());
   }
 }
