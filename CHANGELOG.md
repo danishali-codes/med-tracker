@@ -6,6 +6,32 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.11
+
+Supplements, a mood trend, routines the app learns from you, and one path for every Taken button.
+
+### Supplements
+- Mark a medicine as a supplement (vitamins, fish oil...) in its editor, or add one from the Supplements section on the Medications tab.
+- Supplements get reminders like medicines, but only one: no repeats unless a medicine is due at the same time.
+- They have their own ring and list on the Today screen and never count towards streaks, gold days or badges. Missing one costs nothing.
+
+### Mood
+- The mood check-in now has a Save button. Once saved it folds down to a short summary you can change.
+- New Mood trend screen (Progress tab, or from the saved check-in): your daily moods with a 7-day average line, the change from the period before, how often you picked each mood, your best weekday and the symptoms you noted most.
+
+### Learned routines
+- On top of moving a reminder you're always late for, Sabr now spots doses you take at a different time on certain weekdays (for example later at the weekend) and offers a different time on those days.
+- It also spots two reminder times whose doses you take in one go and offers to join them into one routine.
+- All of this is worked out on the phone from your own logs. Nothing changes until you accept, and Not now hides a suggestion for 30 days.
+
+### Evening check
+- The end-of-day notice now says which dose times are still open (for example "2 medicines from 8:00 AM"), even with medicine names hidden. It was already on by default at 10 PM; you can change the time in Settings.
+
+### Fixed
+- Taken on a notification, the widget, the watch tile and in the app now all log doses through the same code, so they behave the same (food timer, stock, clearing the reminder).
+- A Take press on the widget now updates the watch tile and caregivers straight away, and the reverse.
+- Settings only says the watch is ready when the Sabr watch app is installed on it. A connected watch without it is named, with how to install it. Update the watch app too: older versions don't report themselves.
+
 ## 0.9
 
 A layout pass over every screen, bigger widgets that show more as they grow, and early doses.
