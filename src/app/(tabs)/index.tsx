@@ -5,7 +5,9 @@ import { useWindowDimensions, View } from 'react-native';
 import { popup } from '../../components/Popup';
 import { logAsNeeded, takeDoses } from '../../actions';
 import { Confetti } from '../../components/Confetti';
+import { DoneList } from '../../components/DoneList';
 import { DoseRow } from '../../components/DoseRow';
+import { HealthToday } from '../../components/HealthToday';
 import { Screen } from '../../components/Screen';
 import { Button, Card, FadeIn, PressableScale, Ring, Rings, SectionTitle, Text } from '../../components/ui';
 import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDate, weekdayOf } from '../../domain/dates';
@@ -56,8 +58,10 @@ export default function TodayScreen() {
   const machineDoses = useMemo(() => allDoses.filter((d) => isMachine(medById.get(d.medId))), [allDoses, medById]);
   const todayLogs = useMemo(() => repo.getLogs(today, today), [today, version]);
   const logs = useMemo(() => indexLogs(todayLogs), [todayLogs]);
-  const groups = groupByTime(doses);
-  const suppGroups = groupByTime(suppDoses);
+  // Doses still to take stay up top, grouped by time; taken and skipped ones fold into "Done today".
+  const groups = groupByTime(doses.filter((d) => !logs.has(d.slot)));
+  const suppOpen = suppDoses.filter((d) => !logs.has(d.slot));
+  const doneDoses = allDoses.filter((d) => logs.has(d.slot) && !isMachine(medById.get(d.medId))).sort((a, b) => a.time.localeCompare(b.time));
   const suppDone = suppDoses.filter((d) => logs.has(d.slot)).length;
   const machineDone = machineDoses.filter((d) => logs.has(d.slot)).length;
   const asNeeded = meds.filter((m) => !m.archived && !isMachine(m) && m.schedule.pattern.kind === 'asNeeded');
@@ -189,6 +193,8 @@ export default function TodayScreen() {
           </Card>
         </FadeIn>
 
+        <HealthToday today={today} enabled={settings.healthConnect} />
+
         <MilestoneCard progress={progress} />
         <EarnBackCard progress={progress} />
         <FoodTimerCard key={version} />
@@ -220,19 +226,11 @@ export default function TodayScreen() {
         ) : null}
 
         {groups.map((g, i) => {
-          const pending = g.doses.filter((d) => !logs.has(d.slot));
-          const overdue = pending.length > 0 && dueAt(today, g.time) < now;
+          const pending = g.doses;
+          const overdue = dueAt(today, g.time) < now;
           return (
             <FadeIn key={g.time} delay={120 + i * 50}>
-              <SectionTitle
-                right={
-                  pending.length === 0 ? (
-                    <Text style={[s.tag, { color: c.good, backgroundColor: c.goodSoft }]}>Done</Text>
-                  ) : overdue ? (
-                    <Text style={[s.tag, { color: c.bad, backgroundColor: c.badSoft }]}>Due now</Text>
-                  ) : null
-                }
-              >
+              <SectionTitle right={overdue ? <Text style={[s.tag, { color: c.bad, backgroundColor: c.badSoft }]}>Due now</Text> : null}>
                 {routineAt(g.time, settings.routines) ? `${routineAt(g.time, settings.routines)!.name} · ${formatTime(g.time)}` : formatTime(g.time)}
               </SectionTitle>
               <Card style={{ paddingVertical: 6 }}>
@@ -248,22 +246,14 @@ export default function TodayScreen() {
           );
         })}
 
-        {suppGroups.length > 0 ? (
+        {suppOpen.length > 0 ? (
           <FadeIn delay={140}>
-            <SectionTitle
-              right={
-                suppDone === suppDoses.length ? <Text style={[s.tag, { color: c.good, backgroundColor: c.goodSoft }]}>Done</Text> : null
-              }
-            >
-              Supplements
-            </SectionTitle>
+            <SectionTitle>Supplements</SectionTitle>
             <Card style={{ paddingVertical: 6 }}>
-              {suppGroups.map((g) =>
-                g.doses.map((d) => {
-                  const med = medById.get(d.medId);
-                  return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} showTime /> : null;
-                }),
-              )}
+              {suppOpen.map((d) => {
+                const med = medById.get(d.medId);
+                return med ? <DoseRow key={d.slot} dose={d} med={med} log={logs.get(d.slot)} windowMinutes={settings.onTimeWindowMinutes} showTime /> : null;
+              })}
             </Card>
             <Text style={s.suppHint}>Missing a supplement never affects your streak.</Text>
           </FadeIn>
@@ -278,6 +268,8 @@ export default function TodayScreen() {
           windowMinutes={settings.onTimeWindowMinutes}
           version={version}
         />
+
+        <DoneList doses={doneDoses} medById={medById} logs={logs} windowMinutes={settings.onTimeWindowMinutes} />
 
         {asNeeded.length > 0 ? (
           <>

@@ -52,7 +52,7 @@ export interface WidgetData {
     pills: PillLook[];
     doses: ScheduledDose[];
   } | null;
-  /** Every dose today, by time, for the bigger list widget. */
+  /** Doses still to take today (taken and skipped ones left out), by time, for the bigger list widget. */
   rows: WidgetRow[];
   /** This week, Monday first, for the tallest widget. */
   days: WidgetDay[];
@@ -152,22 +152,25 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
     snoozeMinutes: settings.snoozeMinutes,
     next,
     days,
-    rows: doses.map((d) => {
-      const log = logs.get(d.slot);
-      const med = byId.get(d.medId);
-      const dose = med ? describeDose(med) : '';
-      return {
-        slot: d.slot,
-        time: d.time,
-        label: formatTime(d.time),
-        title: showNames ? (med?.name ?? 'Medicine') : dose || 'Medicine',
-        detail: showNames ? dose : '',
-        pill: look(med),
-        status: log ? log.status : 'open',
-        due: dueAt(today, d.time) <= now,
-        dose: d,
-      };
-    }),
+    rows: doses
+      .filter((d) => !logs.has(d.slot))
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .map((d) => {
+        const log = logs.get(d.slot);
+        const med = byId.get(d.medId);
+        const dose = med ? describeDose(med) : '';
+        return {
+          slot: d.slot,
+          time: d.time,
+          label: formatTime(d.time),
+          title: showNames ? (med?.name ?? 'Medicine') : dose || 'Medicine',
+          detail: showNames ? dose : '',
+          pill: look(med),
+          status: log ? log.status : 'open',
+          due: dueAt(today, d.time) <= now,
+          dose: d,
+        };
+      }),
   };
 }
 

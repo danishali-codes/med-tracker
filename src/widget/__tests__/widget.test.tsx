@@ -99,6 +99,20 @@ describe('home screen widgets', () => {
     expect(moodColors(false, 'done').bg).not.toBe(moodColors(false, 'day').bg);
   });
 
+  it('list only the doses still to take, next one first', () => {
+    expect(SCENARIOS.due.rows.map((r) => r.time)).toEqual(['08:00', '08:00', '21:00', '21:00']);
+    const later = SCENARIOS.later;
+    expect(later.rows.every((r) => r.status === 'open')).toBe(true);
+    expect(later.rows.map((r) => r.time)).toEqual(['21:00', '21:00']);
+    expect(later.next?.time).toBe('21:00');
+    // The rings still count what was taken.
+    expect([later.done, later.total]).toEqual([2, 4]);
+    expect(SCENARIOS.gold.rows).toEqual([]);
+    const list = texts(buildWidgetTree(renderLayout(LIST_WIDGET_NAME, SCENARIOS.gold, false, 320, 320))).join(' ');
+    expect(list).toContain('Nothing left to take today');
+    expect(list).not.toContain('Taken');
+  });
+
   it('count the rings from today and this week', () => {
     const d = SCENARIOS.partlyDone;
     expect([d.done, d.total, d.taken, d.onTime]).toEqual([1, 4, 1, 1]);
@@ -111,7 +125,7 @@ describe('home screen widgets', () => {
       ringsSvg({ rings: [{ pct: 1, color: '#FFFFFF' }, { pct: 0.5, color: '#B8F5D9' }, { pct: 0, color: '#FFD98A' }], size: 96, stroke: 10, gap: 3, track: '#FFFFFF', trackOpacity: 0.2 }),
       confettiSvg(320, 150, '2026-11-19', '#FFFFFF'),
       ...['round', 'oval', 'oblong', 'capsule', 'square', 'diamond', 'triangle'].map((shape) => pillSvg({ form: 'pill', shape: shape as never, color: '#FFFFFF', color2: null }, 22)),
-      ...['liquid', 'injection', 'drops', 'inhaler', 'patch', 'cream', 'sachet'].map((form) => pillSvg({ form: form as never, shape: 'round', color: '#3E7BE0', color2: null }, 22)),
+      ...['liquid', 'injection', 'drops', 'inhaler', 'spray', 'patch', 'cream', 'sachet'].map((form) => pillSvg({ form: form as never, shape: 'round', color: '#3E7BE0', color2: null }, 22)),
     ];
     for (const s of svgs) {
       expect(s.startsWith('<svg ')).toBe(true);

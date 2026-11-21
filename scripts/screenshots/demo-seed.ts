@@ -99,6 +99,29 @@ function seed() {
   setKv('demo_seeded', '1');
 }
 
+// Health builds (0.14 onwards): made-up steps, sleep and heart rate so Today and Health have
+// something to show, as if Health Connect were allowed.
+try {
+  const today = toDateKey(new Date());
+  (globalThis as { __DEMO_HEALTH?: unknown }).__DEMO_HEALTH = Array.from({ length: 35 }, (_, i) => ({
+    date: addDays(today, -i),
+    steps: i === 0 ? 4318 : 5200 + ((i * 2731) % 6100),
+    sleepMin: 380 + ((i * 47) % 110),
+    hrAvg: 74 + (i % 7),
+    hrMin: 55 + (i % 5),
+    hrMax: 118 + (i % 13),
+    restingHr: 60 + (i % 6),
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const repo = require('./db/repo');
+  if (!getKv('demo_health') && typeof repo.saveSettings === 'function' && 'healthConnect' in repo.getSettings()) {
+    repo.saveSettings({ ...repo.getSettings(), healthConnect: true });
+    setKv('demo_health', '1');
+  }
+} catch {
+  // older versions have no health data
+}
+
 try {
   seed();
 } catch (e) {

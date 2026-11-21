@@ -159,6 +159,9 @@ export function pillSvg(look: PillLook, size: number): string {
       case 'inhaler':
         body = `<rect x="17" y="4" width="14" height="26" rx="4" fill="${color}" ${OUTLINE}/><path d="M13 26 H31 Q35 26 35 30 V36 H44 V44 H17 Q13 44 13 40 Z" fill="${METAL}" ${OUTLINE}/>`;
         break;
+      case 'spray':
+        body = `<rect x="20" y="3" width="8" height="10" rx="3" fill="${CAP}" ${OUTLINE}/><rect x="15" y="13" width="18" height="6" rx="2" fill="${METAL}" ${OUTLINE}/><rect x="13" y="19" width="22" height="25" rx="6" fill="${color}" ${OUTLINE}/><rect x="17" y="26" width="14" height="10" rx="2" fill="#FFFFFF" fill-opacity="0.7"/>`;
+        break;
       case 'patch':
         body = `<rect x="7" y="7" width="34" height="34" rx="8" fill="${color}" ${OUTLINE}/><rect x="15" y="15" width="18" height="18" rx="4" fill="#FFFFFF" fill-opacity="0.6"/>`;
         break;

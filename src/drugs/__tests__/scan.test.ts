@@ -13,6 +13,10 @@ describe('guessFromBox', () => {
     expect(g.form).toBe('capsule');
     expect(g.packCount).toBe(30);
   });
+  it('reads nasal sprays', () => {
+    const g = guessFromBox(['Otrivin', 'Xylometazoline 0.1%', 'Nasal spray', '10 ml']);
+    expect(g.form).toBe('spray');
+  });
   it('reads liquids per ml', () => {
     const g = guessFromBox(['Amoxil', 'Amoxicillin 250mg/5ml', 'Powder for oral suspension', '100 ml']);
     expect(g.strength).toBe('250 mg/5 ml');
