@@ -116,6 +116,8 @@ export default function RootLayout() {
             <Stack.Screen name="patterns" options={{ title: 'Patterns' }} />
             <Stack.Screen name="health" options={{ title: 'Health data' }} />
             <Stack.Screen name="mood" options={{ title: 'Mood trend' }} />
+            <Stack.Screen name="setup" options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }} />
+            <Stack.Screen name="profile" options={{ title: 'Health profile' }} />
           </Stack>
           <PopupHost />
           </AppLockGate>

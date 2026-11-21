@@ -44,6 +44,7 @@ export const backupGroup: SettingsGroup = {
         }),
         link({
           id: 'care',
+          feature: 'caregiving',
           title: 'People I look after',
           hint: 'See whether a family member took their doses, with the code they send you.',
           keywords: ['caregiver', 'family', 'parent', 'follow', 'child', 'missed alert'],

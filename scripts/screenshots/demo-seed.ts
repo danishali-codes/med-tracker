@@ -69,6 +69,22 @@ function seed() {
   } catch {
     // older versions have no notes
   }
+  // Setup is done, with the features the demo data uses (0.16 onwards).
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const repo = require('./db/repo');
+    const s = repo.getSettings();
+    if ('setupDone' in s) {
+      repo.saveSettings({
+        ...s,
+        setupDone: true,
+        features: { ...s.features, supplements: true, mood: true, rewards: true },
+        profile: { ...s.profile, conditions: ['diabetes', 'cholesterol'], diabetesType: 'type2', insulin: false, medsPerDay: '3-5', timesPerDay: 2 },
+      });
+    }
+  } catch {
+    // older versions have no setup
+  }
   setKv('demo_seeded', '1');
 }
 

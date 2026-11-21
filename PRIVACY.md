@@ -96,6 +96,12 @@ Google Fit and most watch apps share them. This all happens on the phone: nothin
 All of it is in [`src/health/connect.ts`](src/health/connect.ts) and
 [`modules/sabr-health`](modules/sabr-health).
 
+## Health profile and features
+
+- Setup asks which conditions you have (for example diabetes or high blood pressure) and roughly how many medicines you take. All of it is optional, and you can change or clear it in Settings > Features and health profile.
+- Your health profile is kept in Sabr's database on this phone and in your backups, which are encrypted. It is never part of sharing with family or caregivers, never shown in reminders, never put in a doctor report, and never sent anywhere.
+- Sabr uses it only on the phone, to suggest which features to turn on. Every feature apart from the core and the rewards starts off.
+
 ## Other things to know
 
 - **Phone backups:** Android's automatic Google cloud backup is turned off for this app, so

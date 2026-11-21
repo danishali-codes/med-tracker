@@ -1,6 +1,7 @@
 import type { SettingsGroup } from '../types';
 import { backupGroup } from './backup';
 import { devicesGroup } from './devices';
+import { featuresGroup } from './features';
 import { lookGroup } from './look';
 import { privacyGroup } from './privacy';
 import { remindersGroup } from './reminders';
@@ -14,4 +15,4 @@ import { timingGroup } from './timing';
  * people never need it. A new group gets its own file here and shows up in the list and in
  * search automatically, at /settings/<id>.
  */
-export const SETTINGS_GROUPS: SettingsGroup[] = [lookGroup, remindersGroup, timingGroup, privacyGroup, backupGroup, devicesGroup];
+export const SETTINGS_GROUPS: SettingsGroup[] = [featuresGroup, lookGroup, remindersGroup, timingGroup, privacyGroup, backupGroup, devicesGroup];

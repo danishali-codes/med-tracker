@@ -47,6 +47,7 @@ export const lookGroup: SettingsGroup = {
         }),
         toggle({
           id: 'celebrate',
+          feature: 'rewards',
           title: 'Confetti when the day is done',
           hint: 'A short burst of confetti when every dose of the day is logged.',
           keywords: ['celebrate', 'animation'],

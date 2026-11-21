@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_HEIGHT, tabBarBottom } from '../../components/Screen';
+import { useSettings } from '../../hooks/useData';
 import { FONT, useTheme } from '../../theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -14,6 +15,9 @@ const icon =
 export default function TabsLayout() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
+  const settings = useSettings();
+  // First run, or the first open after updating to a version with features: setup comes first.
+  if (!settings.setupDone) return <Redirect href="/setup" />;
   return (
     <Tabs
       screenOptions={{

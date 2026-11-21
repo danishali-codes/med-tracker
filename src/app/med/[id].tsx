@@ -16,6 +16,7 @@ import { FOOD_RULES, isSupplement, type DayTimes, type FoodRule, type MedForm, t
 import { deletePillPhoto, pickPillPhoto } from '../../media/photos';
 import { scanBox } from '../../media/scanBox';
 import * as repo from '../../db/repo';
+import { useSettings } from '../../hooks/useData';
 import { medicineDetails, onlineAllowed, searchMedicines } from '../../drugs/online';
 import type { NameHit, StrengthOption } from '../../drugs/rank';
 import { makeStyles, MED_COLORS, useTheme } from '../../theme';
@@ -46,7 +47,8 @@ const stepFor = (f: MedForm) => (f === 'pill' || f === 'liquid' ? 0.5 : 1);
 export default function MedEditor() {
   const c = useTheme();
   const st = useStyles();
-  const params = useLocalSearchParams<{ id: string; supplement?: string }>();
+  const params = useLocalSearchParams<{ id: string; supplement?: string; setup?: string }>();
+  const settings = useSettings();
   const { id } = params;
   const existing = useMemo(() => (id && id !== 'new' ? repo.getMed(id) : null), [id]);
   const today = toDateKey(new Date());
@@ -244,6 +246,13 @@ export default function MedEditor() {
         .map(([now, saved]) => ({ from: saved, to: now })),
     );
     if (existing?.photo && existing.photo !== photo) deletePillPhoto(existing.photo);
+    // Adding medicines one after another, straight from setup.
+    if (!existing && params.setup === '1') {
+      return popup('Saved', `${name.trim()} is on your list. Add another?`, [
+        { text: 'Done', style: 'cancel', onPress: () => router.back() },
+        { text: 'Add another', onPress: () => router.replace({ pathname: '/med/[id]', params: { id: 'new', setup: '1' } }) },
+      ]);
+    }
     router.back();
   };
 
@@ -376,6 +385,7 @@ export default function MedEditor() {
           ) : null}
         </Card>
 
+        {settings.features.supplements || supplement ? (
         <Card>
           <View style={st.switchRow}>
             <View style={{ flex: 1 }}>
@@ -389,6 +399,7 @@ export default function MedEditor() {
             <Switch value={supplement} onValueChange={setSupplement} trackColor={{ true: c.primary }} accessibilityLabel="Supplement" />
           </View>
         </Card>
+        ) : null}
 
         <Card>
           <Text style={st.cardTitle}>Dose</Text>

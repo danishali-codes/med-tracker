@@ -1,3 +1,4 @@
+import { DEFAULT_FEATURES, EMPTY_PROFILE, type FeatureFlags, type HealthProfile } from './features';
 import type { DateKey, TimeOfDay } from './dates';
 
 export type SchedulePattern =
@@ -239,6 +240,12 @@ export interface Settings {
    * all pause. Belongs to this phone, so restoring a backup doesn't change it.
    */
   fullyLocal: boolean;
+  /** Which optional parts of Sabr are on. Off ones are hidden; their data is kept. */
+  features: FeatureFlags;
+  /** What the person told Sabr about their health. Kept on the phone (and in encrypted backups), never shared. */
+  profile: HealthProfile;
+  /** Setup (or, after updating, the one-time "choose your features" screen) has been finished or skipped. */
+  setupDone: boolean;
 }
 
 export interface AutoBackupSettings {
@@ -315,6 +322,9 @@ export const DEFAULT_SETTINGS: Settings = {
   healthConnect: false,
   showAdvanced: false,
   fullyLocal: false,
+  features: DEFAULT_FEATURES,
+  profile: EMPTY_PROFILE,
+  setupDone: false,
 };
 
 /** How the day went: a mood from 1 (awful) to 5 (great), symptom tags and free text. */
