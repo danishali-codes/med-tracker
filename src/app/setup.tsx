@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConditionFields, MedicineFields } from '../components/ProfileFields';
@@ -39,7 +39,7 @@ export default function SetupScreen() {
   const s = useStyles();
   const insets = useSafeAreaInsets();
   const settings = useSettings();
-  const fresh = useMemo(() => repo.isFreshInstall(), []);
+  const [fresh, setFresh] = useState(() => repo.isFreshInstall());
   // Coming back from Settings: start from what is set now. After an update: from what is in use.
   const [features, setFeatures] = useState<FeatureFlags>(() =>
     settings.setupDone || fresh ? settings.features : normalizeFeatures({ ...featuresInUse(repo.inUseNow()), ...pickedBefore(settings.features) }),
@@ -50,6 +50,25 @@ export default function SetupScreen() {
   const steps: Step[] = fresh || settings.setupDone ? FULL : ['features', 'finish'];
   const [i, setI] = useState(0);
   const step = steps[i];
+
+  // Back from restoring a backup: start again from what the backup brought, so finishing or
+  // skipping never writes this screen's earlier answers over the restored settings.
+  useFocusEffect(
+    useCallback(() => {
+      if (!fresh || repo.isFreshInstall()) return;
+      const restored = repo.getSettings();
+      if (restored.setupDone) {
+        router.replace('/');
+        return;
+      }
+      setFresh(false);
+      setFeatures(normalizeFeatures({ ...featuresInUse(repo.inUseNow()), ...pickedBefore(restored.features) }));
+      setProfile(restored.profile);
+      setAlarmStyle(restored.alarmStyle);
+      setShowMedNames(restored.showMedNames);
+      setI(0);
+    }, [fresh]),
+  );
   const last = i === steps.length - 1;
 
   const changeProfile = (next: HealthProfile) => {
