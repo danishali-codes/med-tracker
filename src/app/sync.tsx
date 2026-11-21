@@ -13,7 +13,7 @@ import * as sync from '../sync/engine';
 import type { Session } from '../sync/pocketbase';
 import { useTheme } from '../theme';
 
-const SERVER_GUIDE = 'https://github.com/danishali-codes/sabr-med-tracker/blob/main/server/README.md';
+const SERVER_GUIDE = 'https://github.com/danishali-codes/sabr-health-tracker/blob/main/server/README.md';
 
 /** Optional: the Sabr server or one you run, an encrypted backup, and sharing with a caregiver. */
 export default function SyncScreen() {
