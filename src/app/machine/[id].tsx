@@ -8,7 +8,7 @@ import { popup } from '../../components/Popup';
 import { DateButton, TimeButton } from '../../components/Pickers';
 import { PageScroll } from '../../components/Screen';
 import { Button, Card, Field, Input, PressableScale, Select, Text } from '../../components/ui';
-import { addDays, formatDateLong, toDateKey, type TimeOfDay } from '../../domain/dates';
+import { addDays, monthName, parseDateKey, toDateKey, weekdayOf, weekdayShort, type DateKey, type TimeOfDay } from '../../domain/dates';
 import { defaultParts, describeNight, everyText, EVERY_OPTIONS, MACHINE_KINDS, machineKind, machineUsage, partDueText, partDaysLeft } from '../../domain/machines';
 import { indexLogs } from '../../domain/schedule';
 import type { MachinePart, MachineType, Medication } from '../../domain/types';
@@ -144,7 +144,7 @@ export default function MachineEditor() {
                   .slice(0, 7)
                   .map((n) => (
                     <Pressable key={n.date} onPress={() => router.push({ pathname: '/machine/night', params: { id: n.medId, date: n.date } })} style={st.nightRow}>
-                      <Text style={st.nightDate}>{formatDateLong(n.date)}</Text>
+                      <Text style={st.nightDate}>{shortDate(n.date)}</Text>
                       <Text style={st.nightText} numberOfLines={1}>
                         {describeNight(n) || n.note}
                       </Text>
@@ -252,6 +252,12 @@ export default function MachineEditor() {
   );
 }
 
+/** "Fri 20 Nov" */
+function shortDate(key: DateKey): string {
+  const { m, d } = parseDateKey(key);
+  return `${weekdayShort(weekdayOf(key))} ${d} ${monthName(m).slice(0, 3)}`;
+}
+
 function Stat({ label, value }: { label: string; value: string }) {
   const st = useStyles();
   return (
@@ -273,7 +279,7 @@ const useStyles = makeStyles((c) => ({
   statValue: { fontSize: 18, fontWeight: '900', color: c.text },
   statLabel: { fontSize: 12, fontWeight: '700', color: c.muted, marginTop: 2 },
   nightRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.border },
-  nightDate: { fontSize: 13, fontWeight: '800', color: c.text, width: 120 },
+  nightDate: { fontSize: 13, fontWeight: '800', color: c.text, width: 92 },
   nightText: { flex: 1, fontSize: 13, fontWeight: '600', color: c.muted },
   part: { borderWidth: 1.5, borderColor: c.border, borderRadius: 18, padding: 12, marginBottom: 10 },
   partTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
