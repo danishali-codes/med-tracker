@@ -1,28 +1,28 @@
 --------- beginning of crash
-E/AndroidRuntime(  830): FATAL EXCEPTION: main
-E/AndroidRuntime(  830): Process: com.android.systemui, PID: 830
-E/AndroidRuntime(  830): java.lang.RuntimeException: Error receiving broadcast Intent { act=android.intent.action.PACKAGE_CHANGED dat=package: flg=0x5000010 (has extras) } in com.android.systemui.recents.OverviewProxyService$2@dcfc333
-E/AndroidRuntime(  830): 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1810)
-E/AndroidRuntime(  830): 	at android.app.LoadedApk$ReceiverDispatcher$Args.$r8$lambda$gDuJqgxY6Zb-ifyeubKeivTLAwk(Unknown Source:0)
-E/AndroidRuntime(  830): 	at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(Unknown Source:2)
-E/AndroidRuntime(  830): 	at android.os.Handler.handleCallback(Handler.java:958)
-E/AndroidRuntime(  830): 	at android.os.Handler.dispatchMessage(Handler.java:99)
-E/AndroidRuntime(  830): 	at android.os.Looper.loopOnce(Looper.java:205)
-E/AndroidRuntime(  830): 	at android.os.Looper.loop(Looper.java:294)
-E/AndroidRuntime(  830): 	at android.app.ActivityThread.main(ActivityThread.java:8177)
-E/AndroidRuntime(  830): 	at java.lang.reflect.Method.invoke(Native Method)
-E/AndroidRuntime(  830): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:552)
-E/AndroidRuntime(  830): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:971)
-E/AndroidRuntime(  830): Caused by: java.lang.NullPointerException: Attempt to read from field 'android.content.pm.ServiceInfo android.content.pm.ResolveInfo.serviceInfo' on a null object reference in method 'void com.android.systemui.recents.OverviewProxyService$2.onReceive(android.content.Context, android.content.Intent)'
-E/AndroidRuntime(  830): 	at com.android.systemui.recents.OverviewProxyService$2.onReceive(go/retraceme 19693c2b0a8439b7183751b64d60893829dbf56dc1e08e0669fc0cfc55754948:44)
-E/AndroidRuntime(  830): 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1802)
-E/AndroidRuntime(  830): 	... 10 more
+E/AndroidRuntime(  838): FATAL EXCEPTION: main
+E/AndroidRuntime(  838): Process: com.android.systemui, PID: 838
+E/AndroidRuntime(  838): java.lang.RuntimeException: Error receiving broadcast Intent { act=android.intent.action.PACKAGE_CHANGED dat=package: flg=0x5000010 (has extras) } in com.android.systemui.recents.OverviewProxyService$2@e7c2415
+E/AndroidRuntime(  838): 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1810)
+E/AndroidRuntime(  838): 	at android.app.LoadedApk$ReceiverDispatcher$Args.$r8$lambda$gDuJqgxY6Zb-ifyeubKeivTLAwk(Unknown Source:0)
+E/AndroidRuntime(  838): 	at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(Unknown Source:2)
+E/AndroidRuntime(  838): 	at android.os.Handler.handleCallback(Handler.java:958)
+E/AndroidRuntime(  838): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(  838): 	at android.os.Looper.loopOnce(Looper.java:205)
+E/AndroidRuntime(  838): 	at android.os.Looper.loop(Looper.java:294)
+E/AndroidRuntime(  838): 	at android.app.ActivityThread.main(ActivityThread.java:8177)
+E/AndroidRuntime(  838): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(  838): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:552)
+E/AndroidRuntime(  838): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:971)
+E/AndroidRuntime(  838): Caused by: java.lang.NullPointerException: Attempt to read from field 'android.content.pm.ServiceInfo android.content.pm.ResolveInfo.serviceInfo' on a null object reference in method 'void com.android.systemui.recents.OverviewProxyService$2.onReceive(android.content.Context, android.content.Intent)'
+E/AndroidRuntime(  838): 	at com.android.systemui.recents.OverviewProxyService$2.onReceive(go/retraceme 19693c2b0a8439b7183751b64d60893829dbf56dc1e08e0669fc0cfc55754948:44)
+E/AndroidRuntime(  838): 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1802)
+E/AndroidRuntime(  838): 	... 10 more
 --------- beginning of main
-I/ReactNativeJS( 5241): Running "main"
-I/ReactNativeJS( 5241): Running "main"
-I/ReactNativeJS( 5241): Running "main"
-I/ReactNativeJS( 5241): Running "main"
-I/ReactNativeJS(16145): Running "main"
-I/ReactNativeJS(16145): Running "main"
-I/ReactNativeJS(16145): Running "main"
-I/ReactNativeJS(16145): Running "main"
+I/ReactNativeJS( 4646): Running "main"
+I/ReactNativeJS( 4646): Running "main"
+I/ReactNativeJS( 4646): Running "main"
+I/ReactNativeJS( 4646): Running "main"
+I/ReactNativeJS(16471): Running "main"
+I/ReactNativeJS(16471): Running "main"
+I/ReactNativeJS(16471): Running "main"
+I/ReactNativeJS(16471): Running "main"
