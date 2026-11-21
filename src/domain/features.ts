@@ -299,7 +299,9 @@ export function featurePatch(s: Settings, id: FeatureId, on: boolean): Partial<S
 export function featuresPatch(s: Settings, next: FeatureFlags): Partial<Settings> {
   let merged: Settings = s;
   for (const id of Object.keys(next) as FeatureId[]) {
-    if (next[id] === s.features[id]) continue;
+    // Off is always applied, so settings from before features existed (Health Connect, watch
+    // tile or Ramadan on, flag off) are switched off too when the person leaves them unticked.
+    if (next[id] && s.features[id]) continue;
     if (!next[id] && id === 'caregiving' && s.sync.share) continue;
     merged = { ...merged, ...featurePatch(merged, id, next[id]) };
   }

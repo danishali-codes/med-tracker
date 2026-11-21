@@ -86,3 +86,13 @@ describe('features', () => {
     expect(routinesFor(4)).toHaveLength(4);
   });
 });
+
+describe('features from before 0.16', () => {
+  it('switch off what was on even when the stored flag was already off', () => {
+    const s: Settings = { ...DEFAULT_SETTINGS, healthConnect: true, watchTile: true, ramadan: { ...DEFAULT_SETTINGS.ramadan, enabled: true } };
+    const p = featuresPatch(s, { ...DEFAULT_FEATURES });
+    expect(p.healthConnect).toBe(false);
+    expect(p.watchTile).toBe(false);
+    expect(p.ramadan?.enabled).toBe(false);
+  });
+});
