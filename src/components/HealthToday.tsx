@@ -46,8 +46,8 @@ export function HealthToday({ today, enabled }: { today: DateKey; enabled: boole
 export function HealthStrip({ day }: { day: HealthDay | null }) {
   const c = useTheme();
   const s = useStyles();
+  // Resting heart rate when the watch measured it, else the day's average. "Heart" fits big text in a third of a narrow screen.
   const heart = day?.restingHr ?? day?.hrAvg;
-  const heartLabel = day?.restingHr != null ? 'Resting' : 'Heart rate';
   const empty = !day || (day.steps == null && !day.sleepMin && heart == null);
   return (
     <PressableScale onPress={() => router.push('/health')} style={s.card} accessibilityRole="button" accessibilityLabel="Health today. Open health">
@@ -61,7 +61,7 @@ export function HealthStrip({ day }: { day: HealthDay | null }) {
         <View style={s.tiles}>
           <Tile icon="footsteps" color={c.rings[1]} label="Steps" value={day?.steps != null ? formatSteps(day.steps) : '–'} />
           <Tile icon="moon" color={c.primary} label="Sleep" value={day?.sleepMin ? formatSleep(day.sleepMin) : '–'} />
-          <Tile icon="heart" color={c.bad} label={heartLabel} value={heart != null ? `${Math.round(heart)}` : '–'} unit={heart != null ? 'bpm' : undefined} />
+          <Tile icon="heart" color={c.bad} label="Heart" value={heart != null ? `${Math.round(heart)}` : '–'} unit={heart != null ? 'bpm' : undefined} />
         </View>
       )}
     </PressableScale>
