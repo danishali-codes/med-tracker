@@ -23,6 +23,7 @@ const ACTION_SKIP = 'skip';
 // Android allows ~500 alarms per app; iOS keeps only 64 pending notifications.
 const MAX_SCHEDULED = Platform.OS === 'ios' ? 60 : 300;
 const HORIZON_DAYS = Platform.OS === 'ios' ? 3 : 10;
+const MAX_PART_REMINDERS = 6;
 
 let setupDone = false;
 
@@ -119,6 +120,9 @@ async function rescheduleOnce() {
   repo.pruneSnoozes(toDateKey(now));
   const meds = repo.getMeds();
   const settings = repo.getSettings();
+  // Machine parts (CPAP cushion, filter...) on the day they're due. They share the platform's
+  // budget with dose reminders, so a handful at most, soonest first.
+  const parts = planPartReminders(meds, now, Platform.OS === 'ios' ? HORIZON_DAYS : 60).slice(0, MAX_PART_REMINDERS);
   const plan = planReminders({
     meds,
     logs: new Map(repo.getLogs(toDateKey(new Date(now.getTime() - 2 * 86_400_000)), '9999-12-31').map((l) => [l.slot, l])),
@@ -126,7 +130,7 @@ async function rescheduleOnce() {
     now,
     settings,
     horizonDays: HORIZON_DAYS,
-    maxCount: MAX_SCHEDULED,
+    maxCount: MAX_SCHEDULED - parts.length,
   });
 
   const existing = await Notifications.getAllScheduledNotificationsAsync();
@@ -150,8 +154,8 @@ async function rescheduleOnce() {
     });
   }
 
-  // Machine parts (CPAP cushion, filter...) on the day they're due. Gentle: no repeats.
-  for (const p of planPartReminders(meds, now, 60)) {
+  // Gentle: one reminder per part, no repeats.
+  for (const p of parts) {
     const med = byId.get(p.medId);
     const part = med?.machine?.parts.find((x) => x.id === p.partId);
     if (!med || !part) continue;

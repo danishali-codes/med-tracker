@@ -80,18 +80,17 @@ export default function MedsScreen() {
           <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}
-      {active.length > 0 ? (
-        <SectionTitle
-          right={
-            <Pressable onPress={() => router.push({ pathname: '/machine/[id]', params: { id: 'new' } })} hitSlop={10}>
-              <Text style={{ color: c.primary, fontWeight: '800' }}>Add</Text>
-            </Pressable>
-          }
-        >
-          Machines
-        </SectionTitle>
-      ) : null}
-      {active.length > 0 && machines.length === 0 ? (
+      {/* Always shown, so someone who only uses a CPAP can add it without adding a medicine first. */}
+      <SectionTitle
+        right={
+          <Pressable onPress={() => router.push({ pathname: '/machine/[id]', params: { id: 'new' } })} hitSlop={10}>
+            <Text style={{ color: c.primary, fontWeight: '800' }}>Add</Text>
+          </Pressable>
+        }
+      >
+        Machines
+      </SectionTitle>
+      {machines.length === 0 ? (
         <Text style={[s.sub, { marginLeft: 6, marginBottom: 14 }]}>A CPAP, nebulizer or oxygen machine: check in when you use it, and get reminded when parts are due.</Text>
       ) : null}
       {machines.map((m, i) => (
