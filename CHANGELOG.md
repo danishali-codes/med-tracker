@@ -19,6 +19,7 @@ Sabr now asks what you need, and leaves out the rest.
 
 ### Features and health profile
 - New Settings page, Features and health profile: turn supplements, mood, health data, fasting, family and caregivers, rewards and the watch tile on or off. Switching one off hides it and stops what it did in the background; its data stays.
+- With mood off, the Today check-in and Mood trend are hidden. With rewards off, badges and confetti are. With family and caregivers off, the people you follow leave Today. With supplements off, the Add supplement button goes; supplements you already have stay and keep reminding you.
 - Health profile: your conditions (with diabetes type and insulin) and medicine count. Kept on the phone and in encrypted backups, never shared.
 - Settings search still finds a setting whose feature is off, and offers to turn the feature on.
 - Run setup again from Settings any time.
