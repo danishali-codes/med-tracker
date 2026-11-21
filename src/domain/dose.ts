@@ -1,3 +1,4 @@
+import { describeMachine } from './machines';
 import type { Medication, MedForm } from './types';
 
 /** How one unit of each form is counted. */
@@ -30,8 +31,9 @@ export function units(form: MedForm, n: number): string {
   return `${formatAmount(n, form !== 'liquid')} ${n > 0 && n <= 1 ? u.one : u.many}`;
 }
 
-/** "500 mg · 3 tablets" */
-export function describeDose(med: Pick<Medication, 'strength' | 'amount' | 'form'>): string {
+/** "500 mg · 3 tablets", or "Nightly check-in" for a machine. */
+export function describeDose(med: Pick<Medication, 'strength' | 'amount' | 'form'> & Partial<Pick<Medication, 'machine' | 'schedule'>>): string {
+  if (med.machine && med.schedule) return describeMachine({ machine: med.machine, schedule: med.schedule });
   return [med.strength?.trim() || null, units(med.form, med.amount)].filter(Boolean).join(' · ');
 }
 

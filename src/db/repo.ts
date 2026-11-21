@@ -3,7 +3,7 @@ import { addDays, diffDays, eachDay, toDateKey, type DateKey } from '../domain/d
 import { isLowStock, normalizeMed } from '../domain/dose';
 import { summarizeDay, trackedFrom, type DaySummary } from '../domain/progress';
 import { getTimeRules, indexLogs, setTimeRules } from '../domain/schedule';
-import { DEFAULT_SETTINGS, type DayNote, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
+import { DEFAULT_SETTINGS, type DayNote, type MachineNight, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
 
 // ---- change notifications so screens refresh after any write ----
 
@@ -61,6 +61,7 @@ export function deleteMed(id: string) {
   db.withTransactionSync(() => {
     db.runSync('DELETE FROM meds WHERE id = ?', id);
     db.runSync('DELETE FROM dose_log WHERE med_id = ?', id);
+    db.runSync('DELETE FROM machine_night WHERE med_id = ?', id);
   });
   changed();
 }
@@ -279,6 +280,29 @@ export function saveNote(note: DayNote) {
   changed();
 }
 
+// ---- machine nights ----
+
+export function getNight(medId: string, date: DateKey): MachineNight | null {
+  const row = getDb().getFirstSync<{ data: string }>('SELECT data FROM machine_night WHERE med_id = ? AND date = ?', medId, date);
+  return row ? (JSON.parse(row.data) as MachineNight) : null;
+}
+
+export function getNights(from: DateKey, to: DateKey, medId?: string): MachineNight[] {
+  const db = getDb();
+  const rows = medId
+    ? db.getAllSync<{ data: string }>('SELECT data FROM machine_night WHERE med_id = ? AND date >= ? AND date <= ? ORDER BY date', medId, from, to)
+    : db.getAllSync<{ data: string }>('SELECT data FROM machine_night WHERE date >= ? AND date <= ? ORDER BY date', from, to);
+  return rows.map((r) => JSON.parse(r.data) as MachineNight);
+}
+
+/** Saves how the night went, or removes it when nothing is filled in. */
+export function saveNight(n: MachineNight) {
+  const empty = n.hours == null && n.ahi == null && !n.mask && !n.note?.trim();
+  if (empty) getDb().runSync('DELETE FROM machine_night WHERE med_id = ? AND date = ?', n.medId, n.date);
+  else getDb().runSync('INSERT OR REPLACE INTO machine_night (med_id, date, data) VALUES (?, ?, ?)', n.medId, n.date, JSON.stringify(n));
+  changed();
+}
+
 // ---- day summaries ----
 
 /**
@@ -328,7 +352,7 @@ export function getDaySummaries(today: DateKey = toDateKey(new Date())): DaySumm
 // the room decorating, which is switched off for now; they stay so nothing is lost.
 // drive_: which Google account and folder this phone backs up to.
 const LOCAL_ONLY_KV = ['care_', 'sync_', 'share_id', 'backup_id', 'last_share', 'last_backup', 'drive_'];
-const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv', 'day_note'] as const;
+const TABLES = ['meds', 'dose_log', 'day_summary', 'snooze', 'purchase', 'placement', 'kv', 'day_note', 'machine_night'] as const;
 
 export function exportAll(): string {
   const db = getDb();

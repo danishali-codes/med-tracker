@@ -48,6 +48,13 @@ const MIGRATIONS: string[] = [
      date TEXT PRIMARY KEY NOT NULL,
      data TEXT NOT NULL
    );`,
+  // How a night on a machine (CPAP...) went: hours, AHI, mask fit. One row per machine and day.
+  `CREATE TABLE IF NOT EXISTS machine_night (
+     med_id TEXT NOT NULL,
+     date TEXT NOT NULL,
+     data TEXT NOT NULL,
+     PRIMARY KEY (med_id, date)
+   );`,
 ];
 
 export function getDb(): SQLiteDatabase {

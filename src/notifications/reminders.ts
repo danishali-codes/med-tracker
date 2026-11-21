@@ -7,6 +7,7 @@ import { dosesOn, slotKey } from '../domain/schedule';
 import type { DoseStatus, Medication } from '../domain/types';
 import * as repo from '../db/repo';
 import { routineAt } from '../domain/routines';
+import { PART_REMINDER_PREFIX, partReminderText, planPartReminders } from '../domain/machines';
 import { setupTimerChannel, startFoodTimer } from './food';
 
 // Android doesn't let an app change a channel's lock screen setting once it exists, so the
@@ -131,7 +132,7 @@ async function rescheduleOnce() {
   const existing = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     existing
-      .filter((n) => n.identifier.startsWith(REMINDER_PREFIX))
+      .filter((n) => n.identifier.startsWith(REMINDER_PREFIX) || n.identifier.startsWith(PART_REMINDER_PREFIX))
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
   );
 
@@ -146,6 +147,18 @@ async function rescheduleOnce() {
         channelId: CHANNEL_ID,
         delivery: settings.alarmStyle ? 'alarmClock' : 'bestEffort',
       },
+    });
+  }
+
+  // Machine parts (CPAP cushion, filter...) on the day they're due. Gentle: no repeats.
+  for (const p of planPartReminders(meds, now, 60)) {
+    const med = byId.get(p.medId);
+    const part = med?.machine?.parts.find((x) => x.id === p.partId);
+    if (!med || !part) continue;
+    await Notifications.scheduleNotificationAsync({
+      identifier: p.id,
+      content: { ...partReminderText(med.name, part.name, settings.showMedNames), data: { part: p.partId, medId: p.medId }, autoDismiss: true },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: p.at, channelId: REFILL_CHANNEL_ID },
     });
   }
 }

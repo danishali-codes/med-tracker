@@ -125,6 +125,12 @@ export interface Medication {
    * but left out of streaks, gold days and badges, so missing one never costs anything.
    */
   supplement?: boolean;
+  /**
+   * A home therapy machine (CPAP, nebulizer, oxygen...) instead of a medicine. Its "doses" are
+   * check-ins ("Used it"), and its parts have their own replacement reminders. Like supplements,
+   * machines never touch streaks, gold days or badges.
+   */
+  machine?: MachineInfo | null;
   /** Breaks (e.g. "stop for a week"): no doses or reminders, and the streak isn't affected. `to` null = until resumed. */
   pauses?: { from: DateKey; to: DateKey | null }[];
   /** When it was archived; doses before this still show in history. */
@@ -135,6 +141,46 @@ export interface Medication {
 /** Supplements are tracked on their own and never count towards streaks. */
 export function isSupplement(med: Pick<Medication, 'supplement'> | undefined | null): boolean {
   return med?.supplement === true;
+}
+
+/** Machines are tracked on their own too, and never count towards streaks. */
+export function isMachine(med: Pick<Medication, 'machine'> | undefined | null): boolean {
+  return med?.machine != null;
+}
+
+/** Medicines fill the rings and the streak; supplements and machines have their own. */
+export function countsForStreak(med: Pick<Medication, 'supplement' | 'machine'> | undefined | null): boolean {
+  return med != null && !isSupplement(med) && !isMachine(med);
+}
+
+export type MachineType = 'cpap' | 'bipap' | 'nebulizer' | 'oxygen' | 'other';
+
+export interface MachineInfo {
+  type: MachineType;
+  /** Parts that wear out, each with how often it's replaced. */
+  parts: MachinePart[];
+}
+
+export interface MachinePart {
+  id: string;
+  name: string;
+  /** Replace every this many days. */
+  everyDays: number;
+  /** When it was last replaced (or when tracking started). */
+  lastChanged: DateKey;
+}
+
+/** How a night (or session) on a machine went. Everything is optional. */
+export interface MachineNight {
+  medId: string;
+  /** The check-in day: a night belongs to the day it started. */
+  date: DateKey;
+  /** Hours used, e.g. 6.5. */
+  hours?: number | null;
+  /** Events per hour, from the machine's screen (CPAP). */
+  ahi?: number | null;
+  mask?: 'good' | 'some' | 'leaky' | null;
+  note?: string;
 }
 
 export type DoseStatus = 'taken' | 'skipped';

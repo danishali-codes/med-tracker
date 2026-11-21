@@ -6,6 +6,16 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.15
+
+### Machines: CPAP, nebulizer, oxygen
+- Add a machine from the new Machines section on the Medications tab. Pick the type (CPAP / APAP, BiPAP, nebulizer, oxygen concentrator or other), give it a name and a check-in time.
+- A nightly check-in on Today: tap once the mask is on. One gentle reminder at bedtime, no repeats, and it's left out of the evening "not logged" notice.
+- The morning after, "How was last night?" takes the hours used, AHI and mask fit from the machine's screen, plus a note. All optional.
+- Parts reminders: mask cushion, air filter, tubing, mask, headgear and water chamber start on the usual replacement schedule, which you can change. On the day one is due you get a reminder and it shows on Today with a Changed button.
+- The machine's page shows the last 30 days: nights used, average hours, nights of 4 hours or more and average AHI.
+- Machines never count towards streaks, gold days or badges, and are never shared with people who follow you. Reminders don't name the machine or part unless medicine names are turned on.
+
 ## 0.13
 
 ### Health data

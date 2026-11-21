@@ -3,7 +3,7 @@ import { describeDose } from '../domain/dose';
 import { adherence, computeProgress, isGoldDay, type DaySummary } from '../domain/progress';
 import { groupKey } from '../domain/reminders';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../domain/schedule';
-import { isSupplement, type DoseLog, type Medication, type ScheduledDose, type Settings } from '../domain/types';
+import { countsForStreak, type DoseLog, type Medication, type ScheduledDose, type Settings } from '../domain/types';
 import { lookOf } from '../components/pillLook';
 
 export type PillLook = ReturnType<typeof lookOf>;
@@ -85,8 +85,8 @@ export function buildWidgetData({ now, meds, logs: logList, summaries, snoozes, 
   const byId = new Map(meds.map((m) => [m.id, m]));
   const showNames = !!settings.widgetShowNames;
 
-  // The rings and colours follow medicines only, like the app; supplements still show in the lists.
-  const counted = doses.filter((d) => !isSupplement(byId.get(d.medId)));
+  // The rings and colours follow medicines only, like the app; supplements and machines still show in the lists.
+  const counted = doses.filter((d) => countsForStreak(byId.get(d.medId)));
   const taken = counted.filter((d) => logs.get(d.slot)?.status === 'taken');
   const onTime = taken.filter((d) => punctuality(d, new Date(logs.get(d.slot)!.at), settings.onTimeWindowMinutes) === 'onTime').length;
   const done = counted.filter((d) => logs.has(d.slot)).length;
