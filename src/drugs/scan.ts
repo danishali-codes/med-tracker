@@ -18,6 +18,7 @@ const FORM_WORDS: [RegExp, MedForm][] = [
   [/\b(syrup|suspension|oral solution|oral liquid|elixir)\b/i, 'liquid'],
   [/\b(eye|ear|nasal)? ?drops\b/i, 'drops'],
   [/\b(inhaler|puffs?|inhalation|evohaler|turbuhaler|diskus)\b/i, 'inhaler'],
+  [/\b(nasal spray|sprays?)\b/i, 'spray'],
   [/\b(injection|injectable|pre-?filled pen|pen|vial|ampoules?|syringe)\b/i, 'injection'],
   [/\b(cream|ointment|gel|lotion)\b/i, 'cream'],
   [/\b(sachets?|granules|powder for oral)\b/i, 'sachet'],

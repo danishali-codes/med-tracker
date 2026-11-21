@@ -21,6 +21,7 @@ describe('dose', () => {
     expect(describeDose(base)).toBe('500 mg · 3 tablets');
     expect(describeDose({ ...base, amount: 1 })).toBe('500 mg · 1 tablet');
     expect(describeDose({ ...base, strength: '', amount: 0.5 })).toBe('½ tablet');
+    expect(describeDose({ ...base, form: 'spray', strength: '50 mcg', amount: 2 })).toBe('50 mcg · 2 sprays');
     expect(describeDose({ ...base, form: 'liquid', strength: '5 mg/ml', amount: 7.5 })).toBe('5 mg/ml · 7.5 ml');
   });
 

@@ -31,7 +31,7 @@ const KINDS: { kind: Kind; label: string }[] = [
   { kind: 'asNeeded', label: 'As needed' },
 ];
 
-const FORMS: MedForm[] = ['pill', 'capsule', 'liquid', 'injection', 'inhaler', 'drops', 'patch', 'cream', 'sachet', 'other'];
+const FORMS: MedForm[] = ['pill', 'capsule', 'liquid', 'injection', 'inhaler', 'spray', 'drops', 'patch', 'cream', 'sachet', 'other'];
 const SUGGESTED_TIMES = ['08:00', '20:00', '13:00', '22:00', '06:00', '17:00'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
