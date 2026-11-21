@@ -67,7 +67,7 @@ export interface RamadanSettings {
 }
 
 /** 'pill' is shown as "Tablet" (kept as the stored key so older data still reads). */
-export type MedForm = 'pill' | 'capsule' | 'liquid' | 'injection' | 'drops' | 'inhaler' | 'patch' | 'cream' | 'sachet' | 'other';
+export type MedForm = 'pill' | 'capsule' | 'liquid' | 'injection' | 'drops' | 'inhaler' | 'spray' | 'patch' | 'cream' | 'sachet' | 'other';
 
 export type FoodRule = 'empty' | 'with' | 'after';
 

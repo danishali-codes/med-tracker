@@ -11,7 +11,8 @@ const HEADER = 104;
 
 /**
  * The big widget: a coloured header with the rings and what each one means, then
- * every dose today with Take on the ones that are due.
+ * the doses still to take today, next one first, with Take on the ones that are due.
+ * Taken and skipped doses drop off; the rings already count them.
  */
 export function ListWidget({
   data,
@@ -63,7 +64,10 @@ export function ListWidget({
       </OverlapWidget>
       <FlexWidget style={{ width: 'match_parent', flex: 1, flexDirection: 'column', paddingHorizontal: 8, paddingTop: 6 }}>
         {rows.length === 0 ? (
-          <TextWidget text="Nothing due today" style={{ fontSize: 14, fontFamily: REG, color: s.muted, marginTop: 8 }} />
+          <TextWidget
+            text={data.total > 0 || data.done > 0 ? 'Nothing left to take today' : 'Nothing due today'}
+            style={{ fontSize: 14, fontFamily: REG, color: s.muted, marginTop: 8 }}
+          />
         ) : null}
         {rows.map((r) => (
           <Row key={r.slot} r={r} s={s} dark={dark} pad={4 + rowPad} />

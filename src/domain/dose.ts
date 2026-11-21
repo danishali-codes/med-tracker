@@ -8,6 +8,7 @@ export const FORM_UNITS: Record<MedForm, { label: string; one: string; many: str
   injection: { label: 'Injection', one: 'injection', many: 'injections' },
   drops: { label: 'Drops', one: 'drop', many: 'drops' },
   inhaler: { label: 'Inhaler', one: 'puff', many: 'puffs' },
+  spray: { label: 'Spray', one: 'spray', many: 'sprays' },
   patch: { label: 'Patch', one: 'patch', many: 'patches' },
   cream: { label: 'Cream', one: 'application', many: 'applications' },
   sachet: { label: 'Sachet', one: 'sachet', many: 'sachets' },

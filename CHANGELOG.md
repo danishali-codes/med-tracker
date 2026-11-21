@@ -23,6 +23,18 @@ Sabr now asks what you need, and leaves out the rest.
 - Settings search still finds a setting whose feature is off, and offers to turn the feature on.
 - Run setup again from Settings any time.
 
+## 0.14
+
+### Today screen
+- Doses you've already taken or skipped fold into a "Done today" line under the ones still to take, so what's left is always at the top. It's closed every time you open the app; tap it to see them, or to undo one.
+- With health data on, a Health today card shows today's steps, last night's sleep and your heart rate. Tap it for the last 7 days. Hidden when health data is off.
+
+### Widget
+- The big list widget now shows only the doses still to take, next one first. Taken and skipped doses drop off (the rings still count them), and once everything is done it says so.
+
+### Medicines
+- New Spray type (nasal, mouth and throat sprays), counted in sprays, with its own bottle drawing. Box scanning and the medicine search pick it up too.
+
 ## 0.13
 
 ### Health data

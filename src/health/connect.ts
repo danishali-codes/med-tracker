@@ -10,16 +10,20 @@ import * as repo from '../db/repo';
 
 export type HealthStatus = 'ready' | 'needsInstall' | 'unavailable';
 
+/** Screenshot builds set made-up days here (scripts/screenshots/demo-seed.ts); never set in the real app. */
+const demoDays = () => (globalThis as { __DEMO_HEALTH?: HealthDay[] }).__DEMO_HEALTH;
+
 /** Health Connect is there and the setting is on. Counts as off if settings can't be read. */
 export function healthEnabled(): boolean {
   try {
-    return Platform.OS === 'android' && SabrHealth != null && repo.getSettings().healthConnect === true;
+    return Platform.OS === 'android' && (SabrHealth != null || !!demoDays()) && repo.getSettings().healthConnect === true;
   } catch {
     return false;
   }
 }
 
 export function healthStatus(): HealthStatus {
+  if (demoDays()) return 'ready';
   if (Platform.OS !== 'android' || SabrHealth == null) return 'unavailable';
   try {
     return SabrHealth.status();
@@ -30,6 +34,7 @@ export function healthStatus(): HealthStatus {
 
 export async function grantedKinds(): Promise<HealthKind[]> {
   if (healthStatus() !== 'ready') return [];
+  if (demoDays()) return ['steps', 'sleep', 'heartRate', 'restingHeartRate'];
   try {
     return await SabrHealth!.granted();
   } catch {
@@ -72,6 +77,8 @@ const FRESH_MS = 5 * 60 * 1000;
  */
 export async function readHealth(from: DateKey, to: DateKey): Promise<HealthDay[]> {
   if (!healthEnabled() || healthStatus() !== 'ready') return [];
+  const demo = demoDays();
+  if (demo) return demo.filter((d) => d.date >= from && d.date <= to);
   const key = `${from}~${to}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < FRESH_MS) return hit.days;

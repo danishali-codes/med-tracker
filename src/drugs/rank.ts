@@ -59,6 +59,7 @@ function formOf(doseForm: string): MedForm {
   if (f.includes('capsule')) return 'capsule';
   if (f.includes('tablet') || f.includes('lozenge')) return 'pill';
   if (f.includes('inhal')) return 'inhaler';
+  if (f.includes('spray')) return 'spray';
   if (f.includes('inject') || /\bpen\b/.test(f) || f.includes('prefilled syringe')) return 'injection';
   if (f.includes('ophthalmic') || f.includes('otic') || f.includes('drops')) return 'drops';
   if (f.includes('transdermal') || f.includes('patch')) return 'patch';
