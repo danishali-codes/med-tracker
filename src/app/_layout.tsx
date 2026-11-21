@@ -103,6 +103,8 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="med/[id]" options={{ title: 'Medication', presentation: 'modal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="machine/[id]" options={{ title: 'Machine', presentation: 'modal', animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="machine/night" options={{ title: 'How was the night?' }} />
             <Stack.Screen name="interactions" options={{ title: 'Interactions' }} />
             <Stack.Screen name="settings/index" options={{ title: 'Settings' }} />
             <Stack.Screen name="settings/[group]" options={{ title: 'Settings' }} />

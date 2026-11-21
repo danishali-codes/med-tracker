@@ -102,7 +102,7 @@ export const FEATURES: FeatureInfo[] = [
     icon: 'pulse-outline',
     question: 'I use a machine at home, like a CPAP or nebulizer',
     keywords: ['cpap', 'nebulizer', 'oxygen', 'mask', 'filter', 'sleep apnea'],
-    available: false,
+    available: true,
   },
   {
     id: 'sugarChecks',

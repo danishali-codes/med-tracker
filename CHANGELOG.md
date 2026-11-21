@@ -18,11 +18,21 @@ Sabr now asks what you need, and leaves out the rest.
 - After updating, you get one screen to choose your features, with everything you already use ticked. Nothing you saved is removed.
 
 ### Features and health profile
-- New Settings page, Features and health profile: turn supplements, mood, health data, fasting, family and caregivers, rewards and the watch tile on or off. Switching one off hides it and stops what it did in the background; its data stays.
-- With mood off, the Today check-in and Mood trend are hidden. With rewards off, badges and confetti are. With family and caregivers off, the people you follow leave Today. With supplements off, the Add supplement button goes; supplements you already have stay and keep reminding you.
+- New Settings page, Features and health profile: turn supplements, machines, mood, health data, fasting, family and caregivers, rewards and the watch tile on or off. Switching one off hides it and stops what it did in the background; its data stays.
+- With mood off, the Today check-in and Mood trend are hidden. With rewards off, badges and confetti are. With family and caregivers off, the people you follow leave Today. With supplements or machines off, their Add buttons go; ones you already have stay and keep reminding you.
 - Health profile: your conditions (with diabetes type and insulin) and medicine count. Kept on the phone and in encrypted backups, never shared.
 - Settings search still finds a setting whose feature is off, and offers to turn the feature on.
 - Run setup again from Settings any time.
+
+## 0.15
+
+### Machines: CPAP, nebulizer, oxygen
+- Add a machine from the new Machines section on the Medications tab. Pick the type (CPAP / APAP, BiPAP, nebulizer, oxygen concentrator or other), give it a name and a check-in time.
+- A nightly check-in on Today: tap once the mask is on. One gentle reminder at bedtime, no repeats, and it's left out of the evening "not logged" notice.
+- The morning after, "How was last night?" takes the hours used, AHI and mask fit from the machine's screen, plus a note. All optional.
+- Parts reminders: mask cushion, air filter, tubing, mask, headgear and water chamber start on the usual replacement schedule, which you can change. On the day one is due you get a reminder and it shows on Today with a Changed button.
+- The machine's page shows the last 30 days: nights used, average hours, nights of 4 hours or more and average AHI.
+- Machines never count towards streaks, gold days or badges, and are never shared with people who follow you. Reminders don't name the machine or part unless medicine names are turned on.
 
 ## 0.14
 

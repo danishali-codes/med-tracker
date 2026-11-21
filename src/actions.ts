@@ -1,5 +1,6 @@
 import { timeFromDate, toDateKey, type DateKey } from './domain/dates';
 import { groupKey } from './domain/reminders';
+import { markPartChanged } from './domain/machines';
 import type { DoseStatus, Medication } from './domain/types';
 import * as repo from './db/repo';
 import { answerDoses, notifyLowStock, rescheduleAll, snoozeGroup } from './notifications/reminders';
@@ -45,4 +46,12 @@ export async function removeMedication(id: string) {
 /** Remind again in a few minutes for every dose due at this time. */
 export async function snoozeDoses(date: DateKey, time: string, minutes: number) {
   await snoozeGroup(groupKey(date, time), minutes).catch((e) => console.warn('snooze failed', e));
+}
+
+/** A machine part (CPAP cushion, filter...) was replaced today: its next reminder moves on. */
+export async function changePart(medId: string, partId: string, date: DateKey = toDateKey(new Date())) {
+  const med = repo.getMed(medId);
+  if (!med?.machine) return;
+  repo.saveMed(markPartChanged(med, partId, date));
+  await rescheduleAll().catch((e) => console.warn('reschedule failed', e));
 }

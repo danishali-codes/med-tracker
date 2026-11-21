@@ -120,6 +120,11 @@ All of it is in [`src/health/connect.ts`](src/health/connect.ts) and
   Without a password the file is plain JSON, and the app warns you before saving it.
 - **App lock:** uses the phone's own fingerprint, face or screen lock check. Sabr never sees
   your fingerprint or PIN. **Hide in recent apps** also blocks screenshots of the app.
+- **Machines (CPAP, nebulizer, oxygen):** check-ins, night details (hours, AHI, mask fit) and
+  part dates are typed in by you and stay in the app's database. Sabr doesn't connect to the
+  machine, its SD card or the maker's cloud. Machines are never included in what you share
+  with people who follow you. Reminders say "Time for your 10:30 PM check-in" and "A part is
+  due for a change" unless **Show medicine names in reminders** is on.
 - **Patterns, reviews and timing suggestions** are worked out on the phone from data already on it.
 - **Notifications:** by default reminders and refill alerts don't name your medicines
   ("Time for your 8:00 dose, 2 medicines to take"), on the lock screen and on a paired watch.

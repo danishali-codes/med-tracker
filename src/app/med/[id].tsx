@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, Switch, View } from 'react-native';
 import { popup } from '../../components/Popup';
@@ -44,7 +44,15 @@ const num = (s: string, fallback: number) => {
 /** Smallest step for the amount stepper: half tablets, half ml, whole everything else. */
 const stepFor = (f: MedForm) => (f === 'pill' || f === 'liquid' ? 0.5 : 1);
 
-export default function MedEditor() {
+/** Machines (CPAP...) have their own editor. */
+export default function MedOrMachine() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const machine = useMemo(() => (id && id !== 'new' ? repo.getMed(id)?.machine != null : false), [id]);
+  if (machine) return <Redirect href={{ pathname: '/machine/[id]', params: { id } }} />;
+  return <MedEditor />;
+}
+
+function MedEditor() {
   const c = useTheme();
   const st = useStyles();
   const params = useLocalSearchParams<{ id: string; supplement?: string; setup?: string }>();

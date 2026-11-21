@@ -3,6 +3,8 @@ history calendar 4
 meds meds 3
 progress progress 4
 medication med/demo-metformin 5
+machine machine/demo-cpap 4
+machine-night machine/night?id=demo-cpap 2
 interactions interactions 2
 settings settings 2
 settings-features settings/features 2
