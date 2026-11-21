@@ -6,6 +6,18 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.14
+
+### Today screen
+- Doses you've already taken or skipped fold into a "Done today" line under the ones still to take, so what's left is always at the top. It's closed every time you open the app; tap it to see them, or to undo one.
+- With health data on, a Health today card shows today's steps, last night's sleep and your heart rate. Tap it for the last 7 days. Hidden when health data is off.
+
+### Widget
+- The big list widget now shows only the doses still to take, next one first. Taken and skipped doses drop off (the rings still count them), and once everything is done it says so.
+
+### Medicines
+- New Spray type (nasal, mouth and throat sprays), counted in sprays, with its own bottle drawing. Box scanning and the medicine search pick it up too.
+
 ## 0.13
 
 ### Health data

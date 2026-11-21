@@ -125,6 +125,15 @@ function Container({ form, color }: { form: MedForm; color: string }) {
           <Path d="M13 26 H31 Q35 26 35 30 V36 H44 V44 H17 Q13 44 13 40 Z" fill="#D9DCE3" {...common} />
         </G>
       );
+    case 'spray':
+      return (
+        <G>
+          <Rect x={20} y={3} width={8} height={10} rx={3} fill="#E8E8EC" {...common} />
+          <Rect x={15} y={13} width={18} height={6} rx={2} fill="#D9DCE3" {...common} />
+          <Rect x={13} y={19} width={22} height={25} rx={6} fill={color} {...common} />
+          <Rect x={17} y={26} width={14} height={10} rx={2} fill="rgba(255,255,255,0.7)" />
+        </G>
+      );
     case 'patch':
       return (
         <G>
