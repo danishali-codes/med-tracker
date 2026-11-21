@@ -1,10 +1,12 @@
-# Sabr: Medicine Tracker
+# Sabr: Health Tracker
 
 Do you struggle to take your meds on time? Do you forget how many tablets you're meant to take, and when? Have you ever stood in the kitchen wondering whether you actually took this morning's dose, or just thought about taking it?
 
 If you take one pill a day, a phone alarm is probably enough. Once it's five meds, some twice a day, one only on Fridays and one every other week, alarms stop being enough. You need something that knows the schedule, asks "did you take it?", and remembers the answer.
 
 Sabr (صبر, "patience") is a free, open-source Android app that does that. It's a simple, private replacement for Samsung Health's Medications feature, which isn't available in every country (including the UAE, where this app started).
+
+It started as a medicine tracker and has grown into a small health tracker: supplements, CPAP and other machines, mood, fasting in Ramadan, and soon blood sugar and blood pressure checks. Setup asks what you need, and everything else stays off until you turn it on.
 
 <p align="center">
   <img src="docs/screenshots/latest/today.png" width="200" alt="Today screen" />
