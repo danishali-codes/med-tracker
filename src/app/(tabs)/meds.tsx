@@ -13,7 +13,7 @@ import { isMachine, isSupplement, type DoseLog } from '../../domain/types';
 import { machineKind, partDueText, partsDue } from '../../domain/machines';
 import type { Medication } from '../../domain/types';
 import * as repo from '../../db/repo';
-import { useDbVersion, useMeds, useToday } from '../../hooks/useData';
+import { useDbVersion, useMeds, useSettings, useToday } from '../../hooks/useData';
 import { MedIcon } from '../../components/MedIcon';
 import { WeekSquares } from '../../components/WeekSquares';
 import { makeStyles, useTheme } from '../../theme';
@@ -26,6 +26,7 @@ export default function MedsScreen() {
   const version = useDbVersion();
   const [showArchived, setShowArchived] = useState(false);
   const logs = useMemo(() => indexLogs(repo.getLogs()), [version]);
+  const settings = useSettings();
   const active = meds.filter((m) => !m.archived);
   const activeMeds = active.filter((m) => !isSupplement(m) && !isMachine(m));
   const supplements = active.filter((m) => isSupplement(m) && !isMachine(m));
@@ -61,7 +62,7 @@ export default function MedsScreen() {
           <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}
-      {active.length > 0 ? (
+      {active.length > 0 && (settings.features.supplements || supplements.length > 0) ? (
         <SectionTitle
           right={
             <Pressable onPress={() => router.push({ pathname: '/med/[id]', params: { id: 'new', supplement: '1' } })} hitSlop={10}>
@@ -72,7 +73,7 @@ export default function MedsScreen() {
           Supplements
         </SectionTitle>
       ) : null}
-      {active.length > 0 && supplements.length === 0 ? (
+      {active.length > 0 && supplements.length === 0 && settings.features.supplements ? (
         <Text style={[s.sub, { marginLeft: 6, marginBottom: 14 }]}>Vitamins and the like: reminders and their own ring, without counting towards your streak.</Text>
       ) : null}
       {supplements.map((m, i) => (
@@ -80,7 +81,9 @@ export default function MedsScreen() {
           <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}
-      {/* Always shown, so someone who only uses a CPAP can add it without adding a medicine first. */}
+      {/* With machines on it is always shown, so someone who only uses a CPAP can add it without adding a medicine first. */}
+      {settings.features.machines || machines.length > 0 ? (
+      <>
       <SectionTitle
         right={
           <Pressable onPress={() => router.push({ pathname: '/machine/[id]', params: { id: 'new' } })} hitSlop={10}>
@@ -92,6 +95,8 @@ export default function MedsScreen() {
       </SectionTitle>
       {machines.length === 0 ? (
         <Text style={[s.sub, { marginLeft: 6, marginBottom: 14 }]}>A CPAP, nebulizer or oxygen machine: check in when you use it, and get reminded when parts are due.</Text>
+      ) : null}
+      </>
       ) : null}
       {machines.map((m, i) => (
         <FadeIn key={m.id} delay={(activeMeds.length + supplements.length + i) * 40}>

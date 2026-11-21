@@ -7,6 +7,9 @@ machine machine/demo-cpap 4
 machine-night machine/night?id=demo-cpap 2
 interactions interactions 2
 settings settings 2
+settings-features settings/features 2
+profile profile 2
+setup setup 2
 settings-look settings/look 1
 settings-reminders settings/reminders 3
 settings-timing settings/timing 2

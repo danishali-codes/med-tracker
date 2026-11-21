@@ -16,9 +16,10 @@ export function normalize(s: string): string {
 }
 
 /** Items that belong on this phone and in this mode. */
-export function itemShown(item: SettingItem, s: Settings, opts: Platformish & { advanced: boolean }): boolean {
+export function itemShown(item: SettingItem, s: Settings, opts: Platformish & { advanced: boolean; includeOff?: boolean }): boolean {
   if (item.androidOnly && !opts.android) return false;
   if (item.advanced && !opts.advanced) return false;
+  if (item.feature && !s.features[item.feature]) return opts.includeOff === true;
   if (item.visible && !item.visible(s)) return false;
   return true;
 }
@@ -69,7 +70,7 @@ export function searchSettings(groups: SettingsGroup[], query: string, s: Settin
     const found: { item: SettingItem; score: number }[] = [];
     for (const section of group.sections) {
       for (const item of section.items) {
-        if (!itemShown(item, s, { ...opts, advanced: true })) continue;
+        if (!itemShown(item, s, { ...opts, advanced: true, includeOff: true })) continue;
         const score = scoreItem(item, query, [group.title, section.title ?? '']);
         if (score > 0) found.push({ item, score });
       }

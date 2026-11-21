@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import { Fragment } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { Card, PressableScale, SectionTitle, Text } from '../components/ui';
+import { featureInfo, type FeatureId } from '../domain/features';
 import type { Settings } from '../domain/types';
+import { setFeature } from './features';
 import { makeStyles, useTheme } from '../theme';
 import { updateSettings, useSettingStyles } from './rows';
 import { hiddenAdvancedCount, itemShown } from './search';
@@ -19,10 +21,34 @@ export function ItemList({ items, settings }: { items: SettingItem[]; settings: 
       {items.map((item, i) => (
         <Fragment key={item.id}>
           {i > 0 ? <View style={s.divider} /> : null}
-          <item.Component settings={settings} update={updateSettings} />
+          {item.feature && !settings.features[item.feature] ? (
+            <FeatureOffRow item={item} feature={item.feature} />
+          ) : (
+            <item.Component settings={settings} update={updateSettings} />
+          )}
         </Fragment>
       ))}
     </>
+  );
+}
+
+/** Search found a setting whose feature is off: say so, and offer to turn the feature on. */
+function FeatureOffRow({ item, feature }: { item: SettingItem; feature: FeatureId }) {
+  const c = useTheme();
+  const st = useSettingStyles();
+  const info = featureInfo(feature);
+  return (
+    <PressableScale onPress={() => setFeature(feature, true)} style={st.linkRow} scaleTo={0.98} accessibilityRole="button" accessibilityHint={`Turns on ${info.title}`}>
+      <View style={st.iconBubble}>
+        <Ionicons name={info.icon} size={20} color={c.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={st.label}>{item.title}</Text>
+        <Text style={st.hint}>
+          Part of {info.title}, which is off. <Text style={{ color: c.primary, fontWeight: '800' }}>Turn it on</Text>
+        </Text>
+      </View>
+    </PressableScale>
   );
 }
 

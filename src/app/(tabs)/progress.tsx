@@ -10,13 +10,14 @@ import { addDays, parseDateKey, weekdayOf } from '../../domain/dates';
 import { adherence, consistency, consistencySeries, FREEZE_EVERY, MAX_FREEZES, nextMilestone } from '../../domain/progress';
 import { lastMonth } from '../../domain/insights';
 import { monthName } from '../../domain/dates';
-import { useProgress } from '../../hooks/useData';
+import { useProgress, useSettings } from '../../hooks/useData';
 import { makeStyles, useTheme } from '../../theme';
 
 export default function ProgressScreen() {
   const c = useTheme();
   const s = useStyles();
   const { today, progress, badges: allBadges, byDate, summaries } = useProgress();
+  const settings = useSettings();
   // Hidden badges stay a surprise: not listed or counted until they're earned.
   const badges = allBadges.filter((b) => !b.hidden || b.has);
   const last30 = summaries.slice(-31, -1);
@@ -122,6 +123,7 @@ export default function ProgressScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={c.faint} />
         </PressableScale>
+        {settings.features.mood ? (
         <PressableScale onPress={() => router.push('/mood')} style={s.reportLink}>
           <Ionicons name="happy-outline" size={22} color={c.primary} />
           <View style={{ flex: 1 }}>
@@ -130,6 +132,7 @@ export default function ProgressScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={c.faint} />
         </PressableScale>
+        ) : null}
         <PressableScale onPress={() => router.push('/patterns')} style={s.reportLink}>
           <Ionicons name="pulse-outline" size={22} color={c.primary} />
           <View style={{ flex: 1 }}>
@@ -178,6 +181,7 @@ export default function ProgressScreen() {
         </Card>
       </FadeIn>
 
+      {settings.features.rewards ? (
       <FadeIn delay={180}>
         <SectionTitle right={<Text style={s.count}>{earned}/{badges.length}</Text>}>Badges</SectionTitle>
         <View style={s.badges}>
@@ -196,6 +200,7 @@ export default function ProgressScreen() {
           ))}
         </View>
       </FadeIn>
+      ) : null}
     </Screen>
   );
 }

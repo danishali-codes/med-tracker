@@ -3,6 +3,7 @@ import { addDays, diffDays, eachDay, toDateKey, type DateKey } from '../domain/d
 import { isLowStock, normalizeMed } from '../domain/dose';
 import { summarizeDay, trackedFrom, type DaySummary } from '../domain/progress';
 import { getTimeRules, indexLogs, setTimeRules } from '../domain/schedule';
+import { normalizeFeatures, normalizeProfile, type InUse } from '../domain/features';
 import { DEFAULT_SETTINGS, type DayNote, type MachineNight, type DoseLog, type DoseStatus, type Medication, type Settings } from '../domain/types';
 
 // ---- change notifications so screens refresh after any write ----
@@ -246,6 +247,8 @@ export function getSettings(): Settings {
     care: { ...DEFAULT_SETTINGS.care, ...(saved.care ?? {}) },
     autoBackup: { ...DEFAULT_SETTINGS.autoBackup, ...(saved.autoBackup ?? {}) },
     routines: saved.routines ?? [],
+    features: normalizeFeatures(saved.features),
+    profile: normalizeProfile(saved.profile),
   };
   // Weekday times live on each med; Ramadan, temporary changes and travel live here.
   setTimeRules({ ramadan: s.ramadan, timeChanges: s.timeChanges, travelMode: s.travelMode, homeTimeZone: s.homeTimeZone });
@@ -400,4 +403,35 @@ export function importAll(json: string) {
   });
   getSettings();
   changed();
+}
+
+// ---- setup ----
+
+/** True when this phone has never had a medicine or a logged dose: a fresh install, so setup runs in full. */
+export function isFreshInstall(): boolean {
+  const db = getDb();
+  const meds = db.getFirstSync<{ n: number }>('SELECT COUNT(*) AS n FROM meds')?.n ?? 0;
+  const logs = db.getFirstSync<{ n: number }>('SELECT COUNT(*) AS n FROM dose_log')?.n ?? 0;
+  return meds === 0 && logs === 0;
+}
+
+/** What this install already uses, for the one-time "choose your features" screen after updating. */
+export function inUseNow(): InUse {
+  const s = getSettings();
+  const meds = getMeds().filter((m) => !m.archived);
+  const db = getDb();
+  const notes = db.getAllSync<{ data: string }>('SELECT data FROM day_note');
+  // Statuses of people this phone follows are cached here (the share codes themselves are in secure storage).
+  const following = Object.keys(JSON.parse(getKv('care_status') ?? '{}') as object);
+  return {
+    hasSupplements: meds.some((m) => m.supplement === true),
+    hasMachines: meds.some((m) => m.machine != null),
+    hasMoodNotes: notes.some((r) => (JSON.parse(r.data) as DayNote).mood != null),
+    healthConnect: s.healthConnect,
+    ramadan: s.ramadan.enabled,
+    sharing: s.sync.share,
+    following: following.length > 0,
+    watchTile: s.watchTile,
+    celebrate: s.celebrate,
+  };
 }

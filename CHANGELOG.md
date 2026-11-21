@@ -6,6 +6,24 @@ every screen, light and dark, are in [docs/screenshots](docs/screenshots).
 <!-- Each "## x.y" heading becomes a release named vx.y.0. "commit:" pins the release to
      an older commit; without it the release points at the merge that added the heading. -->
 
+## 0.16
+
+Sabr now asks what you need, and leaves out the rest.
+
+### Setup
+- A short setup on first launch: a privacy note, any health conditions you want Sabr to know about, how many medicines you take and how often, which features you want, and how reminders should look. Every step can be skipped.
+- Picking a condition ticks the features that fit it, for example blood sugar checks for diabetes. You can untick them.
+- "How many times a day" sets up matching routines (Morning, Evening and so on) that you can rename or move.
+- At the end, add your medicines one after another, or skip and add them later.
+- After updating, you get one screen to choose your features, with everything you already use ticked. Nothing you saved is removed.
+
+### Features and health profile
+- New Settings page, Features and health profile: turn supplements, machines, mood, health data, fasting, family and caregivers, rewards and the watch tile on or off. Switching one off hides it and stops what it did in the background; its data stays.
+- With mood off, the Today check-in and Mood trend are hidden. With rewards off, badges and confetti are. With family and caregivers off, the people you follow leave Today. With supplements or machines off, their Add buttons go; ones you already have stay and keep reminding you.
+- Health profile: your conditions (with diabetes type and insulin) and medicine count. Kept on the phone and in encrypted backups, never shared.
+- Settings search still finds a setting whose feature is off, and offers to turn the feature on.
+- Run setup again from Settings any time.
+
 ## 0.15
 
 ### Machines: CPAP, nebulizer, oxygen

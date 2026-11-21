@@ -292,13 +292,13 @@ export default function TodayScreen() {
           </>
         ) : null}
 
-        {activeCount > 0 ? (
+        {activeCount > 0 && settings.features.mood ? (
           <View style={{ marginTop: 14 }}>
             <NoteCard date={today} />
           </View>
         ) : null}
 
-        {people.length > 0 ? (
+        {people.length > 0 && settings.features.caregiving ? (
           <>
             <SectionTitle>People I look after</SectionTitle>
             {people.map((p) => (

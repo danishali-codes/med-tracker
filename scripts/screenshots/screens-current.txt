@@ -6,6 +6,9 @@ medication med/demo-metformin
 machine machine/demo-cpap
 interactions interactions
 settings settings
+settings-features settings/features
+profile profile
+setup setup
 times times
 report report
 sync sync

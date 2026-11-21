@@ -70,6 +70,7 @@ export const devicesGroup: SettingsGroup = {
         },
         toggle({
           id: 'watchTile',
+          feature: 'watch',
           title: 'Watch tile',
           hint: "Today's ring, your next dose and Taken and Snooze buttons on a Wear OS tile.",
           keywords: ['watch', 'tile', 'wear os', 'galaxy watch', 'wearable'],
@@ -93,6 +94,7 @@ export const devicesGroup: SettingsGroup = {
       items: [
         link({
           id: 'healthData',
+          feature: 'healthData',
           title: 'Health data',
           hint: 'Off. Bring in steps, sleep and heart rate from Samsung Health',
           keywords: ['samsung health', 'health connect', 'steps', 'sleep', 'heart rate', 'pulse', 'fitness', 'galaxy watch', 'google fit'],

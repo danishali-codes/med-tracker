@@ -1,5 +1,6 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentType } from 'react';
+import type { FeatureId } from '../domain/features';
 import type { Settings } from '../domain/types';
 
 export interface SettingCtx {
@@ -24,6 +25,11 @@ export interface SettingItem {
   advanced?: boolean;
   /** Only on Android (alarms, widgets, the watch). */
   androidOnly?: boolean;
+  /**
+   * Belongs to an optional feature. While that feature is off the item is hidden from its
+   * page; search still finds it and offers to turn the feature on.
+   */
+  feature?: FeatureId;
   /** Shown only while this is true, e.g. options of a toggle that is on. */
   visible?: (s: Settings) => boolean;
   Component: ComponentType<SettingCtx>;
