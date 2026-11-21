@@ -14,7 +14,8 @@ import { addDays, diffDays, formatDateLong, formatTime, parseDateKey, timeFromDa
 import { describeDose } from '../../domain/dose';
 import { adherence, isGoldDay } from '../../domain/progress';
 import { routineAt } from '../../domain/routines';
-import { isSupplement } from '../../domain/types';
+import { isMachine, isSupplement } from '../../domain/types';
+import { MachinesSection } from '../../components/MachineCards';
 import { EarnBackCard, FoodTimerCard, MilestoneCard, ReviewPrompt, TimingCard } from '../../components/TodayCards';
 import { dosesOn, dueAt, groupByTime, indexLogs, punctuality } from '../../domain/schedule';
 import * as repo from '../../db/repo';
@@ -50,16 +51,20 @@ export default function TodayScreen() {
   const medById = useMemo(() => new Map(meds.map((m) => [m.id, m])), [meds]);
   // Medicines fill the rings and the streak; supplements have a ring and a list of their own.
   const allDoses = useMemo(() => dosesOn(meds, today), [meds, today]);
-  const doses = useMemo(() => allDoses.filter((d) => !isSupplement(medById.get(d.medId))), [allDoses, medById]);
+  const doses = useMemo(() => allDoses.filter((d) => !isSupplement(medById.get(d.medId)) && !isMachine(medById.get(d.medId))), [allDoses, medById]);
   const suppDoses = useMemo(() => allDoses.filter((d) => isSupplement(medById.get(d.medId))), [allDoses, medById]);
+  // Machines (CPAP...) have their own section too.
+  const machines = useMemo(() => meds.filter((m) => !m.archived && isMachine(m)), [meds]);
+  const machineDoses = useMemo(() => allDoses.filter((d) => isMachine(medById.get(d.medId))), [allDoses, medById]);
   const todayLogs = useMemo(() => repo.getLogs(today, today), [today, version]);
   const logs = useMemo(() => indexLogs(todayLogs), [todayLogs]);
   // Doses still to take stay up top, grouped by time; taken and skipped ones fold into "Done today".
   const groups = groupByTime(doses.filter((d) => !logs.has(d.slot)));
   const suppOpen = suppDoses.filter((d) => !logs.has(d.slot));
-  const doneDoses = allDoses.filter((d) => logs.has(d.slot)).sort((a, b) => a.time.localeCompare(b.time));
+  const doneDoses = allDoses.filter((d) => logs.has(d.slot) && !isMachine(medById.get(d.medId))).sort((a, b) => a.time.localeCompare(b.time));
   const suppDone = suppDoses.filter((d) => logs.has(d.slot)).length;
-  const asNeeded = meds.filter((m) => !m.archived && m.schedule.pattern.kind === 'asNeeded');
+  const machineDone = machineDoses.filter((d) => logs.has(d.slot)).length;
+  const asNeeded = meds.filter((m) => !m.archived && !isMachine(m) && m.schedule.pattern.kind === 'asNeeded');
   const answered = doses.filter((d) => logs.has(d.slot)).length;
   const taken = doses.filter((d) => logs.get(d.slot)?.status === 'taken');
   const onTime = taken.filter((d) => punctuality(d, new Date(logs.get(d.slot)!.at), settings.onTimeWindowMinutes) === 'onTime').length;
@@ -133,6 +138,9 @@ export default function TodayScreen() {
                 <Legend color={c.rings[2]} label="This week" value={weekPct == null ? '–' : `${Math.round(weekPct * 100)}%`} />
                 {suppDoses.length > 0 ? (
                   <Legend color={c.rings[0]} label="Supplements" value={`${suppDone} of ${suppDoses.length}`} ring={{ value: suppDone, total: suppDoses.length }} />
+                ) : null}
+                {machineDoses.length > 0 ? (
+                  <Legend color={c.rings[0]} label="Machines" value={`${machineDone} of ${machineDoses.length}`} ring={{ value: machineDone, total: machineDoses.length }} />
                 ) : null}
               </View>
             </View>
@@ -250,6 +258,16 @@ export default function TodayScreen() {
             <Text style={s.suppHint}>Missing a supplement never affects your streak.</Text>
           </FadeIn>
         ) : null}
+
+        <MachinesSection
+          machines={machines}
+          doses={machineDoses}
+          logs={logs}
+          todayLogs={todayLogs}
+          today={today}
+          windowMinutes={settings.onTimeWindowMinutes}
+          version={version}
+        />
 
         <DoneList doses={doneDoses} medById={medById} logs={logs} windowMinutes={settings.onTimeWindowMinutes} />
 

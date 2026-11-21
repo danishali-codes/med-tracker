@@ -1,6 +1,6 @@
 import { addDays, diffDays, parseDateKey, daysInMonth, toDateKey, type DateKey } from './dates';
 import { dosesOn, isMedDueOn, punctuality, slotKey } from './schedule';
-import { isSupplement, type DoseLog, type Medication } from './types';
+import { countsForStreak, type DoseLog, type Medication } from './types';
 
 /**
  * Streak rules (agreed with Danish):
@@ -61,7 +61,7 @@ export function summarizeDay(
   // Supplements are left out too: they have their own ring and never touch the streak.
   // Days before a med was added don't count against you, even if its schedule
   // starts earlier (an earlier start date only anchors "every 2 weeks" style schedules).
-  const doses = dosesOn(meds.filter((m) => !isSupplement(m) && trackedFrom(m) <= date), date);
+  const doses = dosesOn(meds.filter((m) => countsForStreak(m) && trackedFrom(m) <= date), date);
   let taken = 0,
     onTime = 0,
     late = 0,

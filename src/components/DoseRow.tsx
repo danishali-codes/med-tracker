@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
+import { router } from 'expo-router';
 import { Animated, Image, Pressable, View } from 'react-native';
 import { logDose, snoozeDoses } from '../actions';
 import { formatTime, timeFromDate, toDateKey } from '../domain/dates';
@@ -43,8 +44,10 @@ export function DoseRow({
   const [sheet, setSheet] = useState(false);
   const options = () => setSheet(true);
   const isToday = dose.date === toDateKey(new Date());
+  // A machine (CPAP...) is checked in, not taken, and is never early or late.
+  const machine = !!med.machine;
   const actions: SheetAction[] = [
-    ...(!taken ? [{ label: 'Taken', icon: 'checkmark-circle-outline' as const, onPress: () => logDose(dose, 'taken') }] : []),
+    ...(!taken ? [{ label: machine ? 'Used it' : 'Taken', icon: 'checkmark-circle-outline' as const, onPress: () => logDose(dose, 'taken') }] : []),
     ...(!log && isToday
       ? [10, 30, 60].map((m) => ({
           label: m === 60 ? 'Remind me in 1 hour' : `Remind me in ${m} minutes`,
@@ -52,7 +55,10 @@ export function DoseRow({
           onPress: () => snoozeDoses(dose.date, dose.time, m),
         }))
       : []),
-    ...(!skipped ? [{ label: 'Skip this dose', icon: 'remove-circle-outline' as const, onPress: () => logDose(dose, 'skipped') }] : []),
+    ...(machine && taken
+      ? [{ label: 'Add hours and notes', icon: 'create-outline' as const, onPress: () => router.push({ pathname: '/machine/night', params: { id: med.id, date: dose.date } }) }]
+      : []),
+    ...(!skipped ? [{ label: machine ? "Didn't use it" : 'Skip this dose', icon: 'remove-circle-outline' as const, onPress: () => logDose(dose, 'skipped') }] : []),
     ...(log ? [{ label: 'Undo', icon: 'arrow-undo-outline' as const, onPress: () => logDose(dose, null), destructive: true }] : []),
   ];
 
@@ -63,7 +69,11 @@ export function DoseRow({
   };
 
   let status: { text: string; color: string } | null = null;
-  if (taken) {
+  if (taken && machine) {
+    status = { text: `Used at ${formatTime(timeFromDate(new Date(log!.at)))}`, color: c.good };
+  } else if (skipped && machine) {
+    status = { text: 'Not used', color: c.muted };
+  } else if (taken) {
     const p = punctuality(dose, new Date(log!.at), windowMinutes);
     const word = p === 'late' ? 'Late' : p === 'early' ? 'Early' : 'Taken';
     status = { text: `${word} at ${formatTime(timeFromDate(new Date(log!.at)))}`, color: p === 'onTime' ? c.good : c.warn };
@@ -84,7 +94,7 @@ export function DoseRow({
         {dose.usualTime ? <Text style={s.moved}>Moved from {formatTime(dose.usualTime)}</Text> : null}
         {status ? <Text style={[s.status, { color: status.color }]}>{status.text}</Text> : null}
       </View>
-      <Pressable onPress={toggle} hitSlop={10} accessibilityRole="button" accessibilityLabel={log ? `${status?.text}. Change` : `Take ${med.name}`}>
+      <Pressable onPress={toggle} hitSlop={10} accessibilityRole="button" accessibilityLabel={log ? `${status?.text}. Change` : machine ? `Check in ${med.name}` : `Take ${med.name}`}>
         <Animated.View
           style={[
             s.check,

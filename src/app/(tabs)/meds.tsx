@@ -9,7 +9,8 @@ import { daysOfSupply, describeDose, isLowStock, units } from '../../domain/dose
 import { medConsistency, medDays, medStreak } from '../../domain/progress';
 import { foodLabel } from '../../domain/routines';
 import { describeSchedule, indexLogs, isPausedOn, nextDueDate } from '../../domain/schedule';
-import { isSupplement, type DoseLog } from '../../domain/types';
+import { isMachine, isSupplement, type DoseLog } from '../../domain/types';
+import { machineKind, partDueText, partsDue } from '../../domain/machines';
 import type { Medication } from '../../domain/types';
 import * as repo from '../../db/repo';
 import { useDbVersion, useMeds, useToday } from '../../hooks/useData';
@@ -26,8 +27,9 @@ export default function MedsScreen() {
   const [showArchived, setShowArchived] = useState(false);
   const logs = useMemo(() => indexLogs(repo.getLogs()), [version]);
   const active = meds.filter((m) => !m.archived);
-  const activeMeds = active.filter((m) => !isSupplement(m));
-  const supplements = active.filter(isSupplement);
+  const activeMeds = active.filter((m) => !isSupplement(m) && !isMachine(m));
+  const supplements = active.filter((m) => isSupplement(m) && !isMachine(m));
+  const machines = active.filter(isMachine);
   const archived = meds.filter((m) => m.archived);
 
   return (
@@ -78,6 +80,24 @@ export default function MedsScreen() {
           <MedCard med={m} today={today} streak={medStreak(m, logs, today)} logs={logs} />
         </FadeIn>
       ))}
+      {/* Always shown, so someone who only uses a CPAP can add it without adding a medicine first. */}
+      <SectionTitle
+        right={
+          <Pressable onPress={() => router.push({ pathname: '/machine/[id]', params: { id: 'new' } })} hitSlop={10}>
+            <Text style={{ color: c.primary, fontWeight: '800' }}>Add</Text>
+          </Pressable>
+        }
+      >
+        Machines
+      </SectionTitle>
+      {machines.length === 0 ? (
+        <Text style={[s.sub, { marginLeft: 6, marginBottom: 14 }]}>A CPAP, nebulizer or oxygen machine: check in when you use it, and get reminded when parts are due.</Text>
+      ) : null}
+      {machines.map((m, i) => (
+        <FadeIn key={m.id} delay={(activeMeds.length + supplements.length + i) * 40}>
+          <MachineCard med={m} today={today} />
+        </FadeIn>
+      ))}
       {archived.length > 0 ? (
         <>
           <SectionTitle
@@ -89,7 +109,9 @@ export default function MedsScreen() {
           >
             Archived ({archived.length})
           </SectionTitle>
-          {showArchived ? archived.map((m) => <MedCard key={m.id} med={m} today={today} streak={0} logs={logs} />) : null}
+          {showArchived
+            ? archived.map((m) => (isMachine(m) ? <MachineCard key={m.id} med={m} today={today} /> : <MedCard key={m.id} med={m} today={today} streak={0} logs={logs} />))
+            : null}
         </>
       ) : null}
     </Screen>
@@ -137,6 +159,38 @@ function MedCard({ med, today, streak, logs }: { med: Medication; today: string;
             </Text>
           ) : null}
         </View>
+      </Card>
+    </PressableScale>
+  );
+}
+
+function MachineCard({ med, today }: { med: Medication; today: string }) {
+  const c = useTheme();
+  const s = useStyles();
+  const next = partsDue([{ ...med, archived: false }], today, 100000)[0];
+  return (
+    <PressableScale onPress={() => router.push({ pathname: '/machine/[id]', params: { id: med.id } })} scaleTo={0.98}>
+      <Card style={med.archived ? { opacity: 0.6 } : undefined}>
+        <View style={s.row}>
+          <MedIcon med={med} size={54} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.name} numberOfLines={1}>
+              {med.name}
+            </Text>
+            <Text style={s.dose}>{machineKind(med.machine?.type).label}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.faint} />
+        </View>
+        <View style={s.meta}>
+          <Text style={s.sub}>{med.schedule.pattern.kind === 'asNeeded' ? 'Logged when used' : describeSchedule(med.schedule)}</Text>
+        </View>
+        {next && !med.archived ? (
+          <View style={s.tags}>
+            <Text style={[s.tag, next.daysLeft <= 0 ? { backgroundColor: c.warnSoft, color: c.warn } : { backgroundColor: c.sunken, color: c.muted }]}>
+              {next.part.name}: {partDueText(next.part, today).toLowerCase()}
+            </Text>
+          </View>
+        ) : null}
       </Card>
     </PressableScale>
   );

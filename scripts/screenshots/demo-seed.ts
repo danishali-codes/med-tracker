@@ -28,6 +28,25 @@ function seed() {
   ];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const m of meds) saveMed({ ...base, ...m } as any);
+  // A CPAP with a part due today, where the version has machines (0.15 onwards).
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const hasMachines = typeof require('./db/repo').saveNight === 'function';
+  if (hasMachines) {
+    saveMed({
+      ...base,
+      id: 'demo-cpap', name: 'CPAP', strength: '', amount: 1, form: 'other', color: '#3AB7F0', stock: null, refillAt: null,
+      schedule: { pattern: { kind: 'daily' }, times: ['22:30'], startDate: start },
+      machine: {
+        type: 'cpap',
+        parts: [
+          { id: 'cushion', name: 'Mask cushion', everyDays: 14, lastChanged: addDays(today, -14) },
+          { id: 'filter', name: 'Air filter', everyDays: 30, lastChanged: addDays(today, -9) },
+          { id: 'tubing', name: 'Tubing', everyDays: 90, lastChanged: addDays(today, -40) },
+        ],
+      },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+  }
 
   // Fixed pseudo-random sequence so every version gets the same history.
   let r = 7;
@@ -46,6 +65,14 @@ function seed() {
       }
       const lateMin = roll > 0.85 ? 40 + Math.floor(rand() * 90) : Math.floor(rand() * 20) - 5;
       setDose(d, 'taken', new Date(Math.min(due.getTime() + lateMin * 60000, now.getTime())));
+    }
+  }
+  if (hasMachines) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const repo = require('./db/repo');
+    for (let i = 1; i <= 14; i++) {
+      const roll = rand();
+      repo.saveNight({ medId: 'demo-cpap', date: addDays(today, -i), hours: Math.round((5 + roll * 3) * 10) / 10, ahi: Math.round((1 + roll * 3) * 10) / 10, mask: roll > 0.8 ? 'some' : 'good' });
     }
   }
   // Layout check builds: every dose today taken on time, so Today shows a gold day.
