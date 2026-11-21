@@ -1,32 +1,45 @@
-"""Draws Sabr's icon (a two-tone capsule on purple) into assets/ and the website.
+"""Draws Sabr's icon (a heart with a leaf inside, on purple) into assets/ and the website.
 
-The same mark as website/public/favicon.svg. Run: python3 scripts/make-icons.py (needs Pillow).
+The same mark as website/public/favicon.svg and the watch's ic_launcher.xml. Sabr also
+means aloe, hence the leaf. Run: python3 scripts/make-icons.py (needs Pillow).
 """
 from PIL import Image, ImageDraw
 
 PURPLE = '#6A4DF4'
 WHITE = '#FFFFFF'
-LILAC = '#C9BEFF'
+MINT = '#B8F5D9'
 SS = 4  # draw big, then scale down for smooth edges
 
+# The mark on a 64 x 64 grid, as cubic curves (same numbers as favicon.svg).
+HEART = [(32, 50), [(20, 42), (13, 34.5), (13, 26.5)], [(13, 20.5), (17.5, 16), (23, 16)], [(27, 16), (30.2, 18.3), (32, 21.5)],
+         [(33.8, 18.3), (37, 16), (41, 16)], [(46.5, 16), (51, 20.5), (51, 26.5)], [(51, 34.5), (44, 42), (32, 50)]]
+LEAF = [(32, 44), [(27, 39.5), (27, 31), (32, 25.5)], [(37, 31), (37, 39.5), (32, 44)]]
 
-def pill(size, length, width, two_tone=True, seam=0):
-    """A capsule centred in a transparent square, tilted 40 degrees."""
+
+def points(path, scale, dx, dy, steps=40):
+    """Flattens a path of cubic curves into polygon points."""
+    out = []
+    x0, y0 = path[0]
+    for (c1, c2, end) in path[1:]:
+        for i in range(steps + 1):
+            t = i / steps
+            u = 1 - t
+            x = u**3 * x0 + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t**3 * end[0]
+            y = u**3 * y0 + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t**3 * end[1]
+            out.append((x * scale + dx, y * scale + dy))
+        x0, y0 = end
+    return out
+
+
+def mark(size, fraction=1.0, mono=False):
+    """The heart and leaf centred in a transparent square. fraction 1 = the favicon's proportions."""
     n = size * SS
-    L, W = length * SS, width * SS
     im = Image.new('RGBA', (n, n), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    x0, y0 = (n - L) / 2, (n - W) / 2
-    x1, y1 = x0 + L, y0 + W
-    d.rounded_rectangle([x0, y0, x1, y1], radius=W / 2, fill=WHITE)
-    if two_tone:
-        mid = n / 2
-        d.rounded_rectangle([mid, y0, x1, y1], radius=W / 2, fill=LILAC)
-        d.rectangle([mid, y0, mid + W / 2, y1], fill=LILAC)
-    if seam:
-        s = seam * SS / 2
-        d.rectangle([n / 2 - s, y0, n / 2 + s, y1], fill=(0, 0, 0, 0))
-    im = im.rotate(40, resample=Image.BICUBIC, center=(n / 2, n / 2))
+    scale = n / 64 * fraction
+    off = n / 2 - 32 * scale
+    d.polygon(points(HEART, scale, off, off), fill=WHITE)
+    d.polygon(points(LEAF, scale, off, off), fill=(0, 0, 0, 0) if mono else MINT)
     return im.resize((size, size), Image.LANCZOS)
 
 
@@ -35,18 +48,17 @@ def on_square(size, radius=0):
     bg = Image.new('RGBA', (n, n), (0, 0, 0, 0))
     ImageDraw.Draw(bg).rounded_rectangle([0, 0, n - 1, n - 1], radius=radius * SS, fill=PURPLE)
     bg = bg.resize((size, size), Image.LANCZOS)
-    # Same proportions as favicon.svg: 40 x 18 on a 64 square.
-    bg.alpha_composite(pill(size, size * 40 / 64, size * 18 / 64))
+    bg.alpha_composite(mark(size))
     return bg
 
 
 # App icon (Android masks the corners itself).
 on_square(1024).convert('RGB').save('assets/icon.png', optimize=True)
-# Adaptive icon: the launcher shows roughly the middle 66%, so the capsule is smaller here.
-pill(512, 290, 130).save('assets/android-icon-foreground.png', optimize=True)
+# Adaptive icon: the launcher shows roughly the middle 66%, so the mark is smaller here.
+mark(512, 0.68).save('assets/android-icon-foreground.png', optimize=True)
 Image.new('RGBA', (512, 512), PURPLE).save('assets/android-icon-background.png', optimize=True)
-pill(432, 245, 110, two_tone=False, seam=10).save('assets/android-icon-monochrome.png', optimize=True)
-pill(1024, 560, 250).save('assets/splash-icon.png', optimize=True)
+mark(432, 0.68, mono=True).save('assets/android-icon-monochrome.png', optimize=True)
+mark(1024, 0.9).save('assets/splash-icon.png', optimize=True)
 on_square(48, radius=12).save('assets/favicon.png', optimize=True)
 # Website
 on_square(180).convert('RGB').save('website/public/apple-touch-icon.png', optimize=True)
